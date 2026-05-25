@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WC2026 Betting</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="animate-fade">
+        <h1 class="gradient-text" style="font-size: 3rem; margin-bottom: 1rem;">WC2026</h1>
+        <div class="card">
+            <p style="color: var(--text-muted);">Sistem kontrol ediliyor...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from './js/supabase.js';
+
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                window.location.href = './matches.html';
+            } else {
+                window.location.href = './auth.html';
+            }
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>

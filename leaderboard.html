@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sıralama | WC2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .podium-row td { background: rgba(255,210,0,0.04); }
+    .rank-row.rank-2 td { background: rgba(192,192,192,0.03); }
+    .rank-row.rank-3 td { background: rgba(205,127,50,0.03); }
+    .my-row td { background: rgba(0,242,254,0.05) !important; }
+
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="toastContainer"></div>
+
+  <nav>
+    <a class="nav-brand" href="index.html">WC2026 ⚽</a>
+    <div class="nav-center" id="navCenter">
+      <ul class="nav-links">
+        <li><a href="matches.html">Maçlar</a></li>
+        <li><a href="leaderboard.html" class="active">Sıralama</a></li>
+        <li><a href="my-stats.html">İstatistiklerim</a></li>
+        <li><a href="admin.html" id="adminLink" style="display:none">Admin</a></li>
+      </ul>
+    </div>
+    <div class="nav-actions">
+      <button id="logoutBtn" class="btn btn-ghost" style="padding:0.4rem 0.875rem;font-size:0.8rem">Çıkış</button>
+      <button class="nav-hamburger" id="hamburger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container animate-fade">
+    <header style="margin-bottom:2rem">
+      <h1 style="font-size:2.25rem;margin-bottom:0.2rem">Sıralama</h1>
+      <p style="color:var(--text-muted);font-size:0.875rem">En iyi tahminciler burada yarışıyor.</p>
+    </header>
+
+    <div class="table-wrap">
+      <table class="leaderboard-table" id="leaderboardTable">
+        <thead>
+          <tr>
+            <th style="width:56px">#</th>
+            <th>Kullanıcı</th>
+            <th>Doğru / Toplam</th>
+            <th>Sürpriz</th>
+            <th style="text-align:right">Puan</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <tr>
+            <td colspan="5">
+              <div style="padding:2rem;display:flex;gap:0.75rem;flex-direction:column">
+                <div class="skeleton" style="height:40px"></div>
+                <div class="skeleton" style="height:40px"></div>
+                <div class="skeleton" style="height:40px"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    window.showToast = function(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      var icons = { success: '✓', error: '✗', info: 'i' };
+      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() { toast.classList.add('show'); }, 10);
+      setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3500);
+    };
+
+    document.getElementById('hamburger').addEventListener('click', function() {
+      document.getElementById('navCenter').classList.toggle('open');
+    });
+  </script>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { requireAuth, logout } from './js/auth.js';
+
+    async function init() {
+      const session = await requireAuth();
+      if (!session) return;
+      const { data: userData } = await supabase.from('users').select('is_admin').eq('id', session.user.id).single();
+      if (userData?.is_admin) document.getElementById('adminLink').style.display = 'block';
+      await loadLeaderboard(session.user.id);
+    }
+
+    async function loadLeaderboard(currentUserId) {
+      const body = document.getElementById('leaderboardBody');
+      const { data: leaderboard, error } = await supabase
+        .from('leaderboard_cache')
+        .select('*, users(username, avatar_color)')
+        .order('total_points', { ascending: false });
+
+      if (error) { body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:2rem">Hata: ${error.message}</td></tr>`; return; }
+      if (!leaderboard?.length) { body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:3rem">Henüz puan yok.</td></tr>`; return; }
+
+      body.innerHTML = leaderboard.map((entry, i) => {
+        const rank = i + 1;
+        const username = entry.users?.username || '?';
+        const initial = username.charAt(0).toUpperCase();
+        const isMe = entry.user_id === currentUserId;
+        const rate = entry.total_predictions > 0 ? Math.round(entry.correct_predictions / entry.total_predictions * 100) : 0;
+        return `<tr class="rank-row rank-${rank} ${isMe ? 'my-row' : ''}">
+          <td><div class="rank-badge rank-badge-${rank}">${rank}</div></td>
+          <td><div class="user-cell">
+            <div class="avatar" style="background:${entry.users?.avatar_color||'var(--primary)'}">${initial}</div>
+            <span class="username ${isMe?'me':''}">${username}${isMe?' (Sen)':''}</span>
+          </div></td>
+          <td>
+            <span class="correct-count">${entry.correct_predictions}</span><span class="muted"> / ${entry.total_predictions}</span>
+            <div class="acc-bar"><div style="width:${rate}%"></div></div>
+          </td>
+          <td><span class="bonus-text">+${entry.surprise_bonus}</span></td>
+          <td style="text-align:right"><span class="points-display">${entry.total_points}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    init();
+  </script>
+</body>
+</html>

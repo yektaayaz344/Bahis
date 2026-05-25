@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | WC2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .match-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: start;
+      gap: 1rem;
+      padding: 1.125rem 1.25rem;
+      border-bottom: 1px solid var(--glass-border);
+      transition: background 0.15s;
+    }
+    .match-row:last-child { border-bottom: none; }
+    .match-row:hover { background: rgba(255,255,255,0.02); }
+
+    .match-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+    .match-sub { font-size: 0.72rem; color: var(--text-muted); font-family: monospace; }
+
+    .match-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+
+    .markets-list {
+      margin-top: 0.625rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .market-chip {
+      background: rgba(0,242,254,0.07);
+      border: 1px solid rgba(0,242,254,0.15);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      color: var(--primary);
+    }
+
+    .no-markets {
+      font-size: 0.72rem;
+      color: var(--danger);
+      opacity: 0.7;
+      margin-top: 0.5rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      max-width: 480px;
+      width: 100%;
+      position: relative;
+      animation: fadeInUp 0.25s ease;
+    }
+
+    .modal-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      font-family: var(--font-display);
+      letter-spacing: 0.04em;
+    }
+
+    .score-inputs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .score-inputs input {
+      width: 72px;
+      text-align: center;
+      font-size: 2rem;
+      font-family: var(--font-display);
+      font-weight: 800;
+      padding: 0.5rem;
+    }
+
+    .score-sep {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--text-muted);
+      font-weight: 800;
+    }
+
+    .market-type-tabs {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .market-tab {
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-display);
+      letter-spacing: 0.04em;
+    }
+
+    .market-tab.active {
+      background: rgba(0,242,254,0.12);
+      border-color: rgba(0,242,254,0.4);
+      color: var(--primary);
+    }
+
+    .odds-row {
+      display: grid;
+      gap: 0.625rem;
+    }
+
+    .odds-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .odds-row-2 { grid-template-columns: 1fr 1fr; }
+  </style>
+</head>
+<body>
+  <div id="toastContainer"></div>
+
+  <nav>
+    <a class="nav-brand" href="index.html">WC2026 ⚽ <span style="font-size:0.7rem;color:var(--warning);font-family:var(--font-body);font-weight:600;margin-left:4px">ADMIN</span></a>
+    <div class="nav-center" id="navCenter">
+      <ul class="nav-links">
+        <li><a href="matches.html">Maçlar</a></li>
+        <li><a href="leaderboard.html">Sıralama</a></li>
+        <li><a href="admin.html" class="active">Admin</a></li>
+      </ul>
+    </div>
+    <div class="nav-actions">
+      <button id="logoutBtn" class="btn btn-ghost" style="padding:0.4rem 0.875rem;font-size:0.8rem">Çıkış</button>
+      <button class="nav-hamburger" id="hamburger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container animate-fade">
+    <header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="font-size:2.25rem;margin-bottom:0.2rem">Admin Paneli</h1>
+        <p style="color:var(--text-muted);font-size:0.875rem">Maçları yönet, puanları dağıt.</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+        <button id="btnDeleteAll" class="btn btn-danger">Tümünü Sil</button>
+        <div style="width:1px;height:28px;background:var(--glass-border)"></div>
+        <button id="btnMegaFetch" class="btn btn-primary">🚀 Maçları & Bahisleri Çek</button>
+        <button onclick="window.fetchScores(this)" class="btn btn-outline" style="border-color:rgba(255,165,2,0.4);color:var(--warning)">📊 Sonuçları Güncelle</button>
+      </div>
+    </header>
+
+    <!-- Maç Listesi -->
+    <section style="margin-bottom:3rem">
+      <h2 style="font-size:1.4rem;margin-bottom:1.25rem">Maç Yönetimi</h2>
+      <div class="card" style="padding:0" id="adminMatchesList">
+        <div style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</div>
+      </div>
+    </section>
+
+    <!-- API Kullanımı -->
+    <section style="margin-bottom:3rem">
+      <h2 style="font-size:1.4rem;margin-bottom:1.25rem">The Odds API Kullanımı</h2>
+      <div class="card" id="apiUsageCard">
+        <div style="display:flex;align-items:center;gap:0.75rem;color:var(--text-muted);font-size:0.875rem">
+          <span>Yükleniyor...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Arkadaş Davet -->
+    <section>
+      <h2 style="font-size:1.4rem;margin-bottom:1.25rem">Arkadaş Davet Et</h2>
+      <div class="card">
+        <form id="inviteForm" style="display:flex;gap:0.75rem;flex-wrap:wrap">
+          <input type="email" id="inviteEmail" placeholder="ornek@mail.com" required style="flex:1;min-width:200px">
+          <button type="submit" class="btn btn-outline">Davet Gönder</button>
+        </form>
+        <div id="inviteMsg" style="margin-top:0.875rem;font-size:0.82rem"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div id="mainModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 class="modal-title" id="modalTitle">İşlem</h3>
+      <div id="modalContent"></div>
+      <div style="margin-top:1.5rem;display:flex;gap:0.75rem">
+        <button id="btnModalClose" class="btn btn-ghost">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.showToast = function(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      var icons = { success: '✓', error: '✗', info: 'i' };
+      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() { toast.classList.add('show'); }, 10);
+      setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3500);
+    };
+
+    document.getElementById('hamburger').addEventListener('click', function() {
+      document.getElementById('navCenter').classList.toggle('open');
+    });
+  </script>
+
+  <script type="module">
+    import { supabase, SUPABASE_URL } from './js/supabase.js';
+    import { requireAdmin, logout } from './js/auth.js';
+
+    async function init() {
+      const isAdmin = await requireAdmin();
+      if (!isAdmin) return;
+      await loadAdminMatches();
+      loadApiUsage();
+    }
+
+    async function loadApiUsage() {
+      const card = document.getElementById('apiUsageCard');
+      const { data, error } = await supabase.functions.invoke('api-usage');
+
+      if (error || !data) {
+        card.innerHTML = `<span style="color:var(--danger);font-size:0.85rem">Kullanım bilgisi alınamadı.</span>`;
+        return;
+      }
+
+      const pct       = data.percent_used;
+      const barColor  = pct >= 80 ? 'var(--danger)' : pct >= 50 ? 'var(--warning)' : 'var(--success)';
+      const statusTxt = pct >= 80 ? '⚠️ Kritik' : pct >= 50 ? '🟡 Orta' : '🟢 İyi';
+
+      card.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1.5rem;align-items:center;flex-wrap:wrap">
+          <div>
+            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Kullanılan</div>
+            <div style="font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:${barColor}">${data.used}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">/ ${data.total} istek</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Kalan</div>
+            <div style="font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:var(--primary)">${data.remaining}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">istek</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Sıfırlanma</div>
+            <div style="font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:var(--text-main)">${data.days_until_reset}g</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">${data.reset_date}</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Durum</div>
+            <div style="font-size:0.9rem;font-weight:600">${statusTxt}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">%${pct} kullanıldı</div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem">
+          <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-bottom:0.375rem">
+            <span>0</span><span>${data.total}</span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.8s ease"></div>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem">
+            Her "Maçları Çek" ~20 istek harcar · Ücretsiz plan: 500 istek/ay · Her ayın 1'inde yenilenir
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadAdminMatches() {
+      const list = document.getElementById('adminMatchesList');
+      const { data: matches, error } = await supabase
+        .from('matches')
+        .select('*, bet_markets(*, bet_options(*))')
+        .order('match_time', { ascending: true });
+
+      if (error) {
+        list.innerHTML = `<div style="padding:2rem;color:var(--danger)">${error.message}</div>`;
+        return;
+      }
+
+      if (!matches?.length) {
+        list.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted)">Henüz maç yok. "Maçları Çek" butonunu kullan.</div>`;
+        return;
+      }
+
+      list.innerHTML = matches.map(m => {
+        const date = new Date(m.match_time).toLocaleDateString('tr-TR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+        const isApproved = m.is_admin_approved;
+        const isFinished = m.status === 'finished';
+
+        const marketsHtml = m.bet_markets.length > 0
+          ? `<div class="markets-list">${m.bet_markets.map(mk => `<span class="market-chip">${mk.label}</span>`).join('')}</div>`
+          : `<div class="no-markets">⚠ Market yok — "Market Ekle" ile ekle</div>`;
+
+        const statusBadge = isFinished
+          ? `<span class="badge badge-finish-a">BİTTİ ${m.home_score}-${m.away_score}</span>`
+          : isApproved
+            ? `<span class="badge badge-open-a">AÇIK</span>`
+            : `<span class="badge badge-draft-a">DRAFT</span>`;
+
+        return `
+          <div class="match-row">
+            <div>
+              <div class="match-title">${m.home_flag || '🏳️'} ${m.home_team} vs ${m.away_team} ${m.away_flag || '🏳️'}</div>
+              <div class="match-sub">${date} · ${m.odds_api_id}</div>
+              ${marketsHtml}
+            </div>
+            <div style="padding-top:0.125rem">${statusBadge}</div>
+            <div class="match-actions">
+              ${!isApproved ? `<button class="btn btn-primary" style="padding:0.3rem 0.6rem;font-size:0.72rem" onclick="window.approveMatch('${m.id}')">Onayla</button>` : ''}
+              ${isApproved && !isFinished ? `
+                <button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.72rem;border-color:rgba(240,147,251,0.4);color:var(--accent)" onclick="window.openMarketCreator('${m.id}','${m.home_team}','${m.away_team}')">+ Market</button>
+                <button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.72rem;border-color:rgba(0,217,126,0.4);color:var(--success)" onclick="window.openScoreEditor('${m.id}')">Skor Gir</button>
+              ` : ''}
+              <button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.72rem" onclick="window.deleteMatch('${m.id}')">Sil</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    window.deleteMatch = async (id) => {
+      if (!confirm('Bu maçı ve ilgili tüm bahisleri silmek istediğine emin misin?')) return;
+      const { error } = await supabase.from('matches').delete().eq('id', id);
+      if (error) showToast(error.message, 'error');
+      else { showToast('Maç silindi.', 'success'); loadAdminMatches(); }
+    };
+
+    window.approveMatch = async (id) => {
+      const { error } = await supabase.from('matches').update({ is_admin_approved: true, status: 'open' }).eq('id', id);
+      if (error) showToast(error.message, 'error');
+      else { showToast('Maç onaylandı!', 'success'); loadAdminMatches(); }
+    };
+
+    function openModal(title) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('mainModal').classList.add('open');
+    }
+
+    window.openMarketCreator = (matchId, home, away) => {
+      openModal('Market Ekle');
+      document.getElementById('modalContent').innerHTML = `
+        <div style="margin-bottom:1rem">
+          <div class="market-type-tabs">
+            <button class="market-tab active" onclick="window.selectTab(this,'1x2')">1X2</button>
+            <button class="market-tab" onclick="window.selectTab(this,'over_under')">Üst/Alt</button>
+            <button class="market-tab" onclick="window.selectTab(this,'btts')">KTG</button>
+            <button class="market-tab" onclick="window.selectTab(this,'custom')">Özel</button>
+          </div>
+          <input type="hidden" id="mType" value="1x2">
+        </div>
+        <div class="input-group">
+          <label>Etiket</label>
+          <input type="text" id="mLabel" value="Maç Sonucu">
+        </div>
+        <div id="oddsFields">
+          <div class="odds-row odds-row-3">
+            <div class="input-group"><label>${home} (1)</label><input type="number" id="o1" step="0.01" min="1.01" placeholder="1.85"></div>
+            <div class="input-group"><label>Beraberlik (X)</label><input type="number" id="oX" step="0.01" min="1.01" placeholder="3.40"></div>
+            <div class="input-group"><label>${away} (2)</label><input type="number" id="o2" step="0.01" min="1.01" placeholder="4.20"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:0.5rem" onclick="window.saveMarket('${matchId}','${home}','${away}')">Market ve Seçenekleri Kaydet</button>
+      `;
+    };
+
+    window.selectTab = (btn, type) => {
+      document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('mType').value = type;
+      const label = document.getElementById('mLabel');
+      const fields = document.getElementById('oddsFields');
+
+      if (type === '1x2') {
+        label.value = 'Maç Sonucu';
+        fields.innerHTML = `<div class="odds-row odds-row-3">
+          <div class="input-group"><label>Ev Sahibi (1)</label><input type="number" id="o1" step="0.01" min="1.01" placeholder="1.85"></div>
+          <div class="input-group"><label>Beraberlik (X)</label><input type="number" id="oX" step="0.01" min="1.01" placeholder="3.40"></div>
+          <div class="input-group"><label>Deplasman (2)</label><input type="number" id="o2" step="0.01" min="1.01" placeholder="4.20"></div>
+        </div>`;
+      } else if (type === 'over_under') {
+        label.value = '2.5 Üst/Alt';
+        fields.innerHTML = `<div class="odds-row odds-row-2">
+          <div class="input-group"><label>2.5 Üstü</label><input type="number" id="o1" step="0.01" min="1.01" placeholder="1.80"></div>
+          <div class="input-group"><label>2.5 Altı</label><input type="number" id="o2" step="0.01" min="1.01" placeholder="2.00"></div>
+        </div>`;
+      } else if (type === 'btts') {
+        label.value = 'Her İki Takım Gol Atar';
+        fields.innerHTML = `<div class="odds-row odds-row-2">
+          <div class="input-group"><label>Evet</label><input type="number" id="o1" step="0.01" min="1.01" placeholder="1.75"></div>
+          <div class="input-group"><label>Hayır</label><input type="number" id="o2" step="0.01" min="1.01" placeholder="2.05"></div>
+        </div>`;
+      } else {
+        label.value = '';
+        fields.innerHTML = `<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Özel market için label gir, seçenekleri sonra manuel ekleyebilirsin.</p>`;
+      }
+    };
+
+    window.saveMarket = async (matchId, home, away) => {
+      const type  = document.getElementById('mType').value;
+      const label = document.getElementById('mLabel').value;
+      const o1 = parseFloat(document.getElementById('o1')?.value || '0');
+      const oX = parseFloat(document.getElementById('oX')?.value || '0');
+      const o2 = parseFloat(document.getElementById('o2')?.value || '0');
+
+      if (!label) return showToast('Etiket boş olamaz.', 'error');
+
+      const { data: market, error: mErr } = await supabase.from('bet_markets').insert({
+        match_id: matchId, market_type: type, label: label, is_active: true
+      }).select().single();
+
+      if (mErr) return showToast(mErr.message, 'error');
+
+      let options = [];
+      if (type === '1x2') {
+        if (!o1 || !oX || !o2) return showToast('Tüm oranları gir.', 'error');
+        options = [
+          { market_id: market.id, label: '1', odds_value: o1, outcome_key: 'home_win' },
+          { market_id: market.id, label: 'X', odds_value: oX, outcome_key: 'draw' },
+          { market_id: market.id, label: '2', odds_value: o2, outcome_key: 'away_win' },
+        ];
+      } else if (type === 'over_under') {
+        if (!o1 || !o2) return showToast('Tüm oranları gir.', 'error');
+        const line = label.match(/[\d.]+/)?.[0] || '2.5';
+        options = [
+          { market_id: market.id, label: `${line} Üstü`, odds_value: o1, outcome_key: `over_${line}` },
+          { market_id: market.id, label: `${line} Altı`,  odds_value: o2, outcome_key: `under_${line}` },
+        ];
+      } else if (type === 'btts') {
+        if (!o1 || !o2) return showToast('Tüm oranları gir.', 'error');
+        options = [
+          { market_id: market.id, label: 'Evet', odds_value: o1, outcome_key: 'btts_yes' },
+          { market_id: market.id, label: 'Hayır', odds_value: o2, outcome_key: 'btts_no' },
+        ];
+      }
+
+      if (options.length > 0) {
+        const { error: oErr } = await supabase.from('bet_options').insert(options);
+        if (oErr) return showToast(oErr.message, 'error');
+      }
+
+      showToast('Market eklendi!', 'success');
+      document.getElementById('mainModal').classList.remove('open');
+      loadAdminMatches();
+    };
+
+    window.openScoreEditor = (matchId) => {
+      openModal('Skor Gir ve Puanları Dağıt');
+      document.getElementById('modalContent').innerHTML = `
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem">Skoru gir ve "Onayla" butonuna bas. Tüm tahminler otomatik puanlanacak.</p>
+        <div class="score-inputs">
+          <input type="number" id="sHome" placeholder="0" min="0" max="20">
+          <span class="score-sep">—</span>
+          <input type="number" id="sAway" placeholder="0" min="0" max="20">
+        </div>
+        <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,var(--success),#4fffb0);color:#060b18" onclick="window.saveScore('${matchId}')">✓ Skoru Onayla ve Puanları Dağıt</button>
+      `;
+    };
+
+    window.saveScore = async (matchId) => {
+      const h = parseInt(document.getElementById('sHome').value);
+      const a = parseInt(document.getElementById('sAway').value);
+      if (isNaN(h) || isNaN(a)) return showToast('Geçerli bir skor gir.', 'error');
+
+      let result = 'draw';
+      if (h > a) result = 'home_win';
+      else if (a > h) result = 'away_win';
+
+      const { error: sErr } = await supabase.from('matches').update({
+        home_score: h, away_score: a, result: result, status: 'finished'
+      }).eq('id', matchId);
+
+      if (sErr) return showToast(sErr.message, 'error');
+
+      const { data, error: fErr } = await supabase.functions.invoke('calculate-points', {
+        body: { match_id: matchId }
+      });
+
+      if (fErr) {
+        showToast('Puan hesaplama hatası: ' + fErr.message, 'error');
+      } else {
+        showToast(`Puanlar dağıtıldı! (${data?.processed ?? 0} tahmin işlendi)`, 'success');
+        document.getElementById('mainModal').classList.remove('open');
+        loadAdminMatches();
+      }
+    };
+
+    window.fetchScores = async (btn) => {
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Güncelleniyor...';
+      const { data, error } = await supabase.functions.invoke('fetch-scores');
+      if (error) {
+        showToast('Hata: ' + error.message, 'error');
+      } else {
+        showToast(data?.message || 'Sonuçlar güncellendi.', 'success');
+        loadAdminMatches();
+      }
+      btn.disabled = false; btn.textContent = orig;
+    };
+
+    document.getElementById('btnMegaFetch').addEventListener('click', async () => {
+      const btn = document.getElementById('btnMegaFetch');
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Çekiliyor...';
+      const { data, error } = await supabase.functions.invoke('fetch-matches');
+      if (error) {
+        let msg = error.message;
+        try { const d = await error.context?.json?.(); if (d?.error) msg = d.error; } catch(_) {}
+        showToast('Hata: ' + msg, 'error');
+        console.error('fetch-matches error:', error);
+      } else {
+        showToast(data?.message || 'Maçlar güncellendi.', 'success');
+        loadAdminMatches();
+      }
+      btn.disabled = false; btn.textContent = orig;
+    });
+
+    document.getElementById('btnDeleteAll').addEventListener('click', async () => {
+      if (!confirm('TÜM maçları, bahisleri ve tahminleri silmek istediğine emin misin? Bu işlem geri alınamaz!')) return;
+      const { error } = await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) showToast(error.message, 'error');
+      else { showToast('Tüm veriler temizlendi.', 'success'); loadAdminMatches(); }
+    });
+
+    document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('inviteEmail').value;
+      const msg = document.getElementById('inviteMsg');
+      const { data, error } = await supabase.functions.invoke('invite-user', { body: { email } });
+      if (error) {
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'Hata: ' + error.message;
+      } else {
+        msg.style.color = 'var(--success)';
+        msg.textContent = `✓ Davet gönderildi: ${email}`;
+        document.getElementById('inviteEmail').value = '';
+      }
+    });
+
+    document.getElementById('btnModalClose').onclick = () => document.getElementById('mainModal').classList.remove('open');
+    document.getElementById('mainModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('mainModal')) document.getElementById('mainModal').classList.remove('open');
+    });
+    document.getElementById('logoutBtn').onclick = logout;
+
+    init();
+  </script>
+</body>
+</html>

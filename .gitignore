@@ -1,0 +1,16 @@
+# Supabase local
+.supabase/
+supabase/.temp/
+supabase/config.toml
+
+# Environment / secrets
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/

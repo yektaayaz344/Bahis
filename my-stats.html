@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İstatistiklerim | WC2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toastContainer"></div>
+
+  <nav>
+    <a class="nav-brand" href="index.html">WC2026 ⚽</a>
+    <div class="nav-center" id="navCenter">
+      <ul class="nav-links">
+        <li><a href="matches.html">Maçlar</a></li>
+        <li><a href="leaderboard.html">Sıralama</a></li>
+        <li><a href="my-stats.html" class="active">İstatistiklerim</a></li>
+        <li><a href="admin.html" id="adminLink" style="display:none">Admin</a></li>
+      </ul>
+    </div>
+    <div class="nav-actions">
+      <button id="logoutBtn" class="btn btn-ghost" style="padding:0.4rem 0.875rem;font-size:0.8rem">Çıkış</button>
+      <button class="nav-hamburger" id="hamburger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container animate-fade">
+    <header style="margin-bottom:2rem">
+      <p style="color:var(--text-muted);font-size:0.8rem;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;margin-bottom:0.25rem">Hoş geldin</p>
+      <h1 style="font-size:2.25rem;margin-bottom:0.2rem" id="welcomeUser">—</h1>
+      <p style="color:var(--text-muted);font-size:0.875rem">Performansını analiz et.</p>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Toplam Puan</div>
+        <div class="stat-value" id="statTotalPoints">—</div>
+        <div class="stat-sub">genel sıralamada</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Başarı Oranı</div>
+        <div class="stat-value success-val" id="statSuccessRate">—</div>
+        <div class="stat-sub" id="statCorrect" style="color:var(--text-muted)">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sürpriz Bonusu</div>
+        <div class="stat-value accent-val" id="statSurpriseBonus">—</div>
+        <div class="stat-sub">7.00+ oran kazanımı</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
+      <h2 style="font-size:1.5rem">Tahmin Geçmişi</h2>
+    </div>
+
+    <div id="historyList" style="display:flex;flex-direction:column;gap:0.75rem">
+      <div class="skeleton" style="height:72px;border-radius:var(--radius-lg)"></div>
+      <div class="skeleton" style="height:72px;border-radius:var(--radius-lg)"></div>
+      <div class="skeleton" style="height:72px;border-radius:var(--radius-lg)"></div>
+    </div>
+  </div>
+
+  <script>
+    window.showToast = function(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      var icons = { success: '✓', error: '✗', info: 'i' };
+      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() { toast.classList.add('show'); }, 10);
+      setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3500);
+    };
+
+    document.getElementById('hamburger').addEventListener('click', function() {
+      document.getElementById('navCenter').classList.toggle('open');
+    });
+  </script>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { requireAuth, logout } from './js/auth.js';
+
+    async function init() {
+      const session = await requireAuth();
+      if (!session) return;
+      const { data: userData } = await supabase.from('users').select('is_admin, username').eq('id', session.user.id).single();
+      if (userData?.is_admin) document.getElementById('adminLink').style.display = 'block';
+      if (userData?.username) document.getElementById('welcomeUser').textContent = userData.username;
+      await loadStats(session.user.id);
+      await loadHistory(session.user.id);
+    }
+
+    async function loadStats(userId) {
+      const { data: stats } = await supabase.from('leaderboard_cache').select('*').eq('user_id', userId).maybeSingle();
+      if (stats) {
+        document.getElementById('statTotalPoints').textContent = stats.total_points;
+        document.getElementById('statSurpriseBonus').textContent = '+' + stats.surprise_bonus;
+        const rate = stats.total_predictions > 0 ? Math.round(stats.correct_predictions / stats.total_predictions * 100) : 0;
+        document.getElementById('statSuccessRate').textContent = '%' + rate;
+        document.getElementById('statCorrect').textContent = stats.correct_predictions + '/' + stats.total_predictions + ' tahmin';
+      } else {
+        document.getElementById('statTotalPoints').textContent = '0';
+        document.getElementById('statSurpriseBonus').textContent = '+0';
+        document.getElementById('statSuccessRate').textContent = '%0';
+        document.getElementById('statCorrect').textContent = '0/0 tahmin';
+      }
+    }
+
+    async function loadHistory(userId) {
+      const list = document.getElementById('historyList');
+      const { data: preds, error } = await supabase
+        .from('predictions')
+        .select('*, matches(home_team,away_team,home_flag,away_flag,home_score,away_score,status), bet_options(label,odds_value)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) { list.innerHTML = `<div class="card" style="color:var(--danger)">Hata: ${error.message}</div>`; return; }
+      if (!preds?.length) { list.innerHTML = `<div class="card"><div class="empty-state">Henüz tahmin yapmamışsın.<br><a href="matches.html" style="color:var(--primary);text-decoration:none;font-weight:600">Maçlar sayfasına git →</a></div></div>`; return; }
+
+      list.innerHTML = preds.map(p => {
+        const isFinished = p.matches?.status === 'finished';
+        const statusText = !isFinished ? 'Bekliyor' : (p.is_correct ? 'Kazandı' : 'Kaybetti');
+        const statusClass = !isFinished ? 'pred-pending' : (p.is_correct ? 'pred-win' : 'pred-loss');
+        return `<div class="pred-history-item ${statusClass}">
+          <div>
+            <div class="pred-match">${p.matches?.home_flag} ${p.matches?.home_team} vs ${p.matches?.away_team} ${p.matches?.away_flag}</div>
+          </div>
+          <div>
+            <div class="pred-choice">Seçim: <strong>${p.bet_options?.label}</strong> @ ${p.odds_at_prediction}</div>
+          </div>
+          <div class="pred-status-col">
+            <span class="pred-status-badge ${statusClass}">${statusText}</span>
+            ${isFinished ? `<span class="pred-score">${p.matches?.home_score} - ${p.matches?.away_score}</span>` : ''}
+          </div>
+          <div class="pred-points">
+            ${p.is_correct ? `+${p.points_earned}` : (isFinished ? '0' : '—')}<span>puan</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    init();
+  </script>
+</body>
+</html>

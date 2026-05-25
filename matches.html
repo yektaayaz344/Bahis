@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maçlar | WC2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toastContainer"></div>
+
+  <nav>
+    <a class="nav-brand" href="index.html">WC2026 ⚽</a>
+    <div class="nav-center" id="navCenter">
+      <ul class="nav-links">
+        <li><a href="matches.html" class="active">Maçlar</a></li>
+        <li><a href="leaderboard.html">Sıralama</a></li>
+        <li><a href="my-stats.html">İstatistiklerim</a></li>
+        <li><a href="admin.html" id="adminLink" style="display:none">Admin</a></li>
+      </ul>
+    </div>
+    <div class="nav-actions">
+      <button id="logoutBtn" class="btn btn-ghost" style="padding:0.4rem 0.875rem;font-size:0.8rem">Çıkış</button>
+      <button class="nav-hamburger" id="hamburger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container animate-fade">
+    <header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="font-size:2.25rem;margin-bottom:0.2rem">Aktif Maçlar</h1>
+        <p style="color:var(--text-muted);font-size:0.875rem">Tahminini yap, puanları topla!</p>
+      </div>
+    </header>
+
+    <div id="matchesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem">
+      <div class="card" style="grid-column:1/-1">
+        <div class="skeleton" style="height:14px;width:30%;margin-bottom:1.25rem"></div>
+        <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:0.75rem;margin-bottom:1.25rem">
+          <div class="skeleton" style="height:72px;border-radius:var(--radius)"></div>
+          <div class="skeleton" style="height:72px;border-radius:var(--radius)"></div>
+          <div class="skeleton" style="height:72px;border-radius:var(--radius)"></div>
+        </div>
+        <div class="skeleton" style="height:64px"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.showToast = function(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      var icons = { success: '✓', error: '✗', info: 'i' };
+      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() { toast.classList.add('show'); }, 10);
+      setTimeout(function() {
+        toast.classList.remove('show');
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3500);
+    };
+
+    document.getElementById('hamburger').addEventListener('click', function() {
+      document.getElementById('navCenter').classList.toggle('open');
+    });
+  </script>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { requireAuth, logout } from './js/auth.js';
+
+    let session;
+
+    async function init() {
+      session = await requireAuth();
+      if (!session) return;
+      const { data: userData } = await supabase.from('users').select('is_admin').eq('id', session.user.id).single();
+      if (userData?.is_admin) document.getElementById('adminLink').style.display = 'block';
+      await loadMatches();
+    }
+
+    async function loadMatches() {
+      const grid = document.getElementById('matchesGrid');
+
+      const { data: matches, error } = await supabase
+        .from('matches')
+        .select('*, bet_markets(*, bet_options(*))')
+        .eq('is_admin_approved', true)
+        .order('match_time', { ascending: true });
+
+      if (error) {
+        grid.innerHTML = `<div class="card" style="color: var(--danger); grid-column:1/-1;">Hata: ${error.message}</div>`;
+        return;
+      }
+
+      const { data: myPredictions } = await supabase
+        .from('predictions')
+        .select('market_id, option_id, points_earned, is_correct')
+        .eq('user_id', session.user.id);
+
+      const predMap = new Map(myPredictions?.map(p => [p.market_id, p]));
+
+      if (!matches || matches.length === 0) {
+        grid.innerHTML = `<div class="card" style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:3rem;">Şu an aktif maç bulunmuyor.</div>`;
+        return;
+      }
+
+      grid.innerHTML = matches.map(match => {
+        const date = new Date(match.match_time).toLocaleString('tr-TR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+        const isFinished = match.status === 'finished';
+        const isLocked = match.status === 'locked' || isFinished;
+        const statusLabel = isFinished ? 'BİTTİ' : (isLocked ? 'KİLİTLİ' : 'AÇIK');
+        const statusClass = isFinished ? 'badge-finished' : (isLocked ? 'badge-locked' : 'badge-open');
+
+        return `
+          <div class="card animate-fade">
+            <div class="card-shine"></div>
+            <div class="card-header">
+              <span class="group-label">${match.group_name || 'WC2026'}</span>
+              <span class="match-date">${date}</span>
+            </div>
+            <div class="match-card">
+              <div class="team-info">
+                <span class="flag">${match.home_flag}</span>
+                <span class="team-name">${match.home_team}</span>
+              </div>
+              <div class="vs-col">
+                ${isFinished
+                  ? `<span class="score">${match.home_score} - ${match.away_score}</span>`
+                  : `<span class="vs-text">VS</span>`}
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+              </div>
+              <div class="team-info">
+                <span class="flag">${match.away_flag}</span>
+                <span class="team-name">${match.away_team}</span>
+              </div>
+            </div>
+            ${match.bet_markets.filter(m => m.is_active || isFinished).map(market => {
+              const myPred = predMap.get(market.id);
+              return `
+              <div class="bet-market-section">
+                <div class="market-label">${market.label}</div>
+                <div class="odds-grid" style="grid-template-columns: repeat(${Math.min(market.bet_options.length, 3)}, 1fr)">
+                  ${market.bet_options.map(opt => {
+                    const isSelected = myPred?.option_id === opt.id;
+                    const isWin  = isSelected && myPred?.is_correct === true;
+                    const isLoss = isSelected && myPred?.is_correct === false;
+                    let extraClass = isSelected ? 'selected' : '';
+                    if (isWin)  extraClass += ' pred-win';
+                    if (isLoss) extraClass += ' pred-loss';
+                    return `
+                    <button class="odd-btn ${extraClass}"
+                      onclick="window.submitPrediction('${market.id}','${match.id}','${opt.id}',${opt.odds_value})"
+                      ${isLocked ? 'disabled' : ''}>
+                      <div class="odd-label">${opt.label}</div>
+                      <div class="odd-value">${opt.odds_value}</div>
+                      ${isWin  ? `<div class="odd-result win">+${myPred.points_earned}p ✓</div>` : ''}
+                      ${isLoss ? `<div class="odd-result loss">✗</div>` : ''}
+                    </button>`;
+                  }).join('')}
+                </div>
+              </div>`;
+            }).join('')}
+          </div>`;
+      }).join('');
+    }
+
+    window.submitPrediction = async (marketId, matchId, optionId, oddsValue) => {
+      const { error } = await supabase.from('predictions').upsert({
+        user_id: session.user.id, match_id: matchId, market_id: marketId,
+        option_id: optionId, odds_at_prediction: oddsValue
+      }, { onConflict: 'user_id,market_id' });
+      if (error) { showToast('Hata: ' + error.message, 'error'); }
+      else { showToast('Tahmin kaydedildi!', 'success'); loadMatches(); }
+    };
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    init();
+  </script>
+</body>
+</html>
