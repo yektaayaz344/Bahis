@@ -90,9 +90,39 @@
       pointer-events: none;
     }
 
-    #loginForm { position: relative; z-index: 1; }
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.75rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.04);
+      padding: 3px;
+    }
 
-    .btn-login {
+    .auth-tab {
+      flex: 1;
+      padding: 0.55rem;
+      background: none;
+      border: none;
+      border-radius: calc(var(--radius-sm) - 2px);
+      color: var(--text-muted);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+
+    .btn-auth {
       width: 100%;
       padding: 0.8rem;
       font-size: 0.9rem;
@@ -101,48 +131,26 @@
       font-weight: 700;
     }
 
-    #errorMessage {
+    .auth-message {
       display: none;
-      background: rgba(255,71,87,0.09);
-      border: 1px solid rgba(255,71,87,0.25);
       border-radius: var(--radius-sm);
       padding: 0.7rem 0.875rem;
-      color: var(--danger);
       font-size: 0.82rem;
       margin-top: 0.875rem;
       line-height: 1.5;
     }
 
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 0.875rem;
-      margin: 1.5rem 0;
+    .auth-message.error {
+      background: rgba(255,71,87,0.09);
+      border: 1px solid rgba(255,71,87,0.25);
+      color: var(--danger);
     }
 
-    .auth-divider::before,
-    .auth-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--glass-border);
+    .auth-message.success {
+      background: rgba(34,197,94,0.09);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: var(--success);
     }
-
-    .auth-divider span {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .invite-note {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.78rem;
-      line-height: 1.7;
-    }
-
-    .invite-note strong { color: var(--text-main); font-weight: 600; }
   </style>
 </head>
 <body class="animate-fade">
@@ -156,64 +164,106 @@
     </div>
 
     <div class="auth-card">
-      <form id="loginForm">
-        <div class="input-group">
-          <label for="email">E-Posta</label>
-          <input type="email" id="email" placeholder="ornek@mail.com" required autocomplete="email">
-        </div>
-        <div class="input-group" style="margin-bottom:0.75rem">
-          <label for="password">Şifre</label>
-          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
-        </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Giriş Yap</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Kayıt Ol</button>
+      </div>
 
-        <button type="submit" class="btn btn-primary btn-login">Giriş Yap</button>
-        <div id="errorMessage"></div>
-      </form>
+      <!-- GİRİŞ -->
+      <div class="auth-panel active" id="panelLogin">
+        <form id="loginForm">
+          <div class="input-group">
+            <label for="email">E-Posta</label>
+            <input type="email" id="email" placeholder="ornek@mail.com" required autocomplete="email">
+          </div>
+          <div class="input-group" style="margin-bottom:0.75rem">
+            <label for="password">Şifre</label>
+            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary btn-auth">Giriş Yap</button>
+          <div id="loginError" class="auth-message error"></div>
+        </form>
+      </div>
 
-      <div class="auth-divider"><span>bilgi</span></div>
-
-      <p class="invite-note">
-        Hesabın yok mu? <strong>Grup adminine</strong> ulaşıp<br>
-        davet isteğinde bulun. Kayıt sistemi<br>yalnızca davetle açık.
-      </p>
+      <!-- KAYIT -->
+      <div class="auth-panel" id="panelSignup">
+        <form id="signupForm">
+          <div class="input-group">
+            <label for="signupUsername">Kullanıcı Adı</label>
+            <input type="text" id="signupUsername" placeholder="örn: kerem07" required minlength="3" maxlength="20" autocomplete="username">
+          </div>
+          <div class="input-group">
+            <label for="signupEmail">E-Posta</label>
+            <input type="email" id="signupEmail" placeholder="ornek@mail.com" required autocomplete="email">
+          </div>
+          <div class="input-group" style="margin-bottom:0.75rem">
+            <label for="signupPassword">Şifre</label>
+            <input type="password" id="signupPassword" placeholder="En az 6 karakter" required minlength="6" autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary btn-auth">Kayıt Ol</button>
+          <div id="signupMessage" class="auth-message"></div>
+        </form>
+      </div>
     </div>
   </div>
 
   <script>
-    window.showToast = function(message, type) {
-      type = type || 'info';
-      var container = document.getElementById('toastContainer');
-      var toast = document.createElement('div');
-      toast.className = 'toast toast-' + type;
-      var icons = { success: '✓', error: '✗', info: 'i' };
-      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
-      container.appendChild(toast);
-      setTimeout(function() { toast.classList.add('show'); }, 10);
-      setTimeout(function() {
-        toast.classList.remove('show');
-        setTimeout(function() { toast.remove(); }, 300);
-      }, 3500);
-    };
+    function switchTab(tab) {
+      document.getElementById('panelLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('panelSignup').classList.toggle('active', tab === 'signup');
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+    }
   </script>
 
   <script type="module">
-    import { login } from './js/auth.js';
-    const loginForm = document.getElementById('loginForm');
-    const errorMessage = document.getElementById('errorMessage');
-    loginForm.addEventListener('submit', async (e) => {
+    import { login, signup } from './js/auth.js';
+
+    // Giriş
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = loginForm.querySelector('button[type="submit"]');
+      const btn = e.target.querySelector('button[type="submit"]');
+      const errEl = document.getElementById('loginError');
       btn.disabled = true;
       btn.textContent = 'Giriş yapılıyor...';
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      errorMessage.style.display = 'none';
-      const { error } = await login(email, password);
+      errEl.style.display = 'none';
+      const { error } = await login(
+        document.getElementById('email').value,
+        document.getElementById('password').value
+      );
       if (error) {
-        errorMessage.textContent = error.message === 'Invalid login credentials' ? 'Hatalı e-posta veya şifre.' : error.message;
-        errorMessage.style.display = 'block';
+        errEl.textContent = error.message === 'Invalid login credentials' ? 'Hatalı e-posta veya şifre.' : error.message;
+        errEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Giriş Yap';
+      }
+    });
+
+    // Kayıt
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const msgEl = document.getElementById('signupMessage');
+      btn.disabled = true;
+      btn.textContent = 'Kayıt yapılıyor...';
+      msgEl.style.display = 'none';
+      const username = document.getElementById('signupUsername').value.trim();
+      const email    = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const { error } = await signup(email, password, username);
+      if (error) {
+        msgEl.className = 'auth-message error';
+        msgEl.textContent = error.message;
+        msgEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Kayıt Ol';
+      } else {
+        msgEl.className = 'auth-message success';
+        msgEl.textContent = '✓ Kayıt başarılı! E-postana bir onay bağlantısı gönderdik. Onayladıktan sonra giriş yapabilirsin.';
+        msgEl.style.display = 'block';
+        e.target.reset();
+        btn.disabled = false;
+        btn.textContent = 'Kayıt Ol';
       }
     });
   </script>

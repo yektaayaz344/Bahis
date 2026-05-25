@@ -10,18 +10,17 @@ export async function requireAuth() {
     return session
 }
 
+const ADMIN_EMAIL = 'ayazyekta344@gmail.com'
+
+export function isAdmin(session) {
+    return session?.user?.email === ADMIN_EMAIL
+}
+
 // Admin kontrolü
 export async function requireAdmin() {
     const session = await requireAuth()
     if (!session) return false
-    
-    const { data: user } = await supabase
-        .from('users')
-        .select('is_admin')
-        .eq('id', session.user.id)
-        .single()
-    
-    if (!user?.is_admin) {
+    if (!isAdmin(session)) {
         window.location.href = './matches.html'
         return false
     }
@@ -34,6 +33,16 @@ export async function login(email, password) {
     if (!error) {
         window.location.href = './matches.html'
     }
+    return { data, error }
+}
+
+// Kayıt
+export async function signup(email, password, username) {
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { username } }
+    })
     return { data, error }
 }
 

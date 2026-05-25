@@ -98,13 +98,12 @@
 
   <script type="module">
     import { supabase } from './js/supabase.js';
-    import { requireAuth, logout } from './js/auth.js';
+    import { requireAuth, logout, isAdmin } from './js/auth.js';
 
     async function init() {
       const session = await requireAuth();
       if (!session) return;
-      const { data: userData } = await supabase.from('users').select('is_admin').eq('id', session.user.id).single();
-      if (userData?.is_admin) document.getElementById('adminLink').style.display = 'block';
+      if (isAdmin(session)) document.getElementById('adminLink').style.display = 'block';
       await loadLeaderboard(session.user.id);
     }
 
