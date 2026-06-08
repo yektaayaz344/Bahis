@@ -144,7 +144,7 @@
             <div class="pred-match">${p.matches?.home_flag} ${p.matches?.home_team} vs ${p.matches?.away_team} ${p.matches?.away_flag}</div>
           </div>
           <div>
-            <div class="pred-choice">Seçim: <strong>${p.bet_options?.label}</strong> @ ${p.odds_at_prediction}</div>
+            <div class="pred-choice">Seçim: <strong>${p.bet_options?.label}</strong> @ ${Number(p.odds_at_prediction).toFixed(1)}</div>
           </div>
           <div class="pred-status-col">
             <span class="pred-status-badge ${statusClass}">${statusText}</span>

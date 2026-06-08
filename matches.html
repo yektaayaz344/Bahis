@@ -160,7 +160,7 @@
                       onclick="window.submitPrediction('${market.id}','${match.id}','${opt.id}',${opt.odds_value})"
                       ${isLocked ? 'disabled' : ''}>
                       <div class="odd-label">${opt.label}</div>
-                      <div class="odd-value">${opt.odds_value}</div>
+                      <div class="odd-value">${Number(opt.odds_value).toFixed(1)}</div>
                       ${isWin  ? `<div class="odd-result win">+${myPred.points_earned}p ✓</div>` : ''}
                       ${isLoss ? `<div class="odd-result loss">✗</div>` : ''}
                     </button>`;

@@ -662,15 +662,16 @@
       const marketsHtml = markets.map(mk => {
         const sortedOpts = (mk.bet_options || []).sort((a,b) => a.created_at > b.created_at ? 1 : -1);
         const currentWinner = sortedOpts.find(o => o.is_correct === true);
+        const cols = sortedOpts.length <= 3 ? sortedOpts.length : 2;
         return `
-          <div style="margin-bottom:1.125rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,0.06)">
+          <div style="margin-bottom:1.25rem;padding-bottom:1.125rem;border-bottom:1px solid rgba(255,255,255,0.06)">
             <div style="font-family:var(--font-display);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.625rem">${mk.label}</div>
-            <div style="display:flex;flex-direction:column;gap:0.375rem">
+            <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:0.5rem">
               ${sortedOpts.map(opt => `
-                <label style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius-sm);border:1px solid ${currentWinner?.id===opt.id?'rgba(0,217,126,0.4)':'rgba(255,255,255,0.07)'};background:${currentWinner?.id===opt.id?'rgba(0,217,126,0.07)':'rgba(255,255,255,0.02)'};cursor:pointer;transition:all 0.15s">
-                  <input type="radio" name="winner_${mk.id}" value="${opt.id}" ${currentWinner?.id===opt.id?'checked':''} style="width:auto;accent-color:var(--success);flex-shrink:0">
-                  <span style="flex:1;font-size:0.875rem">${opt.label}</span>
-                  <span style="font-family:var(--font-display);font-weight:700;color:var(--primary);font-size:0.9rem">${opt.odds_value}x</span>
+                <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.25rem;padding:0.625rem 0.5rem;border-radius:var(--radius-sm);border:2px solid ${currentWinner?.id===opt.id?'rgba(0,217,126,0.6)':'rgba(255,255,255,0.08)'};background:${currentWinner?.id===opt.id?'rgba(0,217,126,0.1)':'rgba(255,255,255,0.02)'};cursor:pointer;text-align:center;transition:all 0.15s;position:relative">
+                  <input type="radio" name="winner_${mk.id}" value="${opt.id}" ${currentWinner?.id===opt.id?'checked':''} style="position:absolute;opacity:0;width:0;height:0">
+                  <span style="font-size:0.8rem;color:var(--text-muted)">${opt.label}</span>
+                  <span style="font-family:var(--font-display);font-weight:800;font-size:1.15rem;color:${currentWinner?.id===opt.id?'var(--success)':'var(--primary)'}">${Number(opt.odds_value).toFixed(1)}</span>
                 </label>
               `).join('')}
             </div>
@@ -689,6 +690,20 @@
         ${marketsHtml}
         <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,var(--success),#4fffb0);color:#060b18;margin-top:0.5rem" onclick="window.saveResult('${matchId}',${isEdit})">✓ Onayla ve Puanları Dağıt</button>
       `, 'md');
+
+      // Kart seçim efekti
+      document.querySelectorAll('input[name^="winner_"]').forEach(radio => {
+        radio.closest('label').addEventListener('click', () => {
+          const name = radio.name;
+          document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+            const lbl = r.closest('label');
+            const isThis = r === radio;
+            lbl.style.borderColor = isThis ? 'rgba(0,217,126,0.6)' : 'rgba(255,255,255,0.08)';
+            lbl.style.background  = isThis ? 'rgba(0,217,126,0.1)'  : 'rgba(255,255,255,0.02)';
+            lbl.querySelector('span:last-child').style.color = isThis ? 'var(--success)' : 'var(--primary)';
+          });
+        });
+      });
     };
 
     window.saveResult = async (matchId, isEdit) => {
@@ -972,7 +987,7 @@
             <label style="display:flex;align-items:center;gap:0.625rem;margin-bottom:0.625rem;cursor:pointer;font-size:0.875rem">
               <input type="radio" name="customWinner" value="${o.id}" ${o.is_correct === true ? 'checked' : ''} style="width:auto;accent-color:var(--primary)">
               <span>${o.label}</span>
-              <span style="color:var(--text-muted);font-size:0.78rem">${o.odds_value}x</span>
+              <span style="color:var(--text-muted);font-size:0.78rem">${Number(o.odds_value).toFixed(1)}x</span>
               ${o.is_correct === true ? '<span style="color:var(--success);font-size:0.72rem;font-weight:700;margin-left:auto">✓ DOĞRU</span>' : ''}
             </label>
           `).join('')}
@@ -1137,7 +1152,7 @@
               <td style="font-weight:600">${p.users?.username||'–'}</td>
               <td style="color:var(--text-muted)">${p.bet_markets?.label||'–'}</td>
               <td>${p.bet_options?.label||'–'}</td>
-              <td style="font-family:var(--font-display);font-weight:700">${p.odds_at_prediction}</td>
+              <td style="font-family:var(--font-display);font-weight:700">${Number(p.odds_at_prediction).toFixed(1)}</td>
               <td class="${status}">${statusLabel}</td>
               <td style="font-family:var(--font-display);font-weight:700;color:${p.points_earned>0?'var(--success)':'var(--text-muted)'}">${p.points_earned||0}</td>
               <td><button class="btn btn-danger" style="padding:0.15rem 0.4rem;font-size:0.65rem" onclick="window.deletePrediction('${p.id}','${matchId}')">Sil</button></td>
@@ -1359,7 +1374,7 @@
               <td style="font-size:0.78rem">${match}</td>
               <td style="color:var(--text-muted);font-size:0.78rem">${p.bet_markets?.label||'–'}</td>
               <td>${p.bet_options?.label||'–'}</td>
-              <td style="font-family:var(--font-display);font-weight:700">${p.odds_at_prediction}</td>
+              <td style="font-family:var(--font-display);font-weight:700">${Number(p.odds_at_prediction).toFixed(1)}</td>
               <td class="${status}">${statusLabel}</td>
               <td style="font-family:var(--font-display);font-weight:700;color:${p.points_earned>0?'var(--success)':'var(--text-muted)'}">${p.points_earned||0}</td>
             </tr>`;
