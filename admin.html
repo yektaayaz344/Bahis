@@ -344,11 +344,11 @@
       <div class="danger-zone" style="margin-bottom:1.75rem">
         <div class="danger-zone-title">Tehlikeli Alan</div>
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-          <button class="btn btn-danger" id="btnFullReset">Tüm Puanları Sıfırla</button>
+          <button class="btn btn-danger" id="btnFullReset">Tüm İstatistikleri Sıfırla</button>
           <button class="btn btn-danger" id="btnDeleteAllSystem">Tüm Maçları Sil</button>
         </div>
         <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.75rem">
-          "Tüm Puanları Sıfırla" — leaderboard_cache ve tüm prediction skorları temizlenir.<br>
+          "Tüm İstatistikleri Sıfırla" — her kullanıcının puanı, doğru tahmin sayısı ve toplam tahmin sayısı (doğruluk oranı) sıfırlanır. Tahmin geçmişi silinmez.<br>
           "Tüm Maçları Sil" — maçlar, marketler ve tahminler silinir.
         </p>
       </div>
@@ -1473,23 +1473,34 @@
 
     function initSystemButtons() {
       document.getElementById('btnFullReset').onclick = async () => {
-        if (!confirm('TÜM kullanıcıların puanları ve tahmin sonuçları sıfırlanacak. DEVAM?')) return;
+        if (!confirm('TÜM kullanıcıların puanı, doğru tahmin sayısı ve doğruluk oranı sıfırlanacak. DEVAM?')) return;
         if (!confirm('Bu işlem geri alınamaz! Son kez: emin misin?')) return;
 
         showToast('Sıfırlanıyor...', 'info');
-        await supabase.from('leaderboard_cache').delete().neq('user_id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('predictions').update({ is_correct: null, points_earned: 0 }).neq('id', '00000000-0000-0000-0000-000000000000');
 
+        // leaderboard_cache: tüm sütunları 0'a çek (satırları silme, kullanıcı kaydı kalsın)
+        await supabase.from('leaderboard_cache').update({
+          total_points: 0,
+          correct_predictions: 0,
+          total_predictions: 0,
+          surprise_bonus: 0,
+          last_updated: new Date().toISOString()
+        }).neq('user_id', '00000000-0000-0000-0000-000000000000');
+
+        // predictions: puan ve sonuç sıfırla
+        await supabase.from('predictions').update({ is_correct: null, points_earned: 0 })
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+
+        // bet_options: kazanan işaretlerini temizle
         const { data: opts } = await supabase.from('bet_options').select('id');
         if (opts?.length) {
-          const chunks = [];
-          for (let i = 0; i < opts.length; i += 50) chunks.push(opts.slice(i, i + 50).map(o => o.id));
-          for (const chunk of chunks) {
-            await supabase.from('bet_options').update({ is_correct: null }).in('id', chunk);
+          for (let i = 0; i < opts.length; i += 50) {
+            await supabase.from('bet_options').update({ is_correct: null })
+              .in('id', opts.slice(i, i + 50).map(o => o.id));
           }
         }
 
-        showToast('Tüm puanlar sıfırlandı.', 'success');
+        showToast('Tüm istatistikler sıfırlandı.', 'success');
         loadDashboard();
       };
 
