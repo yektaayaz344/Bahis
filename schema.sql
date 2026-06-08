@@ -156,3 +156,65 @@ create policy "predictions_update_own" on public.predictions
 -- LEADERBOARD: herkes görebilir
 drop policy if exists "leaderboard_select" on public.leaderboard_cache;
 create policy "leaderboard_select" on public.leaderboard_cache for select using (true);
+
+-- ── Admin Genişletilmiş Yetkiler ──────────────────────────────────────────
+
+-- is_admin() helper — users tablosunda recursion'ı önler
+create or replace function public.is_admin()
+returns boolean as $$
+  select coalesce(
+    (select is_admin from public.users where id = auth.uid()),
+    false
+  )
+$$ language sql security definer stable;
+
+-- USERS: admin her şeyi yapabilir
+drop policy if exists "users_admin_all" on public.users;
+create policy "users_admin_all" on public.users
+  for all using (public.is_admin())
+  with check (public.is_admin());
+
+-- PREDICTIONS: admin her şeyi yapabilir
+drop policy if exists "predictions_admin_all" on public.predictions;
+create policy "predictions_admin_all" on public.predictions
+  for all using (public.is_admin())
+  with check (public.is_admin());
+
+-- LEADERBOARD: admin her şeyi yapabilir
+drop policy if exists "leaderboard_admin_all" on public.leaderboard_cache;
+create policy "leaderboard_admin_all" on public.leaderboard_cache
+  for all using (public.is_admin())
+  with check (public.is_admin());
+
+-- ── Otomatik Market Kilitleme (pg_cron) ──────────────────────────────────
+-- Her 5 dakikada bir çalışır, maç başlamasına 60 dakika kala marketleri kilitler.
+-- Supabase Dashboard → SQL Editor'da çalıştır.
+-- NOT: pg_cron ve pg_net extension'larının aktif olması gerekir.
+
+create or replace function public.auto_lock_markets()
+returns void as $$
+declare
+  market_rec record;
+begin
+  for market_rec in
+    select bm.id as market_id, m.id as match_id
+    from public.bet_markets bm
+    join public.matches m on m.id = bm.match_id
+    where bm.is_active = true
+      and m.status = 'open'
+      and now() >= (m.match_time - (coalesce(bm.lock_before_minutes, 60) || ' minutes')::interval)
+  loop
+    update public.bet_markets set is_active = false where id = market_rec.market_id;
+    update public.matches set status = 'locked'
+      where id = market_rec.match_id and status = 'open';
+  end loop;
+end;
+$$ language plpgsql security definer;
+
+-- Mevcut cron job'u kaldır (tekrar çalıştırmak için)
+select cron.unschedule('auto-lock-markets') where exists (
+  select 1 from cron.job where jobname = 'auto-lock-markets'
+);
+
+-- Her 5 dakikada bir çalıştır
+select cron.schedule('auto-lock-markets', '*/5 * * * *', 'select public.auto_lock_markets()');

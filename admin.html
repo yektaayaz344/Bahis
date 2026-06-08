@@ -9,71 +9,117 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .match-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      align-items: start;
-      gap: 1rem;
-      padding: 1.125rem 1.25rem;
-      border-bottom: 1px solid var(--glass-border);
-      transition: background 0.15s;
-    }
-    .match-row:last-child { border-bottom: none; }
-    .match-row:hover { background: rgba(255,255,255,0.02); }
-
-    .match-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
-    .match-sub { font-size: 0.72rem; color: var(--text-muted); font-family: monospace; }
-
-    .match-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
-
-    .markets-list {
-      margin-top: 0.625rem;
+    /* ── Admin Tabs ── */
+    .admin-tabs {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.375rem;
+      gap: 0;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--glass-border);
+      overflow-x: auto;
     }
+    .admin-tab-btn {
+      padding: 0.65rem 1.2rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+    .admin-tab-btn:hover { color: var(--text-main); }
+    .admin-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeInUp 0.2s ease forwards; }
 
-    .market-chip {
+    /* ── Tables ── */
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .admin-table th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-family: var(--font-display);
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--glass-border);
+      white-space: nowrap;
+    }
+    .admin-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.035);
+      vertical-align: middle;
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── Match Rows ── */
+    .match-row-adm {
+      padding: 0.875rem 1.25rem;
+      border-bottom: 1px solid var(--glass-border);
+      transition: background 0.12s;
+    }
+    .match-row-adm:last-child { border-bottom: none; }
+    .match-row-adm:hover { background: rgba(255,255,255,0.015); }
+    .match-row-header { display: flex; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; }
+    .match-row-info { flex: 1; min-width: 180px; }
+    .match-row-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 0.2rem; }
+    .match-row-sub { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
+    .match-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+    .match-row-actions { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: flex-end; }
+
+    .markets-inline { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .market-chip-adm {
       background: rgba(0,242,254,0.07);
       border: 1px solid rgba(0,242,254,0.15);
       border-radius: 4px;
-      padding: 2px 8px;
-      font-size: 0.7rem;
+      padding: 2px 7px;
+      font-size: 0.68rem;
       color: var(--primary);
+      cursor: pointer;
+      transition: background 0.12s;
     }
+    .market-chip-adm:hover { background: rgba(0,242,254,0.15); }
 
-    .no-markets {
-      font-size: 0.72rem;
-      color: var(--danger);
-      opacity: 0.7;
-      margin-top: 0.5rem;
-    }
+    /* ── Badges ── */
+    .badge { padding: 2px 7px; border-radius: 3px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; font-family: var(--font-display); text-transform: uppercase; display: inline-block; }
+    .badge-open-a   { background: rgba(0,217,126,0.15); color: var(--success); }
+    .badge-draft-a  { background: rgba(100,116,139,0.15); color: var(--text-muted); }
+    .badge-lock-a   { background: rgba(255,165,2,0.15); color: var(--warning); }
+    .badge-finish-a { background: rgba(79,172,254,0.15); color: var(--secondary); }
+    .badge-admin    { background: rgba(240,147,251,0.15); color: var(--accent); }
 
-    /* Modal */
+    /* ── Modals ── */
     .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.78);
       z-index: 1000;
       justify-content: center;
-      align-items: center;
-      padding: 1rem;
-      backdrop-filter: blur(4px);
+      align-items: flex-start;
+      padding: 1.5rem 1rem;
+      backdrop-filter: blur(5px);
+      overflow-y: auto;
     }
     .modal-overlay.open { display: flex; }
-
     .modal-card {
       background: var(--bg-elevated);
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-lg);
-      padding: 2rem;
-      max-width: 480px;
+      padding: 1.875rem;
       width: 100%;
       position: relative;
-      animation: fadeInUp 0.25s ease;
+      animation: fadeInUp 0.22s ease;
+      margin: auto;
     }
-
     .modal-card::before {
       content: '';
       position: absolute;
@@ -82,80 +128,63 @@
       background: var(--gradient-primary);
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
+    .modal-sm  { max-width: 440px; }
+    .modal-md  { max-width: 560px; }
+    .modal-lg  { max-width: 820px; }
+    .modal-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.375rem; font-family: var(--font-display); letter-spacing: 0.04em; }
+    .modal-footer { margin-top: 1.375rem; display: flex; gap: 0.625rem; flex-wrap: wrap; }
 
-    .modal-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      font-family: var(--font-display);
-      letter-spacing: 0.04em;
-    }
+    /* ── Score inputs ── */
+    .score-inputs { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 1.25rem 0; }
+    .score-inputs input { width: 70px; text-align: center; font-size: 2rem; font-family: var(--font-display); font-weight: 800; padding: 0.5rem; }
+    .score-sep { font-family: var(--font-display); font-size: 2rem; color: var(--text-muted); font-weight: 800; }
 
-    .score-inputs {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-
-    .score-inputs input {
-      width: 72px;
-      text-align: center;
-      font-size: 2rem;
-      font-family: var(--font-display);
-      font-weight: 800;
-      padding: 0.5rem;
-    }
-
-    .score-sep {
-      font-family: var(--font-display);
-      font-size: 2rem;
-      color: var(--text-muted);
-      font-weight: 800;
-    }
-
-    .market-type-tabs {
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.25rem;
-    }
-
-    .market-tab {
-      padding: 0.35rem 0.75rem;
-      border-radius: 4px;
-      border: 1px solid var(--glass-border);
-      background: var(--glass);
-      color: var(--text-muted);
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--font-display);
-      letter-spacing: 0.04em;
-    }
-
-    .market-tab.active {
-      background: rgba(0,242,254,0.12);
-      border-color: rgba(0,242,254,0.4);
-      color: var(--primary);
-    }
-
-    .odds-row {
-      display: grid;
-      gap: 0.625rem;
-    }
-
+    /* ── Market type tabs ── */
+    .market-type-tabs { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 1.125rem; }
+    .market-tab { padding: 0.3rem 0.7rem; border-radius: 4px; border: 1px solid var(--glass-border); background: var(--glass); color: var(--text-muted); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: all 0.12s; font-family: var(--font-display); letter-spacing: 0.04em; }
+    .market-tab.active { background: rgba(0,242,254,0.12); border-color: rgba(0,242,254,0.4); color: var(--primary); }
+    .odds-row { display: grid; gap: 0.6rem; }
     .odds-row-3 { grid-template-columns: 1fr 1fr 1fr; }
     .odds-row-2 { grid-template-columns: 1fr 1fr; }
+
+    /* ── Predictions table (modal) ── */
+    .pred-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .pred-table th { text-align: left; padding: 0.45rem 0.75rem; font-family: var(--font-display); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); }
+    .pred-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.035); }
+    .pred-table tr:last-child td { border-bottom: none; }
+    .pred-correct { color: var(--success); }
+    .pred-wrong   { color: var(--danger); }
+    .pred-pending { color: var(--text-muted); }
+
+    /* ── Section header ── */
+    .section-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.125rem; flex-wrap: wrap; gap: 0.625rem; }
+    .section-hdr h2 { font-size: 1.25rem; margin: 0; }
+
+    /* ── Danger zone ── */
+    .danger-zone { border: 1px solid rgba(255,71,87,0.2); border-radius: var(--radius); padding: 1.125rem 1.25rem; }
+    .danger-zone-title { font-family: var(--font-display); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--danger); margin-bottom: 0.75rem; opacity: 0.8; }
+
+    /* ── SQL block ── */
+    .sql-block { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); padding: 0.875rem; font-family: monospace; font-size: 0.7rem; color: var(--primary); white-space: pre-wrap; line-height: 1.65; margin-top: 0.625rem; max-height: 280px; overflow-y: auto; }
+
+    /* ── Options editor ── */
+    .option-edit-row { display: grid; grid-template-columns: 1fr 80px 1fr auto; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.5rem; }
+    .option-edit-row .input-group { margin-bottom: 0; }
+    .option-edit-row .input-group label { font-size: 0.62rem; }
+
+    @media (max-width: 640px) {
+      .match-row-right { width: 100%; align-items: flex-start; }
+      .option-edit-row { grid-template-columns: 1fr 70px; }
+      .option-edit-row > :nth-child(3), .option-edit-row > :nth-child(4) { display: none; }
+      .admin-table th:nth-child(n+5), .admin-table td:nth-child(n+5) { display: none; }
+    }
   </style>
 </head>
 <body>
   <div id="toastContainer"></div>
 
   <nav>
-    <a class="nav-brand" href="index.html">WC2026 ⚽ <span style="font-size:0.7rem;color:var(--warning);font-family:var(--font-body);font-weight:600;margin-left:4px">ADMIN</span></a>
+    <a class="nav-brand" href="index.html">WC2026 ⚽ <span style="font-size:0.65rem;color:var(--warning);font-family:var(--font-body);font-weight:700;margin-left:4px;letter-spacing:0.1em">ADMIN</span></a>
     <div class="nav-center" id="navCenter">
       <ul class="nav-links">
         <li><a href="matches.html">Maçlar</a></li>
@@ -165,236 +194,550 @@
     </div>
     <div class="nav-actions">
       <button id="logoutBtn" class="btn btn-ghost" style="padding:0.4rem 0.875rem;font-size:0.8rem">Çıkış</button>
-      <button class="nav-hamburger" id="hamburger" aria-label="Menü">
-        <span></span><span></span><span></span>
-      </button>
+      <button class="nav-hamburger" id="hamburger" aria-label="Menü"><span></span><span></span><span></span></button>
     </div>
   </nav>
 
   <div class="container animate-fade">
-    <header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem">
-      <div>
-        <h1 style="font-size:2.25rem;margin-bottom:0.2rem">Admin Paneli</h1>
-        <p style="color:var(--text-muted);font-size:0.875rem">Maçları yönet, puanları dağıt.</p>
-      </div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
-        <button id="btnDeleteAll" class="btn btn-danger">Tümünü Sil</button>
-        <div style="width:1px;height:28px;background:var(--glass-border)"></div>
-        <button id="btnMegaFetch" class="btn btn-primary">🚀 Maçları & Bahisleri Çek</button>
-        <button onclick="window.fetchScores(this)" class="btn btn-outline" style="border-color:rgba(255,165,2,0.4);color:var(--warning)">📊 Sonuçları Güncelle</button>
-      </div>
+    <header style="margin-bottom:1.5rem">
+      <h1 style="font-size:2rem;margin-bottom:0.2rem">Admin Paneli</h1>
+      <p style="color:var(--text-muted);font-size:0.82rem">Tam kontrol — kullanıcılar, maçlar, puanlar, sistem.</p>
     </header>
 
-    <!-- Maç Listesi -->
-    <section style="margin-bottom:3rem">
-      <h2 style="font-size:1.4rem;margin-bottom:1.25rem">Maç Yönetimi</h2>
+    <!-- Tab Bar -->
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+      <button class="admin-tab-btn" data-tab="matches" onclick="switchTab('matches')">Maçlar</button>
+      <button class="admin-tab-btn" data-tab="users" onclick="switchTab('users')">Kullanıcılar</button>
+      <button class="admin-tab-btn" data-tab="system" onclick="switchTab('system')">Sistem</button>
+    </div>
+
+    <!-- ── DASHBOARD TAB ── -->
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:1.75rem">
+        <div class="stat-card">
+          <div class="stat-label">Kullanıcılar</div>
+          <div class="stat-value" id="stat-users">–</div>
+          <div class="stat-sub">kayıtlı üye</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Aktif Maç</div>
+          <div class="stat-value success-val" id="stat-active">–</div>
+          <div class="stat-sub">bahis açık</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tahminler</div>
+          <div class="stat-value accent-val" id="stat-preds">–</div>
+          <div class="stat-sub">toplam</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Onay Bekleyen</div>
+          <div class="stat-value" style="background:var(--gradient-gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text" id="stat-pending">–</div>
+          <div class="stat-sub">draft maç</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Bitmiş Maç</div>
+          <div class="stat-value" id="stat-finished">–</div>
+          <div class="stat-sub">sonuç girildi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Toplam Maç</div>
+          <div class="stat-value" id="stat-total-matches">–</div>
+          <div class="stat-sub">veritabanında</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="section-hdr" style="margin-bottom:1rem">
+          <h2 style="font-size:1rem">Hızlı İşlemler</h2>
+        </div>
+        <div style="display:flex;gap:0.625rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="switchTab('matches')">Maçları Yönet</button>
+          <button class="btn btn-outline" id="btnFetchDash">Maçları API'den Çek</button>
+          <button class="btn btn-outline" style="border-color:rgba(255,165,2,0.4);color:var(--warning)" id="btnScoresDash">Sonuçları Güncelle</button>
+          <button class="btn btn-outline" style="border-color:rgba(240,147,251,0.4);color:var(--accent)" id="btnLockDash">Marketleri Kilitle</button>
+          <button class="btn btn-ghost" onclick="switchTab('users')">Kullanıcıları Gör</button>
+        </div>
+      </div>
+
+      <div class="card" id="dashRecentCard">
+        <div class="section-hdr" style="margin-bottom:0.75rem">
+          <h2 style="font-size:1rem">Son Maçlar</h2>
+          <button class="btn btn-ghost" style="padding:0.25rem 0.625rem;font-size:0.75rem" onclick="switchTab('matches')">Tümünü Gör</button>
+        </div>
+        <div id="dashRecentList" style="color:var(--text-muted);font-size:0.85rem;padding:0.5rem 0">Yükleniyor...</div>
+      </div>
+    </section>
+
+    <!-- ── MATCHES TAB ── -->
+    <section id="tab-matches" class="tab-panel">
+      <div class="section-hdr">
+        <h2>Maç Yönetimi</h2>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+          <button class="btn btn-outline" style="font-size:0.78rem;padding:0.4rem 0.75rem" onclick="openCreateMatchModal()">+ Manuel Maç</button>
+          <button class="btn btn-primary" style="font-size:0.78rem;padding:0.4rem 0.75rem" id="btnFetchMatches">Maçları Çek</button>
+          <button class="btn btn-outline" style="font-size:0.78rem;padding:0.4rem 0.75rem;border-color:rgba(255,165,2,0.4);color:var(--warning)" id="btnFetchScores">Sonuçları Güncelle</button>
+          <button class="btn btn-outline" style="font-size:0.78rem;padding:0.4rem 0.75rem;border-color:rgba(240,147,251,0.4);color:var(--accent)" id="btnLockMarkets">Marketleri Kilitle</button>
+          <button class="btn btn-danger"  style="font-size:0.78rem;padding:0.4rem 0.75rem" id="btnDeleteAll">Tümünü Sil</button>
+        </div>
+      </div>
       <div class="card" style="padding:0" id="adminMatchesList">
         <div style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</div>
       </div>
     </section>
 
-    <!-- API Kullanımı -->
-    <section style="margin-bottom:3rem">
-      <h2 style="font-size:1.4rem;margin-bottom:1.25rem">The Odds API Kullanımı</h2>
-      <div class="card" id="apiUsageCard">
-        <div style="display:flex;align-items:center;gap:0.75rem;color:var(--text-muted);font-size:0.875rem">
-          <span>Yükleniyor...</span>
-        </div>
+    <!-- ── USERS TAB ── -->
+    <section id="tab-users" class="tab-panel">
+      <div class="section-hdr">
+        <h2>Kullanıcı Yönetimi</h2>
+        <button class="btn btn-ghost" style="font-size:0.78rem;padding:0.4rem 0.75rem" onclick="loadUsers()">Yenile</button>
+      </div>
+      <div class="card" style="padding:0;overflow:auto">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Kullanıcı</th>
+              <th>Puan</th>
+              <th>Doğru/Top.</th>
+              <th>İsabet %</th>
+              <th>Kayıt</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
-    <!-- Arkadaş Davet -->
-    <section>
-      <h2 style="font-size:1.4rem;margin-bottom:1.25rem">Arkadaş Davet Et</h2>
+    <!-- ── SYSTEM TAB ── -->
+    <section id="tab-system" class="tab-panel">
+      <!-- API Usage -->
+      <div class="section-hdr"><h2>The Odds API Kullanımı</h2></div>
+      <div class="card" id="apiUsageCard" style="margin-bottom:1.75rem">
+        <div style="color:var(--text-muted);font-size:0.85rem">Yükleniyor...</div>
+      </div>
+
+      <!-- Invite + Recalculate side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.75rem">
+        <div class="card">
+          <h2 style="font-size:1rem;margin-bottom:1rem">Arkadaş Davet Et</h2>
+          <form id="inviteForm" style="display:flex;flex-direction:column;gap:0.625rem">
+            <input type="email" id="inviteEmail" placeholder="ornek@mail.com" required>
+            <button type="submit" class="btn btn-outline">Davet Gönder</button>
+          </form>
+          <div id="inviteMsg" style="margin-top:0.75rem;font-size:0.8rem"></div>
+        </div>
+        <div class="card">
+          <h2 style="font-size:1rem;margin-bottom:1rem">Puan Yeniden Hesapla</h2>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.875rem">Belirli bir maçın puanlarını sıfırlayıp yeniden hesaplar.</p>
+          <select id="recalcMatchSelect" style="margin-bottom:0.625rem">
+            <option value="">— Maç seç —</option>
+          </select>
+          <button class="btn btn-outline" style="width:100%" onclick="recalcForMatch()">Yeniden Hesapla</button>
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="danger-zone" style="margin-bottom:1.75rem">
+        <div class="danger-zone-title">Tehlikeli Alan</div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+          <button class="btn btn-danger" id="btnFullReset">Tüm Puanları Sıfırla</button>
+          <button class="btn btn-danger" id="btnDeleteAllSystem">Tüm Maçları Sil</button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.75rem">
+          "Tüm Puanları Sıfırla" — leaderboard_cache ve tüm prediction skorları temizlenir.<br>
+          "Tüm Maçları Sil" — maçlar, marketler ve tahminler silinir.
+        </p>
+      </div>
+
+      <!-- Required SQL -->
       <div class="card">
-        <form id="inviteForm" style="display:flex;gap:0.75rem;flex-wrap:wrap">
-          <input type="email" id="inviteEmail" placeholder="ornek@mail.com" required style="flex:1;min-width:200px">
-          <button type="submit" class="btn btn-outline">Davet Gönder</button>
-        </form>
-        <div id="inviteMsg" style="margin-top:0.875rem;font-size:0.82rem"></div>
+        <h2 style="font-size:1rem;margin-bottom:0.75rem">Gerekli SQL (Supabase SQL Editor'da çalıştır)</h2>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem">Admin panelinin tüm özellikleri için bu SQL'i Supabase Dashboard → SQL Editor'da çalıştır.</p>
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.75rem;margin-bottom:0.625rem" onclick="copySql()">SQL'i Kopyala</button>
+        <div class="sql-block" id="sqlBlock">Yükleniyor...</div>
       </div>
     </section>
   </div>
 
-  <!-- Modal -->
+  <!-- ── MODAL ── -->
   <div id="mainModal" class="modal-overlay">
-    <div class="modal-card">
+    <div class="modal-card modal-md" id="modalCard">
       <h3 class="modal-title" id="modalTitle">İşlem</h3>
       <div id="modalContent"></div>
-      <div style="margin-top:1.5rem;display:flex;gap:0.75rem">
-        <button id="btnModalClose" class="btn btn-ghost">Kapat</button>
+      <div class="modal-footer" id="modalFooter">
+        <button class="btn btn-ghost" onclick="closeModal()">Kapat</button>
       </div>
     </div>
   </div>
 
+  <!-- Non-module JS -->
   <script>
     window.showToast = function(message, type) {
       type = type || 'info';
-      var container = document.getElementById('toastContainer');
-      var toast = document.createElement('div');
-      toast.className = 'toast toast-' + type;
+      var c = document.getElementById('toastContainer');
+      var t = document.createElement('div');
+      t.className = 'toast toast-' + type;
       var icons = { success: '✓', error: '✗', info: 'i' };
-      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
-      container.appendChild(toast);
-      setTimeout(function() { toast.classList.add('show'); }, 10);
-      setTimeout(function() {
-        toast.classList.remove('show');
-        setTimeout(function() { toast.remove(); }, 300);
-      }, 3500);
+      t.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
+      c.appendChild(t);
+      setTimeout(function(){ t.classList.add('show'); }, 10);
+      setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 300); }, 3800);
     };
 
     document.getElementById('hamburger').addEventListener('click', function() {
       document.getElementById('navCenter').classList.toggle('open');
     });
+
+    function switchTab(name) {
+      document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+      if (name === 'matches') loadMatches && loadMatches();
+      else if (name === 'users') loadUsers && loadUsers();
+      else if (name === 'system') { loadApiUsage && loadApiUsage(); loadRecalcSelect && loadRecalcSelect(); }
+    }
+
+    window.closeModal = function() {
+      document.getElementById('mainModal').classList.remove('open');
+    };
+
+    window.openModal = function(title, content, size) {
+      size = size || 'md';
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalContent').innerHTML = content;
+      document.getElementById('modalCard').className = 'modal-card modal-' + size;
+      document.getElementById('mainModal').classList.add('open');
+    };
+
+    document.getElementById('mainModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
   </script>
 
+  <!-- Module JS -->
   <script type="module">
     import { supabase, SUPABASE_URL } from './js/supabase.js';
     import { requireAdmin, logout } from './js/auth.js';
 
+    const matchCache = new Map();
+
+    // ── Init ────────────────────────────────────────────────────────────────
+
     async function init() {
-      const isAdmin = await requireAdmin();
-      if (!isAdmin) return;
-      await loadAdminMatches();
-      loadApiUsage();
+      const ok = await requireAdmin();
+      if (!ok) return;
+      document.getElementById('logoutBtn').onclick = logout;
+
+      await loadDashboard();
+      initMatchButtons();
+      initSystemButtons();
+      renderSqlBlock();
     }
 
-    async function loadApiUsage() {
-      const card = document.getElementById('apiUsageCard');
-      const { data, error } = await supabase.functions.invoke('api-usage');
+    // ── Dashboard ───────────────────────────────────────────────────────────
 
-      if (error || !data) {
-        card.innerHTML = `<span style="color:var(--danger);font-size:0.85rem">Kullanım bilgisi alınamadı.</span>`;
-        return;
-      }
+    window.loadDashboard = async function() {
+      const [u, am, p, draft, fin, total] = await Promise.all([
+        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('matches').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('predictions').select('*', { count: 'exact', head: true }),
+        supabase.from('matches').select('*', { count: 'exact', head: true }).eq('is_admin_approved', false),
+        supabase.from('matches').select('*', { count: 'exact', head: true }).eq('status', 'finished'),
+        supabase.from('matches').select('*', { count: 'exact', head: true }),
+      ]);
+      document.getElementById('stat-users').textContent = u.count ?? '–';
+      document.getElementById('stat-active').textContent = am.count ?? '–';
+      document.getElementById('stat-preds').textContent = p.count ?? '–';
+      document.getElementById('stat-pending').textContent = draft.count ?? '–';
+      document.getElementById('stat-finished').textContent = fin.count ?? '–';
+      document.getElementById('stat-total-matches').textContent = total.count ?? '–';
 
-      const pct       = data.percent_used;
-      const barColor  = pct >= 80 ? 'var(--danger)' : pct >= 50 ? 'var(--warning)' : 'var(--success)';
-      const statusTxt = pct >= 80 ? '⚠️ Kritik' : pct >= 50 ? '🟡 Orta' : '🟢 İyi';
+      // Recent matches
+      const { data: recent } = await supabase
+        .from('matches')
+        .select('id, home_team, away_team, home_flag, away_flag, status, home_score, away_score, match_time')
+        .order('match_time', { ascending: false })
+        .limit(5);
 
-      card.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1.5rem;align-items:center;flex-wrap:wrap">
-          <div>
-            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Kullanılan</div>
-            <div style="font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:${barColor}">${data.used}</div>
-            <div style="font-size:0.72rem;color:var(--text-muted)">/ ${data.total} istek</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Kalan</div>
-            <div style="font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:var(--primary)">${data.remaining}</div>
-            <div style="font-size:0.72rem;color:var(--text-muted)">istek</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Sıfırlanma</div>
-            <div style="font-family:var(--font-display);font-size:1.75rem;font-weight:800;color:var(--text-main)">${data.days_until_reset}g</div>
-            <div style="font-size:0.72rem;color:var(--text-muted)">${data.reset_date}</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-display);margin-bottom:0.4rem">Durum</div>
-            <div style="font-size:0.9rem;font-weight:600">${statusTxt}</div>
-            <div style="font-size:0.72rem;color:var(--text-muted)">%${pct} kullanıldı</div>
-          </div>
-        </div>
-        <div style="margin-top:1.25rem">
-          <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-bottom:0.375rem">
-            <span>0</span><span>${data.total}</span>
-          </div>
-          <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.8s ease"></div>
-          </div>
-          <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem">
-            Her "Maçları Çek" ~20 istek harcar · Ücretsiz plan: 500 istek/ay · Her ayın 1'inde yenilenir
-          </div>
-        </div>
-      `;
-    }
+      const el = document.getElementById('dashRecentList');
+      if (!recent?.length) { el.textContent = 'Henüz maç yok.'; return; }
+      el.innerHTML = recent.map(m => {
+        const statusMap = { draft:'badge-draft-a', open:'badge-open-a', locked:'badge-lock-a', finished:'badge-finish-a' };
+        const statusLabel = { draft:'DRAFT', open:'AÇIK', locked:'KİLİTLİ', finished:`BİTTİ ${m.home_score}-${m.away_score}` };
+        const date = new Date(m.match_time).toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--glass-border)">
+          <span style="font-size:0.85rem">${m.home_flag||'🏳'} ${m.home_team} vs ${m.away_team} ${m.away_flag||'🏳'}</span>
+          <span style="display:flex;gap:0.5rem;align-items:center">
+            <span style="font-size:0.72rem;color:var(--text-muted)">${date}</span>
+            <span class="badge ${statusMap[m.status]||'badge-draft-a'}">${statusLabel[m.status]||m.status}</span>
+          </span>
+        </div>`;
+      }).join('');
+    };
 
-    async function loadAdminMatches() {
+    // ── Match Management ────────────────────────────────────────────────────
+
+    window.loadMatches = async function() {
       const list = document.getElementById('adminMatchesList');
+      list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</div>';
+
       const { data: matches, error } = await supabase
         .from('matches')
-        .select('*, bet_markets(*, bet_options(*))')
+        .select('*, bet_markets(id, match_id, label, market_type, is_active, bet_options(id, label, odds_value, outcome_key, is_correct))')
         .order('match_time', { ascending: true });
 
-      if (error) {
-        list.innerHTML = `<div style="padding:2rem;color:var(--danger)">${error.message}</div>`;
-        return;
-      }
+      if (error) { list.innerHTML = `<div style="padding:2rem;color:var(--danger)">${error.message}</div>`; return; }
+      if (!matches?.length) { list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">Henüz maç yok. "Maçları Çek" ile veya "+ Manuel Maç" ile ekle.</div>'; return; }
 
-      if (!matches?.length) {
-        list.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-muted)">Henüz maç yok. "Maçları Çek" butonunu kullan.</div>`;
-        return;
-      }
-
-      list.innerHTML = matches.map(m => {
-        const date = new Date(m.match_time).toLocaleDateString('tr-TR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
-        const isApproved = m.is_admin_approved;
-        const isFinished = m.status === 'finished';
-
-        const marketsHtml = m.bet_markets.length > 0
-          ? `<div class="markets-list">${m.bet_markets.map(mk => `<span class="market-chip">${mk.label}</span>`).join('')}</div>`
-          : `<div class="no-markets">⚠ Market yok — "Market Ekle" ile ekle</div>`;
-
-        const statusBadge = isFinished
-          ? `<span class="badge badge-finish-a">BİTTİ ${m.home_score}-${m.away_score}</span>`
-          : isApproved
-            ? `<span class="badge badge-open-a">AÇIK</span>`
-            : `<span class="badge badge-draft-a">DRAFT</span>`;
-
-        return `
-          <div class="match-row">
-            <div>
-              <div class="match-title">${m.home_flag || '🏳️'} ${m.home_team} vs ${m.away_team} ${m.away_flag || '🏳️'}</div>
-              <div class="match-sub">${date} · ${m.odds_api_id}</div>
-              ${marketsHtml}
-            </div>
-            <div style="padding-top:0.125rem">${statusBadge}</div>
-            <div class="match-actions">
-              ${!isApproved ? `<button class="btn btn-primary" style="padding:0.3rem 0.6rem;font-size:0.72rem" onclick="window.approveMatch('${m.id}')">Onayla</button>` : ''}
-              ${isApproved && !isFinished ? `
-                <button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.72rem;border-color:rgba(240,147,251,0.4);color:var(--accent)" onclick="window.openMarketCreator('${m.id}','${m.home_team}','${m.away_team}')">+ Market</button>
-                <button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.72rem;border-color:rgba(0,217,126,0.4);color:var(--success)" onclick="window.openScoreEditor('${m.id}')">Skor Gir</button>
-              ` : ''}
-              <button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.72rem" onclick="window.deleteMatch('${m.id}')">Sil</button>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    window.deleteMatch = async (id) => {
-      if (!confirm('Bu maçı ve ilgili tüm bahisleri silmek istediğine emin misin?')) return;
-      const { error } = await supabase.from('matches').delete().eq('id', id);
-      if (error) showToast(error.message, 'error');
-      else { showToast('Maç silindi.', 'success'); loadAdminMatches(); }
+      matchCache.clear();
+      matches.forEach(m => matchCache.set(m.id, m));
+      list.innerHTML = matches.map(renderMatchRow).join('');
     };
+
+    function renderMatchRow(m) {
+      const statusMap = { draft:'badge-draft-a', open:'badge-open-a', locked:'badge-lock-a', finished:'badge-finish-a' };
+      const statusLabel = { draft:'DRAFT', open:'AÇIK', locked:'KİLİTLİ', finished:`BİTTİ ${m.home_score??'?'}-${m.away_score??'?'}` };
+      const s = m.status;
+      const date = new Date(m.match_time).toLocaleString('tr-TR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+      const marketsHtml = m.bet_markets?.length
+        ? m.bet_markets.map(mk =>
+            `<span class="market-chip-adm" title="Düzenle: ${mk.label}" onclick="window.openEditMarketModal('${mk.id}','${mk.match_id||m.id}')">${mk.label} (${mk.bet_options?.length??0})${!mk.is_active?' 🔒':''}</span>`
+          ).join('')
+        : '<span style="font-size:0.7rem;color:var(--danger);opacity:0.7">⚠ Market yok</span>';
+
+      return `<div class="match-row-adm">
+        <div class="match-row-header">
+          <div class="match-row-info">
+            <div class="match-row-title">${m.home_flag||'🏳'} ${m.home_team} vs ${m.away_team} ${m.away_flag||'🏳'}</div>
+            <div class="match-row-sub">${date} · ${m.group_name||'WC2026'} · <span style="opacity:0.5">${m.odds_api_id}</span></div>
+            <div class="markets-inline">${marketsHtml}</div>
+          </div>
+          <div class="match-row-right">
+            <span class="badge ${statusMap[s]||'badge-draft-a'}">${statusLabel[s]||s}</span>
+            <div class="match-row-actions">
+              ${!m.is_admin_approved ? `<button class="btn btn-primary" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.approveMatch('${m.id}')">Onayla</button>` : ''}
+              ${m.is_admin_approved && s!=='finished' ? `<button class="btn btn-ghost" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.setMatchStatus('${m.id}','draft',false)">Draft'a Al</button>` : ''}
+              ${s==='open' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(255,165,2,0.35);color:var(--warning)" onclick="window.setMatchStatus('${m.id}','locked',true)">Kilitle</button>` : ''}
+              ${s==='locked' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(0,217,126,0.35);color:var(--success)" onclick="window.setMatchStatus('${m.id}','open',true)">Aç</button>` : ''}
+              ${m.is_admin_approved && s!=='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(240,147,251,0.35);color:var(--accent)" onclick="window.openMarketCreator('${m.id}')">+Market</button>` : ''}
+              ${m.is_admin_approved && s!=='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(0,217,126,0.35);color:var(--success)" onclick="window.openScoreModal('${m.id}',false)">Skor Gir</button>` : ''}
+              ${s==='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(255,165,2,0.35);color:var(--warning)" onclick="window.openScoreModal('${m.id}',true)">Skoru Düzenle</button>` : ''}
+              <button class="btn btn-ghost" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.openEditMatchModal('${m.id}')">Düzenle</button>
+              <button class="btn btn-ghost" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.openMatchPredictions('${m.id}')">Tahminler</button>
+              <button class="btn btn-danger" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.deleteMatch('${m.id}')">Sil</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
 
     window.approveMatch = async (id) => {
       const { error } = await supabase.from('matches').update({ is_admin_approved: true, status: 'open' }).eq('id', id);
-      if (error) showToast(error.message, 'error');
-      else { showToast('Maç onaylandı!', 'success'); loadAdminMatches(); }
+      if (error) return showToast(error.message, 'error');
+      showToast('Maç onaylandı ve açıldı.', 'success');
+      loadMatches();
     };
 
-    function openModal(title) {
-      document.getElementById('modalTitle').textContent = title;
-      document.getElementById('mainModal').classList.add('open');
+    window.setMatchStatus = async (id, status, updateApproval) => {
+      const upd = { status };
+      if (status === 'draft') upd.is_admin_approved = false;
+      if (updateApproval && status === 'open') upd.is_admin_approved = true;
+      const { error } = await supabase.from('matches').update(upd).eq('id', id);
+      if (error) return showToast(error.message, 'error');
+      showToast(`Durum: ${status}`, 'success');
+      loadMatches();
+    };
+
+    // ── Create Match Manually ────────────────────────────────────────────────
+
+    window.openCreateMatchModal = function() {
+      const now = new Date();
+      const localISO = new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      openModal('Manuel Maç Oluştur', `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+          <div class="input-group"><label>Ev Sahibi Takım</label><input type="text" id="cHome" placeholder="Brazil"></div>
+          <div class="input-group"><label>Deplasman Takım</label><input type="text" id="cAway" placeholder="Argentina"></div>
+          <div class="input-group"><label>Ev Bayrağı</label><input type="text" id="cHomeFlag" placeholder="🇧🇷"></div>
+          <div class="input-group"><label>Dep. Bayrağı</label><input type="text" id="cAwayFlag" placeholder="🇦🇷"></div>
+        </div>
+        <div class="input-group"><label>Maç Zamanı</label><input type="datetime-local" id="cTime" value="${localISO}"></div>
+        <div class="input-group"><label>Grup / Tur</label><input type="text" id="cGroup" placeholder="Grup A / Çeyrek Final"></div>
+        <div class="input-group"><label>Benzersiz ID (otomatik)</label><input type="text" id="cApiId" placeholder="manual_..." readonly style="opacity:0.5"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="window.createMatch()">Maçı Oluştur</button>
+      `, 'md');
+      document.getElementById('cApiId').value = 'manual_' + Date.now();
+    };
+
+    window.createMatch = async () => {
+      const home  = document.getElementById('cHome').value.trim();
+      const away  = document.getElementById('cAway').value.trim();
+      const hFlag = document.getElementById('cHomeFlag').value.trim() || '🏳';
+      const aFlag = document.getElementById('cAwayFlag').value.trim() || '🏳';
+      const time  = document.getElementById('cTime').value;
+      const group = document.getElementById('cGroup').value.trim() || 'WC2026';
+      const apiId = document.getElementById('cApiId').value;
+
+      if (!home || !away || !time) return showToast('Takım adları ve zaman zorunlu.', 'error');
+
+      const { error } = await supabase.from('matches').insert({
+        odds_api_id: apiId,
+        home_team: home, away_team: away,
+        home_flag: hFlag, away_flag: aFlag,
+        match_time: new Date(time).toISOString(),
+        group_name: group,
+        status: 'draft',
+        is_admin_approved: false
+      });
+
+      if (error) return showToast(error.message, 'error');
+      showToast('Maç oluşturuldu!', 'success');
+      closeModal();
+      loadMatches();
+    };
+
+    // ── Edit Match ────────────────────────────────────────────────────────────
+
+    window.openEditMatchModal = function(matchId) {
+      const m = matchCache.get(matchId);
+      if (!m) return showToast('Maç bulunamadı.', 'error');
+      const localISO = new Date(new Date(m.match_time) - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      openModal('Maçı Düzenle', `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+          <div class="input-group"><label>Ev Sahibi Takım</label><input type="text" id="eHome" value="${m.home_team}"></div>
+          <div class="input-group"><label>Deplasman Takım</label><input type="text" id="eAway" value="${m.away_team}"></div>
+          <div class="input-group"><label>Ev Bayrağı</label><input type="text" id="eHomeFlag" value="${m.home_flag||''}"></div>
+          <div class="input-group"><label>Dep. Bayrağı</label><input type="text" id="eAwayFlag" value="${m.away_flag||''}"></div>
+        </div>
+        <div class="input-group"><label>Maç Zamanı</label><input type="datetime-local" id="eTime" value="${localISO}"></div>
+        <div class="input-group"><label>Grup / Tur</label><input type="text" id="eGroup" value="${m.group_name||''}"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="window.updateMatch('${matchId}')">Değişiklikleri Kaydet</button>
+      `, 'md');
+    };
+
+    window.updateMatch = async (matchId) => {
+      const home  = document.getElementById('eHome').value.trim();
+      const away  = document.getElementById('eAway').value.trim();
+      const hFlag = document.getElementById('eHomeFlag').value.trim();
+      const aFlag = document.getElementById('eAwayFlag').value.trim();
+      const time  = document.getElementById('eTime').value;
+      const group = document.getElementById('eGroup').value.trim();
+
+      if (!home || !away) return showToast('Takım adları boş olamaz.', 'error');
+
+      const { error } = await supabase.from('matches').update({
+        home_team: home, away_team: away,
+        home_flag: hFlag, away_flag: aFlag,
+        match_time: new Date(time).toISOString(),
+        group_name: group
+      }).eq('id', matchId);
+
+      if (error) return showToast(error.message, 'error');
+      showToast('Maç güncellendi.', 'success');
+      closeModal();
+      loadMatches();
+    };
+
+    // ── Score Entry ──────────────────────────────────────────────────────────
+
+    window.openScoreModal = function(matchId, isEdit) {
+      const m = matchCache.get(matchId);
+      const warning = isEdit
+        ? `<div style="background:rgba(255,165,2,0.1);border:1px solid rgba(255,165,2,0.2);border-radius:var(--radius-sm);padding:0.75rem;font-size:0.8rem;color:var(--warning);margin-bottom:1rem">⚠ Eski puanlar iptal edilecek ve yeniden hesaplanacak.</div>`
+        : `<p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem">Skor gir ve tüm tahminler otomatik puanlanacak.</p>`;
+
+      openModal(isEdit ? 'Skoru Düzenle' : 'Skor Gir', `
+        ${warning}
+        <div style="text-align:center;font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem">${m?.home_team||''} vs ${m?.away_team||''}</div>
+        <div class="score-inputs">
+          <input type="number" id="sHome" placeholder="0" min="0" max="20" value="${isEdit?(m?.home_score??''):''}">
+          <span class="score-sep">—</span>
+          <input type="number" id="sAway" placeholder="0" min="0" max="20" value="${isEdit?(m?.away_score??''):''}">
+        </div>
+        <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,var(--success),#4fffb0);color:#060b18" onclick="window.saveScore('${matchId}',${isEdit})">✓ Skoru Onayla ve Puanları Dağıt</button>
+      `, 'sm');
+    };
+
+    window.saveScore = async (matchId, isEdit) => {
+      const h = parseInt(document.getElementById('sHome').value);
+      const a = parseInt(document.getElementById('sAway').value);
+      if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return showToast('Geçerli bir skor gir.', 'error');
+
+      const result = h > a ? 'home_win' : a > h ? 'away_win' : 'draw';
+
+      if (isEdit) {
+        showToast('Eski puanlar sıfırlanıyor...', 'info');
+        await resetMatchCalculations(matchId);
+      }
+
+      const { error } = await supabase.from('matches').update({
+        home_score: h, away_score: a, result, status: 'finished'
+      }).eq('id', matchId);
+
+      if (error) return showToast(error.message, 'error');
+
+      const { data, error: fErr } = await supabase.functions.invoke('calculate-points', { body: { match_id: matchId } });
+      if (fErr) return showToast('Puan hatası: ' + fErr.message, 'error');
+
+      showToast(`Puanlar dağıtıldı! (${data?.processed??0} tahmin)`, 'success');
+      closeModal();
+      loadMatches();
+    };
+
+    async function resetMatchCalculations(matchId) {
+      const { data: preds } = await supabase
+        .from('predictions')
+        .select('id, user_id, points_earned, is_correct, odds_at_prediction')
+        .eq('match_id', matchId);
+
+      if (preds?.length) {
+        const userDeltas = {};
+        for (const p of preds) {
+          if (!userDeltas[p.user_id]) userDeltas[p.user_id] = { points: 0, correct: 0, total: 0 };
+          userDeltas[p.user_id].points  += (p.points_earned || 0);
+          userDeltas[p.user_id].total   += 1;
+          if (p.is_correct) {
+            userDeltas[p.user_id].correct += 1;
+          }
+        }
+        for (const [uid, d] of Object.entries(userDeltas)) {
+          const { data: lb } = await supabase.from('leaderboard_cache').select('*').eq('user_id', uid).maybeSingle();
+          if (lb) {
+            await supabase.from('leaderboard_cache').update({
+              total_points:        Math.max(0, (lb.total_points||0) - d.points),
+              correct_predictions: Math.max(0, (lb.correct_predictions||0) - d.correct),
+              total_predictions:   Math.max(0, (lb.total_predictions||0) - d.total),
+              last_updated: new Date().toISOString()
+            }).eq('user_id', uid);
+          }
+        }
+        await supabase.from('predictions').update({ is_correct: null, points_earned: 0 }).eq('match_id', matchId);
+      }
+
+      const { data: mks } = await supabase.from('bet_markets').select('id').eq('match_id', matchId);
+      if (mks?.length) {
+        await supabase.from('bet_options').update({ is_correct: null }).in('market_id', mks.map(x => x.id));
+      }
     }
 
-    window.openMarketCreator = (matchId, home, away) => {
-      openModal('Market Ekle');
-      document.getElementById('modalContent').innerHTML = `
-        <div style="margin-bottom:1rem">
-          <div class="market-type-tabs">
-            <button class="market-tab active" onclick="window.selectTab(this,'1x2')">1X2</button>
-            <button class="market-tab" onclick="window.selectTab(this,'over_under')">Üst/Alt</button>
-            <button class="market-tab" onclick="window.selectTab(this,'btts')">KTG</button>
-            <button class="market-tab" onclick="window.selectTab(this,'custom')">Özel</button>
-          </div>
-          <input type="hidden" id="mType" value="1x2">
+    // ── Market Creator ───────────────────────────────────────────────────────
+
+    window.openMarketCreator = (matchId) => {
+      const m = matchCache.get(matchId);
+      const home = m?.home_team || 'Ev';
+      const away = m?.away_team || 'Dep';
+      openModal('Market Ekle', `
+        <div class="market-type-tabs">
+          <button class="market-tab active" onclick="mTab(this,'1x2')">1X2</button>
+          <button class="market-tab" onclick="mTab(this,'over_under')">Üst/Alt</button>
+          <button class="market-tab" onclick="mTab(this,'btts')">KTG</button>
+          <button class="market-tab" onclick="mTab(this,'custom')">Özel</button>
         </div>
-        <div class="input-group">
-          <label>Etiket</label>
-          <input type="text" id="mLabel" value="Maç Sonucu">
-        </div>
+        <input type="hidden" id="mType" value="1x2">
+        <div class="input-group"><label>Etiket</label><input type="text" id="mLabel" value="Maç Sonucu"></div>
         <div id="oddsFields">
           <div class="odds-row odds-row-3">
             <div class="input-group"><label>${home} (1)</label><input type="number" id="o1" step="0.01" min="1.01" placeholder="1.85"></div>
@@ -402,17 +745,31 @@
             <div class="input-group"><label>${away} (2)</label><input type="number" id="o2" step="0.01" min="1.01" placeholder="4.20"></div>
           </div>
         </div>
-        <button class="btn btn-primary" style="width:100%;margin-top:0.5rem" onclick="window.saveMarket('${matchId}','${home}','${away}')">Market ve Seçenekleri Kaydet</button>
-      `;
+        <button class="btn btn-primary" style="width:100%;margin-top:0.5rem" onclick="window.saveMarket('${matchId}')">Market ve Seçenekleri Kaydet</button>
+      `, 'md');
     };
 
-    window.selectTab = (btn, type) => {
+    window.addCustomOpt = () => {
+      const list = document.getElementById('customOptsList');
+      if (!list) return;
+      const idx = Date.now();
+      const row = document.createElement('div');
+      row.className = 'custom-opt-row';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 70px 1fr auto;gap:0.5rem;align-items:flex-end;margin-bottom:0.5rem';
+      row.innerHTML = `
+        <div class="input-group" style="margin-bottom:0"><label>Etiket</label><input type="text" class="cOptLabel" placeholder="Evet / Gol atar..."></div>
+        <div class="input-group" style="margin-bottom:0"><label>Oran</label><input type="number" class="cOptOdds" placeholder="2.00" step="0.01" min="1.01"></div>
+        <div class="input-group" style="margin-bottom:0"><label>outcome_key (isteğe bağlı)</label><input type="text" class="cOptKey" placeholder="auto"></div>
+        <div style="padding-bottom:1.125rem"><button type="button" class="btn btn-danger" style="padding:0.3rem 0.5rem;font-size:0.7rem" onclick="this.closest('.custom-opt-row').remove()">×</button></div>`;
+      list.appendChild(row);
+    };
+
+    window.mTab = (btn, type) => {
       document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('mType').value = type;
       const label = document.getElementById('mLabel');
       const fields = document.getElementById('oddsFields');
-
       if (type === '1x2') {
         label.value = 'Maç Sonucu';
         fields.innerHTML = `<div class="odds-row odds-row-3">
@@ -434,23 +791,27 @@
         </div>`;
       } else {
         label.value = '';
-        fields.innerHTML = `<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Özel market için label gir, seçenekleri sonra manuel ekleyebilirsin.</p>`;
+        fields.innerHTML = `
+          <div id="customOptsList"></div>
+          <button type="button" class="btn btn-ghost" style="font-size:0.78rem;padding:0.3rem 0.75rem;margin-top:0.25rem" onclick="window.addCustomOpt()">+ Seçenek Ekle</button>
+          <p style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem">outcome_key boş bırakılırsa etiket'ten otomatik üretilir.</p>`;
+        window.addCustomOpt();
+        window.addCustomOpt();
       }
     };
 
-    window.saveMarket = async (matchId, home, away) => {
+    window.saveMarket = async (matchId) => {
       const type  = document.getElementById('mType').value;
-      const label = document.getElementById('mLabel').value;
+      const label = document.getElementById('mLabel').value.trim();
       const o1 = parseFloat(document.getElementById('o1')?.value || '0');
       const oX = parseFloat(document.getElementById('oX')?.value || '0');
       const o2 = parseFloat(document.getElementById('o2')?.value || '0');
 
       if (!label) return showToast('Etiket boş olamaz.', 'error');
 
-      const { data: market, error: mErr } = await supabase.from('bet_markets').insert({
-        match_id: matchId, market_type: type, label: label, is_active: true
-      }).select().single();
-
+      const { data: market, error: mErr } = await supabase
+        .from('bet_markets').insert({ match_id: matchId, market_type: type, label, is_active: true })
+        .select().single();
       if (mErr) return showToast(mErr.message, 'error');
 
       let options = [];
@@ -462,107 +823,482 @@
           { market_id: market.id, label: '2', odds_value: o2, outcome_key: 'away_win' },
         ];
       } else if (type === 'over_under') {
-        if (!o1 || !o2) return showToast('Tüm oranları gir.', 'error');
+        if (!o1 || !o2) return showToast('Oranları gir.', 'error');
         const line = label.match(/[\d.]+/)?.[0] || '2.5';
         options = [
           { market_id: market.id, label: `${line} Üstü`, odds_value: o1, outcome_key: `over_${line}` },
           { market_id: market.id, label: `${line} Altı`,  odds_value: o2, outcome_key: `under_${line}` },
         ];
       } else if (type === 'btts') {
-        if (!o1 || !o2) return showToast('Tüm oranları gir.', 'error');
+        if (!o1 || !o2) return showToast('Oranları gir.', 'error');
         options = [
           { market_id: market.id, label: 'Evet', odds_value: o1, outcome_key: 'btts_yes' },
           { market_id: market.id, label: 'Hayır', odds_value: o2, outcome_key: 'btts_no' },
         ];
       }
 
-      if (options.length > 0) {
+      if (type === 'custom') {
+        const labels = document.querySelectorAll('.cOptLabel');
+        const oddsList = document.querySelectorAll('.cOptOdds');
+        const keys = document.querySelectorAll('.cOptKey');
+        for (let i = 0; i < labels.length; i++) {
+          const lv = labels[i].value.trim();
+          const ov = parseFloat(oddsList[i].value);
+          if (!lv || !ov) continue;
+          const kv = keys[i].value.trim() || lv.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+          options.push({ market_id: market.id, label: lv, odds_value: ov, outcome_key: kv });
+        }
+        if (!options.length) return showToast('En az bir geçerli seçenek gir.', 'error');
+      }
+
+      if (options.length) {
         const { error: oErr } = await supabase.from('bet_options').insert(options);
         if (oErr) return showToast(oErr.message, 'error');
       }
 
       showToast('Market eklendi!', 'success');
-      document.getElementById('mainModal').classList.remove('open');
-      loadAdminMatches();
+      closeModal();
+      loadMatches();
     };
 
-    window.openScoreEditor = (matchId) => {
-      openModal('Skor Gir ve Puanları Dağıt');
-      document.getElementById('modalContent').innerHTML = `
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem">Skoru gir ve "Onayla" butonuna bas. Tüm tahminler otomatik puanlanacak.</p>
-        <div class="score-inputs">
-          <input type="number" id="sHome" placeholder="0" min="0" max="20">
-          <span class="score-sep">—</span>
-          <input type="number" id="sAway" placeholder="0" min="0" max="20">
+    // ── Edit Market ──────────────────────────────────────────────────────────
+
+    window.openEditMarketModal = async (marketId, matchId) => {
+      const { data: market, error } = await supabase
+        .from('bet_markets')
+        .select('*, bet_options(*)')
+        .eq('id', marketId)
+        .single();
+
+      if (error) return showToast(error.message, 'error');
+
+      const optionsHtml = market.bet_options?.length
+        ? market.bet_options.map((o, i) => `
+          <div class="option-edit-row" id="optRow_${i}">
+            <div class="input-group"><label>Etiket</label><input type="text" id="oLabel_${i}" value="${o.label}"></div>
+            <div class="input-group"><label>Oran</label><input type="number" id="oOdds_${i}" value="${o.odds_value}" step="0.01" min="1.01"></div>
+            <div class="input-group"><label>outcome_key</label><input type="text" id="oKey_${i}" value="${o.outcome_key}"></div>
+            <input type="hidden" id="oId_${i}" value="${o.id}">
+            <div style="display:flex;align-items:flex-end;padding-bottom:1.125rem">
+              <button class="btn btn-danger" style="padding:0.3rem 0.5rem;font-size:0.7rem" onclick="window.deleteOption('${o.id}','${marketId}','${matchId}')">×</button>
+            </div>
+          </div>
+        `).join('')
+        : '<p style="font-size:0.82rem;color:var(--text-muted)">Seçenek yok. Aşağıdan ekle.</p>';
+
+      openModal(`Market Düzenle: ${market.label}`, `
+        <div class="input-group"><label>Market Etiketi</label><input type="text" id="mEditLabel" value="${market.label}"></div>
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.125rem">
+          <label style="font-size:0.75rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Aktif</label>
+          <input type="checkbox" id="mEditActive" ${market.is_active ? 'checked' : ''} style="width:auto;accent-color:var(--primary)">
         </div>
-        <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,var(--success),#4fffb0);color:#060b18" onclick="window.saveScore('${matchId}')">✓ Skoru Onayla ve Puanları Dağıt</button>
+        <div style="font-family:var(--font-display);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.625rem">Seçenekler (${market.bet_options?.length??0})</div>
+        <div id="optionsContainer" style="margin-bottom:1rem">${optionsHtml}</div>
+        <button class="btn btn-ghost" style="font-size:0.78rem;margin-bottom:1rem;padding:0.3rem 0.75rem" onclick="window.addNewOptionRow('${marketId}')">+ Seçenek Ekle</button>
+        <div style="display:flex;gap:0.625rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="window.saveMarketEdits('${marketId}','${matchId}',${market.bet_options?.length??0})">Kaydet</button>
+          <button class="btn btn-danger" onclick="window.deleteMarket('${marketId}','${matchId}')">Marketi Sil</button>
+        </div>
+      `, 'lg');
+    };
+
+    window.addNewOptionRow = (marketId) => {
+      const container = document.getElementById('optionsContainer');
+      const i = 'new_' + Date.now();
+      const div = document.createElement('div');
+      div.className = 'option-edit-row';
+      div.id = 'optRow_' + i;
+      div.innerHTML = `
+        <div class="input-group"><label>Etiket</label><input type="text" id="oLabel_${i}" placeholder="1 / Evet / Üstü..."></div>
+        <div class="input-group"><label>Oran</label><input type="number" id="oOdds_${i}" placeholder="2.00" step="0.01" min="1.01"></div>
+        <div class="input-group"><label>outcome_key</label><input type="text" id="oKey_${i}" placeholder="home_win"></div>
+        <input type="hidden" id="oId_${i}" value="NEW">
+        <div style="display:flex;align-items:flex-end;padding-bottom:1.125rem">
+          <button class="btn btn-danger" style="padding:0.3rem 0.5rem;font-size:0.7rem" onclick="this.closest('.option-edit-row').remove()">×</button>
+        </div>`;
+      container.appendChild(div);
+    };
+
+    window.saveMarketEdits = async (marketId, matchId, existingCount) => {
+      const label  = document.getElementById('mEditLabel').value.trim();
+      const active = document.getElementById('mEditActive').checked;
+      if (!label) return showToast('Etiket boş olamaz.', 'error');
+
+      const { error: mErr } = await supabase.from('bet_markets').update({ label, is_active: active }).eq('id', marketId);
+      if (mErr) return showToast(mErr.message, 'error');
+
+      // Update existing options + insert new ones
+      const container = document.getElementById('optionsContainer');
+      const rows = container.querySelectorAll('.option-edit-row');
+      for (const row of rows) {
+        const idInput = row.querySelector('[id^="oId_"]');
+        const lInput  = row.querySelector('[id^="oLabel_"]');
+        const oInput  = row.querySelector('[id^="oOdds_"]');
+        const kInput  = row.querySelector('[id^="oKey_"]');
+        if (!idInput || !lInput || !oInput || !kInput) continue;
+
+        const optId   = idInput.value;
+        const optLabel = lInput.value.trim();
+        const optOdds  = parseFloat(oInput.value);
+        const optKey   = kInput.value.trim();
+
+        if (!optLabel || !optOdds || !optKey) continue;
+
+        if (optId === 'NEW') {
+          await supabase.from('bet_options').insert({ market_id: marketId, label: optLabel, odds_value: optOdds, outcome_key: optKey });
+        } else {
+          await supabase.from('bet_options').update({ label: optLabel, odds_value: optOdds, outcome_key: optKey }).eq('id', optId);
+        }
+      }
+
+      showToast('Market güncellendi.', 'success');
+      closeModal();
+      loadMatches();
+    };
+
+    window.deleteOption = async (optId, marketId, matchId) => {
+      if (!confirm('Bu seçeneği ve bağlı tahminleri silmek istiyor musun?')) return;
+      const { error } = await supabase.from('bet_options').delete().eq('id', optId);
+      if (error) return showToast(error.message, 'error');
+      showToast('Seçenek silindi.', 'success');
+      openEditMarketModal(marketId, matchId);
+    };
+
+    window.deleteMarket = async (marketId, matchId) => {
+      if (!confirm('Bu marketi ve tüm seçenekleri/tahminleri silmek istiyor musun?')) return;
+      const { error } = await supabase.from('bet_markets').delete().eq('id', marketId);
+      if (error) return showToast(error.message, 'error');
+      showToast('Market silindi.', 'success');
+      closeModal();
+      loadMatches();
+    };
+
+    // ── Match Predictions View ───────────────────────────────────────────────
+
+    window.openMatchPredictions = async (matchId) => {
+      const m = matchCache.get(matchId);
+      openModal(`Tahminler: ${m?.home_team||''} vs ${m?.away_team||''}`, '<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem 0">Yükleniyor...</div>', 'lg');
+
+      const { data: preds, error } = await supabase
+        .from('predictions')
+        .select('*, users(username), bet_options(label, odds_value, outcome_key), bet_markets(label)')
+        .eq('match_id', matchId)
+        .order('created_at', { ascending: false });
+
+      if (error) { document.getElementById('modalContent').innerHTML = `<span style="color:var(--danger)">${error.message}</span>`; return; }
+
+      if (!preds?.length) { document.getElementById('modalContent').innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem">Henüz tahmin yok.</p>'; return; }
+
+      const html = `<div style="overflow-x:auto"><table class="pred-table">
+        <thead><tr><th>Kullanıcı</th><th>Market</th><th>Tahmin</th><th>Oran</th><th>Durum</th><th>Puan</th><th></th></tr></thead>
+        <tbody>
+          ${preds.map(p => {
+            const status = p.is_correct === true ? 'pred-correct' : p.is_correct === false ? 'pred-wrong' : 'pred-pending';
+            const statusLabel = p.is_correct === true ? '✓ Doğru' : p.is_correct === false ? '✗ Yanlış' : '⏳ Bekliyor';
+            return `<tr>
+              <td style="font-weight:600">${p.users?.username||'–'}</td>
+              <td style="color:var(--text-muted)">${p.bet_markets?.label||'–'}</td>
+              <td>${p.bet_options?.label||'–'}</td>
+              <td style="font-family:var(--font-display);font-weight:700">${p.odds_at_prediction}</td>
+              <td class="${status}">${statusLabel}</td>
+              <td style="font-family:var(--font-display);font-weight:700;color:${p.points_earned>0?'var(--success)':'var(--text-muted)'}">${p.points_earned||0}</td>
+              <td><button class="btn btn-danger" style="padding:0.15rem 0.4rem;font-size:0.65rem" onclick="window.deletePrediction('${p.id}','${matchId}')">Sil</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>`;
+
+      document.getElementById('modalContent').innerHTML = html;
+    };
+
+    window.deletePrediction = async (predId, matchId) => {
+      if (!confirm('Bu tahmini silmek istediğine emin misin?')) return;
+      const { error } = await supabase.from('predictions').delete().eq('id', predId);
+      if (error) return showToast(error.message, 'error');
+      showToast('Tahmin silindi.', 'success');
+      openMatchPredictions(matchId);
+    };
+
+    // ── Delete Match ─────────────────────────────────────────────────────────
+
+    window.deleteMatch = async (id) => {
+      if (!confirm('Bu maçı ve ilgili tüm verileri silmek istiyor musun?')) return;
+      const { error } = await supabase.from('matches').delete().eq('id', id);
+      if (error) return showToast(error.message, 'error');
+      showToast('Maç silindi.', 'success');
+      loadMatches();
+    };
+
+    // ── Match Buttons Init ───────────────────────────────────────────────────
+
+    function initMatchButtons() {
+      document.getElementById('btnFetchMatches').onclick = async function() {
+        const btn = this; btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Çekiliyor...';
+        const { data, error } = await supabase.functions.invoke('fetch-matches');
+        btn.disabled = false; btn.textContent = orig;
+        if (error) return showToast('Hata: ' + error.message, 'error');
+        showToast(data?.message || 'Maçlar güncellendi.', 'success');
+        loadMatches();
+      };
+
+      document.getElementById('btnFetchScores').onclick = async function() {
+        const btn = this; btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Güncelleniyor...';
+        const { data, error } = await supabase.functions.invoke('fetch-scores');
+        btn.disabled = false; btn.textContent = orig;
+        if (error) return showToast('Hata: ' + error.message, 'error');
+        showToast(data?.message || 'Sonuçlar güncellendi.', 'success');
+        loadMatches();
+      };
+
+      document.getElementById('btnLockMarkets').onclick = async function() {
+        const btn = this; btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Kilitleniyor...';
+        const { data, error } = await supabase.functions.invoke('lock-markets');
+        btn.disabled = false; btn.textContent = orig;
+        if (error) return showToast('Hata: ' + error.message, 'error');
+        showToast(`${data?.locked ?? 0} market kilitlendi.`, 'success');
+        loadMatches();
+      };
+
+      document.getElementById('btnDeleteAll').onclick = async () => {
+        if (!confirm('TÜM maçları, marketleri, tahminleri silmek istiyor musun? GERİ ALINAMAZ!')) return;
+        const { error } = await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) return showToast(error.message, 'error');
+        showToast('Tüm maçlar silindi.', 'success');
+        loadMatches();
+      };
+
+      // Dashboard quick buttons
+      document.getElementById('btnFetchDash').onclick = () => document.getElementById('btnFetchMatches').click();
+      document.getElementById('btnScoresDash').onclick = () => document.getElementById('btnFetchScores').click();
+      document.getElementById('btnLockDash').onclick = () => document.getElementById('btnLockMarkets').click();
+    }
+
+    // ── User Management ──────────────────────────────────────────────────────
+
+    window.loadUsers = async function() {
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</td></tr>';
+
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*, leaderboard_cache(*)')
+        .order('created_at', { ascending: true });
+
+      if (error) { tbody.innerHTML = `<tr><td colspan="7" style="padding:2rem;color:var(--danger)">${error.message}</td></tr>`; return; }
+      if (!users?.length) { tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--text-muted)">Kullanıcı yok.</td></tr>'; return; }
+
+      const sorted = [...users].sort((a, b) => {
+        const pa = a.leaderboard_cache?.total_points ?? 0;
+        const pb = b.leaderboard_cache?.total_points ?? 0;
+        return pb - pa;
+      });
+
+      tbody.innerHTML = sorted.map((u, i) => {
+        const lb = u.leaderboard_cache;
+        const pts     = lb?.total_points ?? 0;
+        const correct = lb?.correct_predictions ?? 0;
+        const total   = lb?.total_predictions ?? 0;
+        const acc     = total > 0 ? Math.round(correct / total * 100) : 0;
+        const joinDate = new Date(u.created_at).toLocaleDateString('tr-TR', { day:'numeric', month:'short', year:'numeric' });
+        const initials = (u.username||'?').slice(0, 2).toUpperCase();
+        const color    = u.avatar_color || '#B5D4F4';
+
+        return `<tr>
+          <td style="color:var(--text-muted);font-family:var(--font-display);font-weight:700">${i + 1}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.625rem">
+              <div class="avatar" style="background:${color};width:1.875rem;height:1.875rem;font-size:0.75rem">${initials}</div>
+              <div>
+                <div style="font-weight:600;font-size:0.875rem">${u.username}</div>
+                ${u.is_admin ? '<span class="badge badge-admin" style="margin-top:2px">ADMIN</span>' : ''}
+              </div>
+            </div>
+          </td>
+          <td style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--primary)">${pts}</td>
+          <td style="font-family:var(--font-display);font-weight:700;color:var(--success)">${correct}<span style="color:var(--text-muted);font-size:0.75rem">/${total}</span></td>
+          <td style="color:var(--text-muted)">${acc}%</td>
+          <td style="font-size:0.75rem;color:var(--text-muted)">${joinDate}</td>
+          <td>
+            <div style="display:flex;gap:0.3rem;flex-wrap:wrap">
+              <button class="btn btn-outline" style="padding:0.2rem 0.45rem;font-size:0.65rem" onclick="window.openAdjustPointsModal('${u.id}','${u.username}',${pts})">Puan</button>
+              <button class="btn btn-ghost" style="padding:0.2rem 0.45rem;font-size:0.65rem" onclick="window.openEditUsernameModal('${u.id}','${u.username}')">Ad</button>
+              <button class="btn btn-ghost" style="padding:0.2rem 0.45rem;font-size:0.65rem;color:${u.is_admin?'var(--warning)':'var(--accent)'}" onclick="window.toggleAdmin('${u.id}',${u.is_admin},'${u.username}')">${u.is_admin?'Admin Al':'Admin Ver'}</button>
+              <button class="btn btn-ghost" style="padding:0.2rem 0.45rem;font-size:0.65rem" onclick="window.openUserPredictionsModal('${u.id}','${u.username}')">Tahminler</button>
+              <button class="btn btn-danger" style="padding:0.2rem 0.45rem;font-size:0.65rem" onclick="window.deleteUser('${u.id}','${u.username}')">Sil</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    };
+
+    window.openAdjustPointsModal = (userId, username, currentPts) => {
+      openModal(`Puan Ayarla: ${username}`, `
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.125rem">Mevcut puan: <strong style="color:var(--primary);font-family:var(--font-display);font-size:1.1rem">${currentPts}</strong></p>
+        <div class="input-group">
+          <label>Değişim (+ ekle / - çıkar)</label>
+          <input type="number" id="pDelta" placeholder="+50 veya -20" style="font-size:1.1rem;font-family:var(--font-display);font-weight:700">
+        </div>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1.125rem">Yeni puan: <span id="pPreview" style="color:var(--primary);font-weight:700">${currentPts}</span></p>
+        <button class="btn btn-primary" style="width:100%" onclick="window.saveAdjustPoints('${userId}',${currentPts})">Puanı Güncelle</button>
+      `, 'sm');
+
+      setTimeout(() => {
+        const input = document.getElementById('pDelta');
+        if (input) input.addEventListener('input', () => {
+          const d = parseInt(input.value) || 0;
+          const el = document.getElementById('pPreview');
+          if (el) el.textContent = Math.max(0, currentPts + d);
+        });
+      }, 50);
+    };
+
+    window.saveAdjustPoints = async (userId, currentPts) => {
+      const delta = parseInt(document.getElementById('pDelta').value);
+      if (isNaN(delta) || delta === 0) return showToast('Geçerli bir değer gir.', 'error');
+      const newPts = Math.max(0, currentPts + delta);
+
+      const { data: lb } = await supabase.from('leaderboard_cache').select('*').eq('user_id', userId).maybeSingle();
+      let err;
+      if (lb) {
+        ({ error: err } = await supabase.from('leaderboard_cache').update({ total_points: newPts, last_updated: new Date().toISOString() }).eq('user_id', userId));
+      } else {
+        ({ error: err } = await supabase.from('leaderboard_cache').insert({ user_id: userId, total_points: newPts, correct_predictions: 0, total_predictions: 0, surprise_bonus: 0 }));
+      }
+
+      if (err) return showToast(err.message, 'error');
+      showToast(`Puan güncellendi: ${delta > 0 ? '+' : ''}${delta} (yeni: ${newPts})`, 'success');
+      closeModal();
+      loadUsers();
+    };
+
+    window.openEditUsernameModal = (userId, currentName) => {
+      openModal('Kullanıcı Adını Düzenle', `
+        <div class="input-group"><label>Yeni Kullanıcı Adı</label><input type="text" id="uNewName" value="${currentName}"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="window.updateUsername('${userId}')">Kaydet</button>
+      `, 'sm');
+    };
+
+    window.updateUsername = async (userId) => {
+      const name = document.getElementById('uNewName').value.trim();
+      if (!name) return showToast('Ad boş olamaz.', 'error');
+      const { error } = await supabase.from('users').update({ username: name }).eq('id', userId);
+      if (error) return showToast(error.message, 'error');
+      showToast('Kullanıcı adı güncellendi.', 'success');
+      closeModal();
+      loadUsers();
+    };
+
+    window.toggleAdmin = async (userId, isAdmin, username) => {
+      const action = isAdmin ? 'admin yetkisini almak' : 'admin yapmak';
+      if (!confirm(`${username} kullanıcısını ${action} istiyor musun?`)) return;
+      const { error } = await supabase.from('users').update({ is_admin: !isAdmin }).eq('id', userId);
+      if (error) return showToast(error.message, 'error');
+      showToast(`${username}: admin ${!isAdmin ? 'verildi' : 'alındı'}.`, 'success');
+      loadUsers();
+    };
+
+    window.openUserPredictionsModal = async (userId, username) => {
+      openModal(`Tahminler: ${username}`, '<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem 0">Yükleniyor...</div>', 'lg');
+
+      const { data: preds, error } = await supabase
+        .from('predictions')
+        .select('*, bet_options(label, odds_value), bet_markets(label), matches(home_team, away_team, home_flag, away_flag, status, home_score, away_score)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) { document.getElementById('modalContent').innerHTML = `<span style="color:var(--danger)">${error.message}</span>`; return; }
+      if (!preds?.length) { document.getElementById('modalContent').innerHTML = '<p style="color:var(--text-muted)">Henüz tahmin yok.</p>'; return; }
+
+      document.getElementById('modalContent').innerHTML = `<div style="overflow-x:auto"><table class="pred-table">
+        <thead><tr><th>Maç</th><th>Market</th><th>Seçim</th><th>Oran</th><th>Durum</th><th>Puan</th></tr></thead>
+        <tbody>
+          ${preds.map(p => {
+            const m = p.matches;
+            const match = m ? `${m.home_flag||'🏳'} ${m.home_team} vs ${m.away_team}` : '–';
+            const status = p.is_correct === true ? 'pred-correct' : p.is_correct === false ? 'pred-wrong' : 'pred-pending';
+            const statusLabel = p.is_correct === true ? '✓' : p.is_correct === false ? '✗' : '⏳';
+            return `<tr>
+              <td style="font-size:0.78rem">${match}</td>
+              <td style="color:var(--text-muted);font-size:0.78rem">${p.bet_markets?.label||'–'}</td>
+              <td>${p.bet_options?.label||'–'}</td>
+              <td style="font-family:var(--font-display);font-weight:700">${p.odds_at_prediction}</td>
+              <td class="${status}">${statusLabel}</td>
+              <td style="font-family:var(--font-display);font-weight:700;color:${p.points_earned>0?'var(--success)':'var(--text-muted)'}">${p.points_earned||0}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>`;
+    };
+
+    window.deleteUser = async (userId, username) => {
+      if (!confirm(`"${username}" kullanıcısını silmek istiyor musun? Tüm tahminleri de silinecek. (Auth kaydı ayrıca Supabase Auth'dan kaldırılmalı)`)) return;
+      const { error } = await supabase.from('users').delete().eq('id', userId);
+      if (error) return showToast(error.message, 'error');
+      showToast(`${username} silindi.`, 'success');
+      loadUsers();
+    };
+
+    // ── System ──────────────────────────────────────────────────────────────
+
+    window.loadApiUsage = async function() {
+      const card = document.getElementById('apiUsageCard');
+      const { data, error } = await supabase.functions.invoke('api-usage');
+
+      if (error || !data) {
+        card.innerHTML = '<span style="color:var(--danger);font-size:0.85rem">API kullanım bilgisi alınamadı.</span>';
+        return;
+      }
+
+      const pct = data.percent_used;
+      const color = pct >= 80 ? 'var(--danger)' : pct >= 50 ? 'var(--warning)' : 'var(--success)';
+      const status = pct >= 80 ? '⚠️ Kritik' : pct >= 50 ? '🟡 Orta' : '🟢 İyi';
+
+      card.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1.25rem;margin-bottom:1.125rem">
+          <div><div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.3rem">Kullanılan</div>
+            <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:${color}">${data.used}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted)">/ ${data.total}</div></div>
+          <div><div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.3rem">Kalan</div>
+            <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--primary)">${data.remaining}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted)">istek</div></div>
+          <div><div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.3rem">Sıfırlanma</div>
+            <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800">${data.days_until_reset}g</div>
+            <div style="font-size:0.7rem;color:var(--text-muted)">${data.reset_date}</div></div>
+          <div><div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.3rem">Durum</div>
+            <div style="font-size:0.9rem;font-weight:600">${status}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted)">%${pct} kullanıldı</div></div>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.8s ease"></div>
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem">Her "Maçları Çek" ~20 istek · Ücretsiz plan: 500/ay · Her ayın 1'inde yenilenir</div>
       `;
     };
 
-    window.saveScore = async (matchId) => {
-      const h = parseInt(document.getElementById('sHome').value);
-      const a = parseInt(document.getElementById('sAway').value);
-      if (isNaN(h) || isNaN(a)) return showToast('Geçerli bir skor gir.', 'error');
-
-      let result = 'draw';
-      if (h > a) result = 'home_win';
-      else if (a > h) result = 'away_win';
-
-      const { error: sErr } = await supabase.from('matches').update({
-        home_score: h, away_score: a, result: result, status: 'finished'
-      }).eq('id', matchId);
-
-      if (sErr) return showToast(sErr.message, 'error');
-
-      const { data, error: fErr } = await supabase.functions.invoke('calculate-points', {
-        body: { match_id: matchId }
+    window.loadRecalcSelect = async function() {
+      const sel = document.getElementById('recalcMatchSelect');
+      const { data } = await supabase.from('matches').select('id, home_team, away_team, status').eq('status', 'finished').order('match_time', { ascending: false });
+      sel.innerHTML = '<option value="">— Bitmiş maç seç —</option>';
+      (data || []).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.home_team} vs ${m.away_team}`;
+        sel.appendChild(opt);
       });
-
-      if (fErr) {
-        showToast('Puan hesaplama hatası: ' + fErr.message, 'error');
-      } else {
-        showToast(`Puanlar dağıtıldı! (${data?.processed ?? 0} tahmin işlendi)`, 'success');
-        document.getElementById('mainModal').classList.remove('open');
-        loadAdminMatches();
-      }
     };
 
-    window.fetchScores = async (btn) => {
-      const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = 'Güncelleniyor...';
-      const { data, error } = await supabase.functions.invoke('fetch-scores');
-      if (error) {
-        showToast('Hata: ' + error.message, 'error');
-      } else {
-        showToast(data?.message || 'Sonuçlar güncellendi.', 'success');
-        loadAdminMatches();
-      }
-      btn.disabled = false; btn.textContent = orig;
+    window.recalcForMatch = async function() {
+      const matchId = document.getElementById('recalcMatchSelect').value;
+      if (!matchId) return showToast('Maç seç.', 'error');
+      if (!confirm('Bu maçın puanları sıfırlanıp yeniden hesaplanacak. Devam?')) return;
+
+      showToast('Eski puanlar sıfırlanıyor...', 'info');
+      await resetMatchCalculations(matchId);
+
+      const { data, error } = await supabase.functions.invoke('calculate-points', { body: { match_id: matchId } });
+      if (error) return showToast('Hata: ' + error.message, 'error');
+      showToast(`Yeniden hesaplandı! (${data?.processed??0} tahmin)`, 'success');
     };
-
-    document.getElementById('btnMegaFetch').addEventListener('click', async () => {
-      const btn = document.getElementById('btnMegaFetch');
-      const orig = btn.textContent;
-      btn.disabled = true; btn.textContent = 'Çekiliyor...';
-      const { data, error } = await supabase.functions.invoke('fetch-matches');
-      if (error) {
-        let msg = error.message;
-        try { const d = await error.context?.json?.(); if (d?.error) msg = d.error; } catch(_) {}
-        showToast('Hata: ' + msg, 'error');
-        console.error('fetch-matches error:', error);
-      } else {
-        showToast(data?.message || 'Maçlar güncellendi.', 'success');
-        loadAdminMatches();
-      }
-      btn.disabled = false; btn.textContent = orig;
-    });
-
-    document.getElementById('btnDeleteAll').addEventListener('click', async () => {
-      if (!confirm('TÜM maçları, bahisleri ve tahminleri silmek istediğine emin misin? Bu işlem geri alınamaz!')) return;
-      const { error } = await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (error) showToast(error.message, 'error');
-      else { showToast('Tüm veriler temizlendi.', 'success'); loadAdminMatches(); }
-    });
 
     document.getElementById('inviteForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -579,11 +1315,72 @@
       }
     });
 
-    document.getElementById('btnModalClose').onclick = () => document.getElementById('mainModal').classList.remove('open');
-    document.getElementById('mainModal').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('mainModal')) document.getElementById('mainModal').classList.remove('open');
-    });
-    document.getElementById('logoutBtn').onclick = logout;
+    function initSystemButtons() {
+      document.getElementById('btnFullReset').onclick = async () => {
+        if (!confirm('TÜM kullanıcıların puanları ve tahmin sonuçları sıfırlanacak. DEVAM?')) return;
+        if (!confirm('Bu işlem geri alınamaz! Son kez: emin misin?')) return;
+
+        showToast('Sıfırlanıyor...', 'info');
+        await supabase.from('leaderboard_cache').delete().neq('user_id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('predictions').update({ is_correct: null, points_earned: 0 }).neq('id', '00000000-0000-0000-0000-000000000000');
+
+        const { data: opts } = await supabase.from('bet_options').select('id');
+        if (opts?.length) {
+          const chunks = [];
+          for (let i = 0; i < opts.length; i += 50) chunks.push(opts.slice(i, i + 50).map(o => o.id));
+          for (const chunk of chunks) {
+            await supabase.from('bet_options').update({ is_correct: null }).in('id', chunk);
+          }
+        }
+
+        showToast('Tüm puanlar sıfırlandı.', 'success');
+        loadDashboard();
+      };
+
+      document.getElementById('btnDeleteAllSystem').onclick = async () => {
+        if (!confirm('TÜM maçlar, marketler ve tahminler silinecek. DEVAM?')) return;
+        if (!confirm('Bu işlem geri alınamaz! Son kez: emin misin?')) return;
+        const { error } = await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) return showToast(error.message, 'error');
+        showToast('Tüm maçlar silindi.', 'success');
+        loadDashboard();
+      };
+    }
+
+    const REQUIRED_SQL = `-- Admin Genişletilmiş Yetkiler
+-- Supabase Dashboard > SQL Editor'da çalıştır
+
+create or replace function public.is_admin()
+returns boolean as $$
+  select coalesce(
+    (select is_admin from public.users where id = auth.uid()),
+    false
+  )
+$$ language sql security definer stable;
+
+drop policy if exists "users_admin_all" on public.users;
+create policy "users_admin_all" on public.users
+  for all using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "predictions_admin_all" on public.predictions;
+create policy "predictions_admin_all" on public.predictions
+  for all using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "leaderboard_admin_all" on public.leaderboard_cache;
+create policy "leaderboard_admin_all" on public.leaderboard_cache
+  for all using (public.is_admin())
+  with check (public.is_admin());`;
+
+    function renderSqlBlock() {
+      const el = document.getElementById('sqlBlock');
+      if (el) el.textContent = REQUIRED_SQL;
+    }
+
+    window.copySql = function() {
+      navigator.clipboard.writeText(REQUIRED_SQL).then(() => showToast('SQL kopyalandı!', 'success')).catch(() => showToast('Kopyalanamadı.', 'error'));
+    };
 
     init();
   </script>

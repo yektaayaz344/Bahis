@@ -82,6 +82,7 @@
       session = await requireAuth();
       if (!session) return;
       if (isAdmin(session)) document.getElementById('adminLink').style.display = 'block';
+      await supabase.functions.invoke('lock-markets').catch(() => {});
       await loadMatches();
     }
 

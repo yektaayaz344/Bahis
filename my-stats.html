@@ -49,9 +49,9 @@
         <div class="stat-sub" id="statCorrect" style="color:var(--text-muted)">—</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Sürpriz Bonusu</div>
-        <div class="stat-value accent-val" id="statSurpriseBonus">—</div>
-        <div class="stat-sub">7.00+ oran kazanımı</div>
+        <div class="stat-label">Sıralama</div>
+        <div class="stat-value accent-val" id="statRank">—</div>
+        <div class="stat-sub">genel sıralamada</div>
       </div>
     </div>
 
@@ -102,16 +102,23 @@
     }
 
     async function loadStats(userId) {
-      const { data: stats } = await supabase.from('leaderboard_cache').select('*').eq('user_id', userId).maybeSingle();
+      const [statsRes, allRes] = await Promise.all([
+        supabase.from('leaderboard_cache').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('leaderboard_cache').select('user_id, total_points').order('total_points', { ascending: false })
+      ]);
+      const stats = statsRes.data;
+      const all   = allRes.data || [];
+      const rank  = all.findIndex(r => r.user_id === userId) + 1;
+
       if (stats) {
         document.getElementById('statTotalPoints').textContent = stats.total_points;
-        document.getElementById('statSurpriseBonus').textContent = '+' + stats.surprise_bonus;
+        document.getElementById('statRank').textContent = rank > 0 ? '#' + rank : '—';
         const rate = stats.total_predictions > 0 ? Math.round(stats.correct_predictions / stats.total_predictions * 100) : 0;
         document.getElementById('statSuccessRate').textContent = '%' + rate;
         document.getElementById('statCorrect').textContent = stats.correct_predictions + '/' + stats.total_predictions + ' tahmin';
       } else {
         document.getElementById('statTotalPoints').textContent = '0';
-        document.getElementById('statSurpriseBonus').textContent = '+0';
+        document.getElementById('statRank').textContent = '—';
         document.getElementById('statSuccessRate').textContent = '%0';
         document.getElementById('statCorrect').textContent = '0/0 tahmin';
       }

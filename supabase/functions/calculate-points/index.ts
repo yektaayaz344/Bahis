@@ -6,10 +6,7 @@ const corsHeaders = {
 }
 
 function calcPoints(odds: number): number {
-  const base = Math.floor(odds * 10)
-  if (odds >= 15) return base + Math.floor(base * 0.5)
-  if (odds >= 7)  return base + Math.floor(base * 0.2)
-  return base
+  return Math.floor(odds * 10)
 }
 
 Deno.serve(async (req) => {
@@ -55,25 +52,21 @@ Deno.serve(async (req) => {
       .select('id, user_id, option_id, odds_at_prediction')
       .eq('match_id', match_id)
 
-    const userPoints: Record<string, { total: number; correct: number; surprise: number; count: number }> = {}
+    const userPoints: Record<string, { total: number; correct: number; count: number }> = {}
 
     for (const pred of preds ?? []) {
       const isCorrect = options?.find(o => o.id === pred.option_id)?.outcome_key === match.result
       const points = isCorrect ? calcPoints(Number(pred.odds_at_prediction)) : 0
-      const surpriseBonus = isCorrect && Number(pred.odds_at_prediction) >= 7
-        ? points - Math.floor(Number(pred.odds_at_prediction) * 10)
-        : 0
 
       await supabase.from('predictions').update({
         is_correct: isCorrect,
         points_earned: points
       }).eq('id', pred.id)
 
-      if (!userPoints[pred.user_id]) userPoints[pred.user_id] = { total: 0, correct: 0, surprise: 0, count: 0 }
-      userPoints[pred.user_id].total    += points
-      userPoints[pred.user_id].correct  += isCorrect ? 1 : 0
-      userPoints[pred.user_id].surprise += surpriseBonus
-      userPoints[pred.user_id].count    += 1
+      if (!userPoints[pred.user_id]) userPoints[pred.user_id] = { total: 0, correct: 0, count: 0 }
+      userPoints[pred.user_id].total   += points
+      userPoints[pred.user_id].correct += isCorrect ? 1 : 0
+      userPoints[pred.user_id].count   += 1
     }
 
     // leaderboard_cache güncelle
@@ -89,7 +82,6 @@ Deno.serve(async (req) => {
         total_points:        (existing?.total_points        ?? 0) + pts.total,
         correct_predictions: (existing?.correct_predictions ?? 0) + pts.correct,
         total_predictions:   (existing?.total_predictions   ?? 0) + pts.count,
-        surprise_bonus:      (existing?.surprise_bonus      ?? 0) + pts.surprise,
         last_updated: new Date().toISOString()
       })
     }

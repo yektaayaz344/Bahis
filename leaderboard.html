@@ -56,13 +56,13 @@
             <th style="width:56px">#</th>
             <th>Kullanıcı</th>
             <th>Doğru / Toplam</th>
-            <th>Sürpriz</th>
+            <th>İsabet %</th>
             <th style="text-align:right">Puan</th>
           </tr>
         </thead>
         <tbody id="leaderboardBody">
           <tr>
-            <td colspan="5">
+            <td colspan="5" style="padding:0">
               <div style="padding:2rem;display:flex;gap:0.75rem;flex-direction:column">
                 <div class="skeleton" style="height:40px"></div>
                 <div class="skeleton" style="height:40px"></div>
@@ -133,7 +133,7 @@
             <span class="correct-count">${entry.correct_predictions}</span><span class="muted"> / ${entry.total_predictions}</span>
             <div class="acc-bar"><div style="width:${rate}%"></div></div>
           </td>
-          <td><span class="bonus-text">+${entry.surprise_bonus}</span></td>
+          <td style="font-family:var(--font-display);font-weight:700;color:var(--text-muted)">${rate}%</td>
           <td style="text-align:right"><span class="points-display">${entry.total_points}</span></td>
         </tr>`;
       }).join('');
