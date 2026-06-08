@@ -660,7 +660,11 @@
         : '';
 
       const marketsHtml = markets.map(mk => {
-        const sortedOpts = (mk.bet_options || []).sort((a,b) => a.created_at > b.created_at ? 1 : -1);
+        const keyOrder = { home_win: 0, draw: 1, away_win: 2 };
+        const sortedOpts = (mk.bet_options || []).sort((a,b) => {
+          const ai = keyOrder[a.outcome_key] ?? 99, bi = keyOrder[b.outcome_key] ?? 99;
+          return ai !== bi ? ai - bi : (a.created_at > b.created_at ? 1 : -1);
+        });
         const currentWinner = sortedOpts.find(o => o.is_correct === true);
         const cols = sortedOpts.length <= 3 ? sortedOpts.length : 2;
         return `
