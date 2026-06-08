@@ -752,14 +752,12 @@
     window.addCustomOpt = () => {
       const list = document.getElementById('customOptsList');
       if (!list) return;
-      const idx = Date.now();
       const row = document.createElement('div');
       row.className = 'custom-opt-row';
-      row.style.cssText = 'display:grid;grid-template-columns:1fr 70px 1fr auto;gap:0.5rem;align-items:flex-end;margin-bottom:0.5rem';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 90px auto;gap:0.5rem;align-items:flex-end;margin-bottom:0.5rem';
       row.innerHTML = `
-        <div class="input-group" style="margin-bottom:0"><label>Etiket</label><input type="text" class="cOptLabel" placeholder="Evet / Gol atar..."></div>
+        <div class="input-group" style="margin-bottom:0"><label>Seçenek</label><input type="text" class="cOptLabel" placeholder="Gol atar, Evet, Hayır..."></div>
         <div class="input-group" style="margin-bottom:0"><label>Oran</label><input type="number" class="cOptOdds" placeholder="2.00" step="0.01" min="1.01"></div>
-        <div class="input-group" style="margin-bottom:0"><label>outcome_key (isteğe bağlı)</label><input type="text" class="cOptKey" placeholder="auto"></div>
         <div style="padding-bottom:1.125rem"><button type="button" class="btn btn-danger" style="padding:0.3rem 0.5rem;font-size:0.7rem" onclick="this.closest('.custom-opt-row').remove()">×</button></div>`;
       list.appendChild(row);
     };
@@ -791,10 +789,11 @@
         </div>`;
       } else {
         label.value = '';
+        label.placeholder = 'Ör: Kerem Aktürkoğlu gol atar?';
         fields.innerHTML = `
           <div id="customOptsList"></div>
           <button type="button" class="btn btn-ghost" style="font-size:0.78rem;padding:0.3rem 0.75rem;margin-top:0.25rem" onclick="window.addCustomOpt()">+ Seçenek Ekle</button>
-          <p style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem">outcome_key boş bırakılırsa etiket'ten otomatik üretilir.</p>`;
+          <p style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem">Maç bittikten sonra "Market Düzenle"den kazananı işaretle.</p>`;
         window.addCustomOpt();
         window.addCustomOpt();
       }
@@ -840,12 +839,11 @@
       if (type === 'custom') {
         const labels = document.querySelectorAll('.cOptLabel');
         const oddsList = document.querySelectorAll('.cOptOdds');
-        const keys = document.querySelectorAll('.cOptKey');
         for (let i = 0; i < labels.length; i++) {
           const lv = labels[i].value.trim();
           const ov = parseFloat(oddsList[i].value);
           if (!lv || !ov) continue;
-          const kv = keys[i].value.trim() || lv.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+          const kv = lv.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
           options.push({ market_id: market.id, label: lv, odds_value: ov, outcome_key: kv });
         }
         if (!options.length) return showToast('En az bir geçerli seçenek gir.', 'error');
@@ -864,13 +862,15 @@
     // ── Edit Market ──────────────────────────────────────────────────────────
 
     window.openEditMarketModal = async (marketId, matchId) => {
-      const { data: market, error } = await supabase
-        .from('bet_markets')
-        .select('*, bet_options(*)')
-        .eq('id', marketId)
-        .single();
+      const [{ data: market, error }, { data: matchInfo }] = await Promise.all([
+        supabase.from('bet_markets').select('*, bet_options(*)').eq('id', marketId).single(),
+        supabase.from('matches').select('status').eq('id', matchId).single()
+      ]);
 
       if (error) return showToast(error.message, 'error');
+
+      const isCustom = market.market_type === 'custom';
+      const matchFinished = matchInfo?.status === 'finished';
 
       const optionsHtml = market.bet_options?.length
         ? market.bet_options.map((o, i) => `
@@ -886,6 +886,21 @@
         `).join('')
         : '<p style="font-size:0.82rem;color:var(--text-muted)">Seçenek yok. Aşağıdan ekle.</p>';
 
+      const customWinnerHtml = isCustom && matchFinished && market.bet_options?.length ? `
+        <div style="margin-top:1.25rem;border-top:1px solid rgba(255,255,255,0.08);padding-top:1.25rem">
+          <div style="font-family:var(--font-display);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem">Kazanan Seçenek</div>
+          ${market.bet_options.map(o => `
+            <label style="display:flex;align-items:center;gap:0.625rem;margin-bottom:0.625rem;cursor:pointer;font-size:0.875rem">
+              <input type="radio" name="customWinner" value="${o.id}" ${o.is_correct === true ? 'checked' : ''} style="width:auto;accent-color:var(--primary)">
+              <span>${o.label}</span>
+              <span style="color:var(--text-muted);font-size:0.78rem">${o.odds_value}x</span>
+              ${o.is_correct === true ? '<span style="color:var(--success);font-size:0.72rem;font-weight:700;margin-left:auto">✓ DOĞRU</span>' : ''}
+            </label>
+          `).join('')}
+          <button class="btn btn-primary" style="width:100%;margin-top:0.75rem" onclick="window.markCustomWinner('${marketId}','${matchId}')">Kazananı İşaretle & Puanları Dağıt</button>
+        </div>
+      ` : (isCustom && !matchFinished ? `<p style="font-size:0.78rem;color:var(--text-muted);margin-top:1rem">Maç bittikten sonra kazananı işaretleyebilirsin.</p>` : '');
+
       openModal(`Market Düzenle: ${market.label}`, `
         <div class="input-group"><label>Market Etiketi</label><input type="text" id="mEditLabel" value="${market.label}"></div>
         <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.125rem">
@@ -899,7 +914,51 @@
           <button class="btn btn-primary" onclick="window.saveMarketEdits('${marketId}','${matchId}',${market.bet_options?.length??0})">Kaydet</button>
           <button class="btn btn-danger" onclick="window.deleteMarket('${marketId}','${matchId}')">Marketi Sil</button>
         </div>
+        ${customWinnerHtml}
       `, 'lg');
+    };
+
+    window.markCustomWinner = async (marketId, matchId) => {
+      const sel = document.querySelector('input[name="customWinner"]:checked');
+      if (!sel) return showToast('Bir seçenek seç.', 'error');
+      const winningOptionId = sel.value;
+
+      const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
+      for (const opt of options ?? []) {
+        await supabase.from('bet_options').update({ is_correct: opt.id === winningOptionId }).eq('id', opt.id);
+      }
+
+      const { data: preds } = await supabase.from('predictions')
+        .select('id, user_id, option_id, odds_at_prediction, is_correct, points_earned')
+        .eq('market_id', marketId);
+
+      let winCount = 0;
+      for (const pred of preds ?? []) {
+        const wasCorrect = pred.is_correct === true;
+        const isCorrect  = pred.option_id === winningOptionId;
+        const oldPoints  = pred.points_earned || 0;
+        const newPoints  = isCorrect ? Math.floor(Number(pred.odds_at_prediction) * 10) : 0;
+
+        await supabase.from('predictions').update({ is_correct: isCorrect, points_earned: newPoints }).eq('id', pred.id);
+
+        const ptsDelta     = newPoints - oldPoints;
+        const correctDelta = (isCorrect ? 1 : 0) - (wasCorrect ? 1 : 0);
+
+        if (ptsDelta !== 0 || correctDelta !== 0) {
+          const { data: lb } = await supabase.from('leaderboard_cache').select('*').eq('user_id', pred.user_id).maybeSingle();
+          await supabase.from('leaderboard_cache').upsert({
+            user_id: pred.user_id,
+            total_points:        Math.max(0, (lb?.total_points        ?? 0) + ptsDelta),
+            correct_predictions: Math.max(0, (lb?.correct_predictions ?? 0) + correctDelta),
+            total_predictions:   lb?.total_predictions ?? 0,
+            last_updated: new Date().toISOString()
+          });
+        }
+        if (isCorrect) winCount++;
+      }
+
+      showToast(`Kazanan işaretlendi! ${winCount} kullanıcı puan kazandı.`, 'success');
+      openEditMarketModal(marketId, matchId);
     };
 
     window.addNewOptionRow = (marketId) => {
