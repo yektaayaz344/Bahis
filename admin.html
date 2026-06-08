@@ -524,8 +524,8 @@
               ${s==='open' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(255,165,2,0.35);color:var(--warning)" onclick="window.setMatchStatus('${m.id}','locked',true)">Kilitle</button>` : ''}
               ${s==='locked' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(0,217,126,0.35);color:var(--success)" onclick="window.setMatchStatus('${m.id}','open',true)">Aç</button>` : ''}
               ${m.is_admin_approved && s!=='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(240,147,251,0.35);color:var(--accent)" onclick="window.openMarketCreator('${m.id}')">+Market</button>` : ''}
-              ${m.is_admin_approved && s!=='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(0,217,126,0.35);color:var(--success)" onclick="window.openScoreModal('${m.id}',false)">Skor Gir</button>` : ''}
-              ${s==='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(255,165,2,0.35);color:var(--warning)" onclick="window.openScoreModal('${m.id}',true)">Skoru Düzenle</button>` : ''}
+              ${m.is_admin_approved && s!=='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(0,217,126,0.35);color:var(--success)" onclick="window.openResultModal('${m.id}',false)">Kazananı Belirle</button>` : ''}
+              ${s==='finished' ? `<button class="btn btn-outline" style="padding:0.22rem 0.5rem;font-size:0.68rem;border-color:rgba(255,165,2,0.35);color:var(--warning)" onclick="window.openResultModal('${m.id}',true)">Sonucu Düzenle</button>` : ''}
               <button class="btn btn-ghost" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.openEditMatchModal('${m.id}')">Düzenle</button>
               <button class="btn btn-ghost" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.openMatchPredictions('${m.id}')">Tahminler</button>
               <button class="btn btn-danger" style="padding:0.22rem 0.5rem;font-size:0.68rem" onclick="window.deleteMatch('${m.id}')">Sil</button>
@@ -643,46 +643,125 @@
 
     // ── Score Entry ──────────────────────────────────────────────────────────
 
-    window.openScoreModal = function(matchId, isEdit) {
+    window.openResultModal = async function(matchId, isEdit) {
       const m = matchCache.get(matchId);
-      const warning = isEdit
-        ? `<div style="background:rgba(255,165,2,0.1);border:1px solid rgba(255,165,2,0.2);border-radius:var(--radius-sm);padding:0.75rem;font-size:0.8rem;color:var(--warning);margin-bottom:1rem">⚠ Eski puanlar iptal edilecek ve yeniden hesaplanacak.</div>`
-        : `<p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem">Skor gir ve tüm tahminler otomatik puanlanacak.</p>`;
 
-      openModal(isEdit ? 'Skoru Düzenle' : 'Skor Gir', `
+      const { data: markets, error } = await supabase
+        .from('bet_markets')
+        .select('*, bet_options(*)')
+        .eq('match_id', matchId)
+        .order('created_at', { ascending: true });
+
+      if (error) return showToast(error.message, 'error');
+      if (!markets?.length) return showToast('Bu maça henüz market eklenmemiş.', 'error');
+
+      const warning = isEdit
+        ? `<div style="background:rgba(255,165,2,0.08);border:1px solid rgba(255,165,2,0.2);border-radius:var(--radius-sm);padding:0.625rem 0.875rem;font-size:0.78rem;color:var(--warning);margin-bottom:1.25rem">⚠ Eski puanlar sıfırlanıp yeniden hesaplanacak.</div>`
+        : '';
+
+      const marketsHtml = markets.map(mk => {
+        const sortedOpts = (mk.bet_options || []).sort((a,b) => a.created_at > b.created_at ? 1 : -1);
+        const currentWinner = sortedOpts.find(o => o.is_correct === true);
+        return `
+          <div style="margin-bottom:1.125rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="font-family:var(--font-display);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.625rem">${mk.label}</div>
+            <div style="display:flex;flex-direction:column;gap:0.375rem">
+              ${sortedOpts.map(opt => `
+                <label style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius-sm);border:1px solid ${currentWinner?.id===opt.id?'rgba(0,217,126,0.4)':'rgba(255,255,255,0.07)'};background:${currentWinner?.id===opt.id?'rgba(0,217,126,0.07)':'rgba(255,255,255,0.02)'};cursor:pointer;transition:all 0.15s">
+                  <input type="radio" name="winner_${mk.id}" value="${opt.id}" ${currentWinner?.id===opt.id?'checked':''} style="width:auto;accent-color:var(--success);flex-shrink:0">
+                  <span style="flex:1;font-size:0.875rem">${opt.label}</span>
+                  <span style="font-family:var(--font-display);font-weight:700;color:var(--primary);font-size:0.9rem">${opt.odds_value}x</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>`;
+      }).join('');
+
+      openModal(isEdit ? 'Sonucu Düzenle' : 'Kazananı Belirle', `
+        <div style="text-align:center;font-weight:600;margin-bottom:1.125rem">${m?.home_flag||''} ${m?.home_team||''} — ${m?.away_team||''} ${m?.away_flag||''}</div>
         ${warning}
-        <div style="text-align:center;font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem">${m?.home_team||''} vs ${m?.away_team||''}</div>
-        <div class="score-inputs">
-          <input type="number" id="sHome" placeholder="0" min="0" max="20" value="${isEdit?(m?.home_score??''):''}">
-          <span class="score-sep">—</span>
-          <input type="number" id="sAway" placeholder="0" min="0" max="20" value="${isEdit?(m?.away_score??''):''}">
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;margin-bottom:1.5rem">
+          <div class="input-group" style="margin-bottom:0"><label>Ev Skoru <span style="font-weight:400;opacity:.5">(opsiyonel)</span></label><input type="number" id="sHome" placeholder="—" min="0" max="30" value="${isEdit&&m?.home_score!=null?m.home_score:''}"></div>
+          <span style="padding-top:1.4rem;color:var(--text-muted);font-weight:700">—</span>
+          <div class="input-group" style="margin-bottom:0"><label>Dep Skoru</label><input type="number" id="sAway" placeholder="—" min="0" max="30" value="${isEdit&&m?.away_score!=null?m.away_score:''}"></div>
         </div>
-        <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,var(--success),#4fffb0);color:#060b18" onclick="window.saveScore('${matchId}',${isEdit})">✓ Skoru Onayla ve Puanları Dağıt</button>
-      `, 'sm');
+        <div style="font-family:var(--font-display);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.875rem">Kazanan Seçenekler</div>
+        ${marketsHtml}
+        <button class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,var(--success),#4fffb0);color:#060b18;margin-top:0.5rem" onclick="window.saveResult('${matchId}',${isEdit})">✓ Onayla ve Puanları Dağıt</button>
+      `, 'md');
     };
 
-    window.saveScore = async (matchId, isEdit) => {
-      const h = parseInt(document.getElementById('sHome').value);
-      const a = parseInt(document.getElementById('sAway').value);
-      if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return showToast('Geçerli bir skor gir.', 'error');
+    window.saveResult = async (matchId, isEdit) => {
+      // Her market için seçilen kazanan option_id'yi topla
+      const radios = document.querySelectorAll('input[type="radio"][name^="winner_"]');
+      const winnerMap = {};
+      let anySelected = false;
+      for (const r of radios) {
+        if (r.checked) {
+          const marketId = r.name.replace('winner_', '');
+          winnerMap[marketId] = r.value;
+          anySelected = true;
+        }
+      }
+      if (!anySelected) return showToast('En az bir market için kazanan seç.', 'error');
 
-      const result = h > a ? 'home_win' : a > h ? 'away_win' : 'draw';
+      const hVal = document.getElementById('sHome').value;
+      const aVal = document.getElementById('sAway').value;
+      const h = hVal !== '' ? parseInt(hVal) : null;
+      const a = aVal !== '' ? parseInt(aVal) : null;
 
       if (isEdit) {
         showToast('Eski puanlar sıfırlanıyor...', 'info');
         await resetMatchCalculations(matchId);
       }
 
-      const { error } = await supabase.from('matches').update({
-        home_score: h, away_score: a, result, status: 'finished'
-      }).eq('id', matchId);
+      // Match sonucunu güncelle
+      const matchUpdate = { status: 'finished' };
+      if (h !== null && a !== null) {
+        matchUpdate.home_score = h;
+        matchUpdate.away_score = a;
+        matchUpdate.result = h > a ? 'home_win' : a > h ? 'away_win' : 'draw';
+      }
+      await supabase.from('matches').update(matchUpdate).eq('id', matchId);
 
-      if (error) return showToast(error.message, 'error');
+      // Her market için bet_options is_correct işaretle
+      for (const [marketId, winOptId] of Object.entries(winnerMap)) {
+        const { data: opts } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
+        for (const opt of opts ?? []) {
+          await supabase.from('bet_options').update({ is_correct: opt.id === winOptId }).eq('id', opt.id);
+        }
+      }
 
-      const { data, error: fErr } = await supabase.functions.invoke('calculate-points', { body: { match_id: matchId } });
-      if (fErr) return showToast('Puan hatası: ' + fErr.message, 'error');
+      // Tüm tahminleri puanla
+      const { data: preds } = await supabase.from('predictions')
+        .select('id, user_id, market_id, option_id, odds_at_prediction')
+        .eq('match_id', matchId);
 
-      showToast(`Puanlar dağıtıldı! (${data?.processed??0} tahmin)`, 'success');
+      const userPoints = {};
+      for (const pred of preds ?? []) {
+        const winOptId = winnerMap[pred.market_id];
+        const isCorrect = winOptId ? pred.option_id === winOptId : false;
+        const points = isCorrect ? Math.floor(Number(pred.odds_at_prediction) * 10) : 0;
+        await supabase.from('predictions').update({ is_correct: isCorrect, points_earned: points }).eq('id', pred.id);
+        if (!userPoints[pred.user_id]) userPoints[pred.user_id] = { total: 0, correct: 0, count: 0 };
+        userPoints[pred.user_id].total   += points;
+        userPoints[pred.user_id].correct += isCorrect ? 1 : 0;
+        userPoints[pred.user_id].count   += 1;
+      }
+
+      // Leaderboard güncelle
+      for (const [uid, pts] of Object.entries(userPoints)) {
+        const { data: lb } = await supabase.from('leaderboard_cache').select('*').eq('user_id', uid).maybeSingle();
+        await supabase.from('leaderboard_cache').upsert({
+          user_id: uid,
+          total_points:        (lb?.total_points        ?? 0) + pts.total,
+          correct_predictions: (lb?.correct_predictions ?? 0) + pts.correct,
+          total_predictions:   (lb?.total_predictions   ?? 0) + pts.count,
+          last_updated: new Date().toISOString()
+        });
+      }
+
+      showToast(`Puanlar dağıtıldı! (${preds?.length ?? 0} tahmin)`, 'success');
       closeModal();
       loadMatches();
     };
@@ -1349,14 +1428,13 @@
     window.recalcForMatch = async function() {
       const matchId = document.getElementById('recalcMatchSelect').value;
       if (!matchId) return showToast('Maç seç.', 'error');
-      if (!confirm('Bu maçın puanları sıfırlanıp yeniden hesaplanacak. Devam?')) return;
+      if (!confirm('Bu maçın puanları sıfırlanacak ve kazananları yeniden seçmen istenecek. Devam?')) return;
 
       showToast('Eski puanlar sıfırlanıyor...', 'info');
       await resetMatchCalculations(matchId);
-
-      const { data, error } = await supabase.functions.invoke('calculate-points', { body: { match_id: matchId } });
-      if (error) return showToast('Hata: ' + error.message, 'error');
-      showToast(`Yeniden hesaplandı! (${data?.processed??0} tahmin)`, 'success');
+      showToast('Sıfırlandı. Kazananları tekrar belirle.', 'info');
+      closeModal();
+      window.openResultModal(matchId, false);
     };
 
     document.getElementById('inviteForm').addEventListener('submit', async (e) => {
