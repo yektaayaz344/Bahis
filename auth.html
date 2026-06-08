@@ -258,12 +258,7 @@
         btn.disabled = false;
         btn.textContent = 'Kayıt Ol';
       } else {
-        msgEl.className = 'auth-message success';
-        msgEl.textContent = '✓ Kayıt başarılı! E-postana bir onay bağlantısı gönderdik. Onayladıktan sonra giriş yapabilirsin.';
-        msgEl.style.display = 'block';
-        e.target.reset();
-        btn.disabled = false;
-        btn.textContent = 'Kayıt Ol';
+        await login(email, password);
       }
     });
   </script>
