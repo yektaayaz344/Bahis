@@ -88,10 +88,23 @@ async function upsertMarketAndOptions(
   }
 
   if (dbMarket) {
-    await supabase.from('bet_options').delete().eq('market_id', dbMarket.id)
-    await supabase.from('bet_options').insert(
-      options.map(o => ({ ...o, market_id: dbMarket.id }))
-    )
+    for (const o of options) {
+      const { data: existing } = await supabase
+        .from('bet_options')
+        .select('id')
+        .eq('market_id', dbMarket.id)
+        .eq('outcome_key', o.outcome_key)
+        .maybeSingle()
+
+      if (existing) {
+        await supabase.from('bet_options')
+          .update({ label: o.label, odds_value: o.odds_value })
+          .eq('id', existing.id)
+      } else {
+        await supabase.from('bet_options')
+          .insert({ ...o, market_id: dbMarket.id })
+      }
+    }
   }
 }
 
@@ -115,7 +128,7 @@ Deno.serve(async (req) => {
 
     let marketsCreated = 0
 
-    for (const match of oddsData.slice(0, 20)) {
+    for (const match of oddsData) {
       const homeFlag = getFlag(match.home_team)
       const awayFlag = getFlag(match.away_team)
 
@@ -144,13 +157,7 @@ Deno.serve(async (req) => {
         if (!newMatch) continue
         dbMatchId = newMatch.id
       } else {
-        // Bayrakları ve zamanı güncelle
-        await supabase.from('matches').update({
-          match_time: match.commence_time,
-          home_flag: homeFlag,
-          away_flag: awayFlag,
-        }).eq('id', existing.id)
-        dbMatchId = existing.id
+        continue
       }
 
       // Tüm bookmaker'lardan marketleri topla (daha fazla coverage için)
