@@ -342,6 +342,18 @@
         </div>
       </div>
 
+      <!-- Bot Management -->
+      <div class="card" style="margin-bottom:1.75rem">
+        <h2 style="font-size:1rem;margin-bottom:0.5rem">Bot Yönetimi</h2>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">3 strateji botu: Favorici (en düşük oran), Riskci (en yüksek oran), Ortanci (ortanca oran).</p>
+        <div style="display:flex;gap:0.625rem;flex-wrap:wrap">
+          <button class="btn btn-outline" id="btnCreateBots">Botları Kur (tek seferlik)</button>
+          <button class="btn btn-outline" style="border-color:rgba(0,217,126,0.4);color:var(--success)" id="btnRunBots">Açık Maçlar İçin Tahmin Üret</button>
+          <button class="btn btn-outline" style="border-color:rgba(255,165,2,0.4);color:var(--warning)" id="btnBackfillBots">Geçmiş Maçların Puanlarını Dağıt</button>
+        </div>
+        <div id="botStatusMsg" style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted)"></div>
+      </div>
+
       <!-- Danger Zone -->
       <div class="danger-zone" style="margin-bottom:1.75rem">
         <div class="danger-zone-title">Tehlikeli Alan</div>
@@ -435,6 +447,7 @@
 
       await loadDashboard();
       initMatchButtons();
+      initBotButtons();
       initSystemButtons();
       renderSqlBlock();
     }
@@ -1493,6 +1506,39 @@
         document.getElementById('inviteEmail').value = '';
       }
     });
+
+    function initBotButtons() {
+      const msg = document.getElementById('botStatusMsg');
+
+      document.getElementById('btnCreateBots').onclick = async function() {
+        const btn = this; btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Kuruluyor...';
+        const { data, error } = await supabase.functions.invoke('create-bots');
+        btn.disabled = false; btn.textContent = orig;
+        if (error) { msg.textContent = 'Hata: ' + error.message; return; }
+        const summary = (data?.results || []).map(r => `${r.username}: ${r.status}`).join(' · ');
+        msg.textContent = summary;
+        showToast('Botlar kuruldu!', 'success');
+      };
+
+      document.getElementById('btnRunBots').onclick = async function() {
+        const btn = this; btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Üretiliyor...';
+        const { data, error } = await supabase.functions.invoke('run-bots', { body: { includeFinished: false } });
+        btn.disabled = false; btn.textContent = orig;
+        if (error) { msg.textContent = 'Hata: ' + error.message; return; }
+        showToast(`${data?.predictions_made ?? 0} bot tahmini oluşturuldu.`, 'success');
+        msg.textContent = `${data?.predictions_made ?? 0} tahmin üretildi.`;
+      };
+
+      document.getElementById('btnBackfillBots').onclick = async function() {
+        if (!confirm('Geçmiş tüm bitmiş maçlar için bot tahminleri ve puanları hesaplanacak. Devam?')) return;
+        const btn = this; btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Hesaplanıyor...';
+        const { data, error } = await supabase.functions.invoke('run-bots', { body: { includeFinished: true } });
+        btn.disabled = false; btn.textContent = orig;
+        if (error) { msg.textContent = 'Hata: ' + error.message; return; }
+        showToast(`Geçmiş tahminler hesaplandı! (${data?.predictions_made ?? 0} tahmin)`, 'success');
+        msg.textContent = `${data?.predictions_made ?? 0} tahmin, puanlar güncellendi.`;
+      };
+    }
 
     function initSystemButtons() {
       document.getElementById('btnFullReset').onclick = async () => {

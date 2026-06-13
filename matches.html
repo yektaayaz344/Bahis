@@ -144,11 +144,13 @@
             </div>
             ${match.bet_markets.filter(m => m.is_active || isFinished).map(market => {
               const myPred = predMap.get(market.id);
+              const keyOrder = { home_win: 0, draw: 1, away_win: 2 };
+              const sortedOptions = [...market.bet_options].sort((a, b) => (keyOrder[a.outcome_key] ?? 99) - (keyOrder[b.outcome_key] ?? 99));
               return `
               <div class="bet-market-section">
                 <div class="market-label">${market.label}</div>
                 <div class="odds-grid" style="grid-template-columns: repeat(${Math.min(market.bet_options.length, 3)}, 1fr)">
-                  ${market.bet_options.map(opt => {
+                  ${sortedOptions.map(opt => {
                     const isSelected = myPred?.option_id === opt.id;
                     const isWin  = isSelected && myPred?.is_correct === true;
                     const isLoss = isSelected && myPred?.is_correct === false;
