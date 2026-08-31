@@ -333,12 +333,30 @@
         return;
       }
 
+      const now = new Date();
+
       grid.innerHTML = matches.map(match => {
-        const date = new Date(match.match_time).toLocaleString('tr-TR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+        const dateObj = new Date(match.match_time);
+        const dateStr = dateObj.toLocaleString('tr-TR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+
+        // MAÇ BAŞLAMADAN 1 SAAT ÖNCE KİLİTLENME KONTROLÜ (60 Dakika = 3600000 ms)
+        const oneHourBeforeMatch = new Date(dateObj.getTime() - 60 * 60 * 1000);
+        const isAutoLocked = now >= oneHourBeforeMatch;
+
         const isFinished = match.status === 'finished';
-        const isLocked = match.status === 'locked' || isFinished;
-        const statusLabel = isFinished ? 'BİTTİ' : (isLocked ? 'KİLİTLİ' : 'AÇIK');
-        const statusClass = isFinished ? 'badge-finished' : (isLocked ? 'badge-locked' : 'badge-open');
+        const isLocked = match.status === 'locked' || isFinished || isAutoLocked;
+
+        let statusLabel = 'AÇIK';
+        let statusClass = 'badge-open';
+
+        if (isFinished) {
+          statusLabel = 'BİTTİ';
+          statusClass = 'badge-finished';
+        } else if (isLocked) {
+          statusLabel = '🔒 KİLİTLİ (Maça 1 saat kaldı)';
+          statusClass = 'badge-locked';
+        }
+
         const compClass = (match.group_name || '').toLowerCase().includes('europa') ? 'comp-uel' : 'comp-ucl';
 
         const homeClass = getTeamClass(match.home_team);
@@ -414,7 +432,7 @@
           </div>
         `;
 
-        // 3. Tam Maç Skoru (5 Puan)
+        // 3. Tam Maç Skoru (5 Puan) — TAKIM İSİMLERİ KALDIRILDI, SADECE SKOR GİRDİSİ VE KAYDET BUTONU
         const currentHomePred = predScore?.predicted_home_score ?? '';
         const currentAwayPred = predScore?.predicted_away_score ?? '';
         const htmlScore = `
@@ -424,12 +442,10 @@
               <span style="color:var(--ucl-gold);">5 PUAN</span>
             </div>
             <div class="score-input-group">
-              <span style="font-weight:700; font-size:0.85rem; color:#fff;">${match.home_team}</span>
               <input type="number" min="0" max="20" class="score-num-input" id="hs_pred_${match.id}" value="${currentHomePred}" placeholder="0" ${isLocked ? 'disabled' : ''}>
-              <span style="font-weight:800; color:var(--text-muted);">-</span>
+              <span style="font-weight:800; font-size:1.3rem; color:var(--text-muted);">-</span>
               <input type="number" min="0" max="20" class="score-num-input" id="as_pred_${match.id}" value="${currentAwayPred}" placeholder="0" ${isLocked ? 'disabled' : ''}>
-              <span style="font-weight:700; font-size:0.85rem; color:#fff;">${match.away_team}</span>
-              <button class="btn btn-outline save-score-btn" style="padding:0.4rem 0.75rem; font-size:0.75rem;" ${isLocked ? 'disabled' : ''}
+              <button class="btn btn-outline save-score-btn" style="padding:0.5rem 0.88rem; font-size:0.78rem;" ${isLocked ? 'disabled' : ''}
                 data-match-id="${match.id}" data-market-id="${marketScore?.id || ''}">
                 Kaydet
               </button>
@@ -446,7 +462,7 @@
           <div class="card animate-fade">
             <div class="match-header-bar">
               <span class="competition-badge ${compClass}">${match.group_name || 'UEFA Champions League'}</span>
-              <span class="match-date-time">📅 ${date}</span>
+              <span class="match-date-time">📅 ${dateStr}</span>
             </div>
 
             <div class="match-teams-display">
