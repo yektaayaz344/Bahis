@@ -14,19 +14,20 @@ Deno.serve(async (req) => {
 
     const { data: match } = await supabase
       .from('matches')
-      .select('result')
+      .select('home_score, away_score, result')
       .eq('id', match_id)
       .single()
 
     if (!match?.result) {
-      return new Response(JSON.stringify({ error: 'Maç sonucu girilmemiş' }), { status: 400, headers: corsHeaders })
+      return new Response(JSON.stringify({ error: 'Maç sonucu henüz girilmemiş' }), { status: 400, headers: corsHeaders })
     }
 
     const { data: marketRows } = await supabase
       .from('bet_markets')
-      .select('id')
+      .select('id, market_type')
       .eq('match_id', match_id)
 
+    const marketMap = new Map(marketRows?.map(m => [m.id, m.market_type]))
     const marketIds = marketRows?.map(m => m.id) ?? []
 
     const { data: options } = await supabase
@@ -34,35 +35,54 @@ Deno.serve(async (req) => {
       .select('id, outcome_key, market_id')
       .in('market_id', marketIds)
 
-    for (const opt of options ?? []) {
-      await supabase.from('bet_options').update({
-        is_correct: opt.outcome_key === match.result
-      }).eq('id', opt.id)
-    }
+    const optionMap = new Map(options?.map(o => [o.id, o]))
 
     const { data: preds } = await supabase
       .from('predictions')
-      .select('id, user_id, option_id')
+      .select('*')
       .eq('match_id', match_id)
 
-    const userPoints: Record<string, { total: number; correct: number; count: number }> = {}
+    const userPoints: Record<string, { totalPts: number; correct1x2: number; exactScores: number; count: number }> = {}
 
     for (const pred of preds ?? []) {
-      const isCorrect = options?.find(o => o.id === pred.option_id)?.outcome_key === match.result
-      const points = isCorrect ? 1 : 0
+      const mType = marketMap.get(pred.market_id)
+      const opt = optionMap.get(pred.option_id)
+      let pts = 0
+      let isCorrect = false
+
+      if (mType === '1x2') {
+        if (opt && opt.outcome_key === match.result) {
+          pts = 10
+          isCorrect = true
+        }
+      } else if (mType === 'exact_score') {
+        if (
+          pred.predicted_home_score !== null &&
+          pred.predicted_away_score !== null &&
+          pred.predicted_home_score === match.home_score &&
+          pred.predicted_away_score === match.away_score
+        ) {
+          pts = 50
+          isCorrect = true
+        }
+      }
 
       await supabase.from('predictions').update({
         is_correct: isCorrect,
-        points_earned: points
+        points_earned: pts
       }).eq('id', pred.id)
 
-      if (!userPoints[pred.user_id]) userPoints[pred.user_id] = { total: 0, correct: 0, count: 0 }
-      userPoints[pred.user_id].total   += points
-      userPoints[pred.user_id].correct += isCorrect ? 1 : 0
-      userPoints[pred.user_id].count   += 1
+      if (!userPoints[pred.user_id]) {
+        userPoints[pred.user_id] = { totalPts: 0, correct1x2: 0, exactScores: 0, count: 0 }
+      }
+
+      userPoints[pred.user_id].totalPts += pts
+      if (mType === '1x2' && isCorrect) userPoints[pred.user_id].correct1x2 += 1
+      if (mType === 'exact_score' && isCorrect) userPoints[pred.user_id].exactScores += 1
+      userPoints[pred.user_id].count += 1
     }
 
-    for (const [userId, pts] of Object.entries(userPoints)) {
+    for (const [userId, stats] of Object.entries(userPoints)) {
       const { data: existing } = await supabase
         .from('leaderboard_cache')
         .select('*')
@@ -71,9 +91,10 @@ Deno.serve(async (req) => {
 
       await supabase.from('leaderboard_cache').upsert({
         user_id: userId,
-        total_points:        (existing?.total_points        ?? 0) + pts.total,
-        correct_predictions: (existing?.correct_predictions ?? 0) + pts.correct,
-        total_predictions:   (existing?.total_predictions   ?? 0) + pts.count,
+        total_points:        (existing?.total_points        ?? 0) + stats.totalPts,
+        correct_predictions: (existing?.correct_predictions ?? 0) + stats.correct1x2,
+        exact_scores_count:  (existing?.exact_scores_count  ?? 0) + stats.exactScores,
+        total_predictions:   (existing?.total_predictions   ?? 0) + stats.count,
         last_updated: new Date().toISOString()
       })
     }

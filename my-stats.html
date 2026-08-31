@@ -36,27 +36,27 @@
     <header style="margin-bottom:2rem;">
       <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Tahmin İstatistiklerim</h1>
       <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-        FB, GS ve BJK Avrupa maçlarındaki tahmin başarım ve geçmişiniz.
+        FB, GS ve BJK Avrupa maçlarındaki tahmin başarım ve puanlarınız.
       </p>
     </header>
 
     <!-- Stats Cards Grid -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--ucl-gold); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TOPLAM PUANIM</div>
+        <div id="statPoints" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-gold);">0</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--ucl-cyan); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">DOĞRU MAÇ SONUCU (10P)</div>
+        <div id="stat1x2" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-cyan);">0</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--success); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TAM MAÇ SKORU (50P)</div>
+        <div id="statExact" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--success);">0</div>
+      </div>
       <div class="card" style="text-align:center;">
         <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TOPLAM TAHMİN</div>
         <div id="statTotal" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:#fff;">0</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:0.75rem; color:var(--success); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">DOĞRU TAHMİN</div>
-        <div id="statCorrect" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--success);">0</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:0.75rem; color:var(--danger); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">YANLIŞ TAHMİN</div>
-        <div id="statWrong" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--danger);">0</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:0.75rem; color:var(--ucl-cyan); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">BAŞARI ORANI</div>
-        <div id="statAccuracy" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-cyan);">%0</div>
       </div>
     </div>
 
@@ -89,9 +89,12 @@
     }
 
     async function loadStats(userId) {
+      const { data: cache } = await supabase.from('leaderboard_cache').select('total_points').eq('user_id', userId).maybeSingle();
+      document.getElementById('statPoints').textContent = (cache?.total_points ?? 0) + ' P';
+
       const { data: predictions, error } = await supabase
         .from('predictions')
-        .select('*, matches(*), bet_options(*)')
+        .select('*, matches(*), bet_markets(*), bet_options(*)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -101,24 +104,19 @@
       }
 
       let total = predictions ? predictions.length : 0;
-      let correct = 0;
-      let wrong = 0;
-      let pending = 0;
+      let count1x2 = 0;
+      let countExact = 0;
 
       (predictions || []).forEach(p => {
-        if (p.matches?.status === 'finished') {
-          if (p.is_correct === true) correct++;
-          else wrong++;
-        } else {
-          pending++;
+        if (p.is_correct) {
+          if (p.predicted_home_score !== null) countExact++;
+          else count1x2++;
         }
       });
 
       document.getElementById('statTotal').textContent = total;
-      document.getElementById('statCorrect').textContent = correct;
-      document.getElementById('statWrong').textContent = wrong;
-      const accuracyPct = (correct + wrong) > 0 ? ((correct / (correct + wrong)) * 100).toFixed(1) : '0';
-      document.getElementById('statAccuracy').textContent = `%${accuracyPct}`;
+      document.getElementById('stat1x2').textContent = count1x2;
+      document.getElementById('statExact').textContent = countExact;
 
       const historyDiv = document.getElementById('historyContainer');
       if (!predictions || predictions.length === 0) {
@@ -131,26 +129,33 @@
           <thead>
             <tr>
               <th>MAÇ</th>
-              <th>ORGANİZASYON</th>
+              <th>TAHMİN TÜRÜ</th>
               <th style="text-align:center;">TAHMİNİNİZ</th>
               <th style="text-align:center;">SKOR</th>
-              <th style="text-align:right;">DURUM</th>
+              <th style="text-align:right;">KAZANILAN PUAN</th>
             </tr>
           </thead>
           <tbody>
             ${predictions.map(p => {
               const match = p.matches;
+              const market = p.bet_markets;
               const opt = p.bet_options;
               const isFinished = match?.status === 'finished';
+              const isScorePred = p.predicted_home_score !== null;
 
-              let statusBadge = '<span class="status-badge badge-open">BEKLİYOR</span>';
-              if (isFinished) {
-                statusBadge = p.is_correct
-                  ? '<span class="status-badge badge-open" style="background:rgba(0,230,118,0.2); color:var(--success);">DOĞRU (+1 Puan)</span>'
-                  : '<span class="status-badge badge-finished" style="background:rgba(255,51,102,0.2); color:var(--danger);">YANLIŞ</span>';
+              let pickText = '';
+              if (isScorePred) {
+                pickText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
+              } else {
+                pickText = opt?.outcome_key === 'home_win' ? '1 (Ev Sahibi)' : (opt?.outcome_key === 'draw' ? 'X (Beraberlik)' : '2 (Deplasman)');
               }
 
-              const pickCode = opt?.outcome_key === 'home_win' ? '1 (Ev Sahibi)' : (opt?.outcome_key === 'draw' ? 'X (Beraberlik)' : '2 (Deplasman)');
+              let ptsBadge = '<span class="status-badge badge-open">BEKLİYOR</span>';
+              if (isFinished) {
+                ptsBadge = (p.points_earned > 0)
+                  ? `<span class="status-badge badge-open" style="background:rgba(255,215,0,0.2); color:var(--ucl-gold); font-size:0.9rem;">+${p.points_earned} PUAN</span>`
+                  : `<span class="status-badge badge-finished" style="background:rgba(255,51,102,0.15); color:var(--danger);">0 PUAN</span>`;
+              }
 
               return `
                 <tr>
@@ -158,16 +163,16 @@
                     <span style="font-weight:700; color:#fff;">${match ? match.home_team : '-'} vs ${match ? match.away_team : '-'}</span>
                   </td>
                   <td>
-                    <span style="font-size:0.8rem; color:var(--ucl-cyan);">${match ? match.group_name : '-'}</span>
+                    <span style="font-size:0.8rem; color:var(--ucl-cyan);">${isScorePred ? 'Tam Maç Skoru (50P)' : 'Maç Sonucu 1X2 (10P)'}</span>
                   </td>
                   <td style="text-align:center; font-weight:700; color:var(--ucl-gold);">
-                    ${pickCode}
+                    ${pickText}
                   </td>
                   <td style="text-align:center; font-weight:700;">
                     ${isFinished ? `${match.home_score} - ${match.away_score}` : 'VS'}
                   </td>
                   <td style="text-align:right;">
-                    ${statusBadge}
+                    ${ptsBadge}
                   </td>
                 </tr>
               `;

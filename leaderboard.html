@@ -37,7 +37,7 @@
       <div>
         <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Liderlik Tablosu</h1>
         <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-          En çok doğru tahmin yapan yarışmacılar (1 - X - 2 Doğru Tahmin Sayısı)
+          Maç Sonucu: <strong>10 Puan</strong> | Tam Maç Skoru: <strong>50 Puan</strong>
         </p>
       </div>
     </header>
@@ -73,40 +73,41 @@
     async function loadLeaderboard() {
       const container = document.getElementById('leaderboardContent');
 
-      // Fetch users and their correct predictions tally
       const { data: users, error: userError } = await supabase.from('users').select('id, username');
       if (userError) {
         container.innerHTML = `<div style="color:var(--danger); padding:1rem;">Hata: ${userError.message}</div>`;
         return;
       }
 
-      const { data: predictions, error: predError } = await supabase
-        .from('predictions')
-        .select('user_id, is_correct');
+      const { data: cache } = await supabase.from('leaderboard_cache').select('*');
+      const cacheMap = new Map(cache?.map(c => [c.user_id, c]));
 
-      if (predError) {
-        container.innerHTML = `<div style="color:var(--danger); padding:1rem;">Hata: ${predError.message}</div>`;
-        return;
-      }
+      const { data: predictions } = await supabase.from('predictions').select('user_id, points_earned, is_correct, predicted_home_score');
 
-      // Aggregate user stats
       const userStatsMap = new Map();
       users.forEach(u => {
-        userStatsMap.set(u.id, { username: u.username, total: 0, correct: 0 });
+        const c = cacheMap.get(u.id);
+        userStatsMap.set(u.id, {
+          username: u.username,
+          points: c?.total_points ?? 0,
+          correct1x2: 0,
+          exactScores: 0,
+          total: 0
+        });
       });
 
       (predictions || []).forEach(p => {
         const stats = userStatsMap.get(p.user_id);
         if (stats) {
           stats.total += 1;
-          if (p.is_correct === true) stats.correct += 1;
+          if (p.is_correct) {
+            if (p.predicted_home_score !== null) stats.exactScores += 1;
+            else stats.correct1x2 += 1;
+          }
         }
       });
 
-      const leaderList = Array.from(userStatsMap.values()).sort((a, b) => {
-        if (b.correct !== a.correct) return b.correct - a.correct;
-        return a.total - b.total; // Tie-breaker: fewer total picks for same correct count
-      });
+      const leaderList = Array.from(userStatsMap.values()).sort((a, b) => b.points - a.points);
 
       if (leaderList.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Henüz sıralama verisi bulunmuyor.</div>`;
@@ -119,16 +120,15 @@
             <tr>
               <th style="width:70px; text-align:center;">SIRA</th>
               <th>YARIŞMACI</th>
-              <th style="text-align:center;">TOPLAM TAHMİN</th>
-              <th style="text-align:center;">DOĞRU TAHMİN</th>
-              <th style="text-align:right;">BAŞARI YÜZDESİ</th>
+              <th style="text-align:center;">1X2 BİLME (10P)</th>
+              <th style="text-align:center;">TAM SKOR BİLME (50P)</th>
+              <th style="text-align:right;">TOPLAM PUAN</th>
             </tr>
           </thead>
           <tbody>
             ${leaderList.map((row, index) => {
               const rank = index + 1;
               const rankClass = rank === 1 ? 'rank-1' : (rank === 2 ? 'rank-2' : (rank === 3 ? 'rank-3' : ''));
-              const pct = row.total > 0 ? ((row.correct / row.total) * 100).toFixed(1) : '0.0';
 
               return `
                 <tr>
@@ -138,16 +138,16 @@
                   <td>
                     <span style="font-weight:700; font-size:1.05rem; color:#fff;">${row.username}</span>
                   </td>
-                  <td style="text-align:center; font-weight:600; color:var(--text-muted);">
-                    ${row.total}
+                  <td style="text-align:center; font-weight:600; color:var(--ucl-cyan);">
+                    ${row.correct1x2} Maç
                   </td>
                   <td style="text-align:center;">
-                    <span class="status-badge badge-open" style="font-size:0.95rem; font-family:var(--font-display); font-weight:800; padding:4px 12px;">
-                      ${row.correct} Doğru
+                    <span class="status-badge badge-open" style="font-size:0.9rem; font-family:var(--font-display); font-weight:800; padding:4px 10px; background:rgba(255,215,0,0.15); color:var(--ucl-gold); border-color:rgba(255,215,0,0.3);">
+                      🎯 ${row.exactScores} Skor
                     </span>
                   </td>
-                  <td style="text-align:right; font-family:var(--font-display); font-size:1.1rem; font-weight:800; color:var(--ucl-cyan);">
-                    %${pct}
+                  <td style="text-align:right; font-family:var(--font-display); font-size:1.4rem; font-weight:800; color:var(--ucl-gold);">
+                    ${row.points} PUAN
                   </td>
                 </tr>
               `;

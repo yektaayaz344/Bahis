@@ -8,6 +8,57 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dual-prediction-box {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .pred-section-title {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .score-input-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      background: rgba(5, 8, 20, 0.6);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+    }
+
+    .score-num-input {
+      width: 55px;
+      height: 42px;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: rgba(18, 27, 58, 0.9);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      border-radius: 6px;
+      color: #fff;
+    }
+
+    .score-num-input:focus {
+      outline: none;
+      border-color: var(--ucl-cyan);
+      box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+    }
+  </style>
 </head>
 <body>
   <div id="toastContainer"></div>
@@ -35,16 +86,16 @@
   <div class="container animate-fade">
     <header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem">
       <div>
-        <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Avrupa Maçları</h1>
+        <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Avrupa Fikstürü (24 Maç)</h1>
         <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-          Fenerbahçe, Galatasaray ve Beşiktaş'ın Şampiyonlar Ligi & Avrupa Ligi maçları! (1 - X - 2 Tahmin Et, Puanları Topla)
+          Her maç için 2 tahmin: <strong>Maç Sonucu (10 Puan)</strong> &amp; <strong>Tam Maç Skoru (50 Puan)</strong>!
         </p>
       </div>
     </header>
 
-    <div id="matchesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.5rem">
+    <div id="matchesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1.5rem">
       <div class="card" style="grid-column:1/-1; text-align:center; padding:3rem;">
-        <div style="color:var(--ucl-cyan); font-family:var(--font-display); font-size:1.5rem;">Maçlar Yükleniyor...</div>
+        <div style="color:var(--ucl-cyan); font-family:var(--font-display); font-size:1.5rem;">Fikstür Yükleniyor...</div>
       </div>
     </div>
   </div>
@@ -77,12 +128,6 @@
     let session;
     const TURKISH_TEAMS = ['fenerbahçe', 'fenerbahce', 'galatasaray', 'beşiktaş', 'besiktas', 'fb', 'gs', 'bjk'];
 
-    function isTurkishTeamMatch(match) {
-      const home = (match.home_team || '').toLowerCase();
-      const away = (match.away_team || '').toLowerCase();
-      return TURKISH_TEAMS.some(t => home.includes(t) || away.includes(t));
-    }
-
     function getTeamClass(teamName) {
       const t = teamName.toLowerCase();
       if (t.includes('fener')) return 'team-fb';
@@ -114,28 +159,23 @@
         return;
       }
 
-      // Filter matches specifically for FB, GS, BJK
-      const filteredMatches = matches ? matches.filter(isTurkishTeamMatch) : [];
-
       const { data: myPredictions } = await supabase
         .from('predictions')
-        .select('market_id, option_id, points_earned, is_correct')
+        .select('*')
         .eq('user_id', session.user.id);
 
       const predMap = new Map(myPredictions?.map(p => [p.market_id, p]));
 
-      if (!filteredMatches || filteredMatches.length === 0) {
+      if (!matches || matches.length === 0) {
         grid.innerHTML = `
           <div class="card" style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:3.5rem;">
-            <div style="font-size:2.5rem;margin-bottom:0.5rem;">⚽</div>
-            <h3 style="color:#fff;margin-bottom:0.5rem;">Şu an aktif Fenerbahçe, Galatasaray veya Beşiktaş maçı bulunmuyor.</h3>
-            <p>Admin panelinden yeni Avrupa maçları eklendiğinde burada listelenecektir.</p>
+            <h3>Şu an aktif maç bulunmuyor.</h3>
           </div>
         `;
         return;
       }
 
-      grid.innerHTML = filteredMatches.map(match => {
+      grid.innerHTML = matches.map(match => {
         const date = new Date(match.match_time).toLocaleString('tr-TR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
         const isFinished = match.status === 'finished';
         const isLocked = match.status === 'locked' || isFinished;
@@ -146,33 +186,76 @@
         const homeClass = getTeamClass(match.home_team);
         const awayClass = getTeamClass(match.away_team);
 
-        const market = match.bet_markets?.[0]; // 1X2 market
+        const market1X2 = match.bet_markets?.find(m => m.market_type === '1x2');
+        const marketScore = match.bet_markets?.find(m => m.market_type === 'exact_score');
 
-        let pickHtml = '';
-        if (market) {
-          const myPred = predMap.get(market.id);
+        const pred1X2 = market1X2 ? predMap.get(market1X2.id) : null;
+        const predScore = marketScore ? predMap.get(marketScore.id) : null;
+
+        // 1X2 HTML
+        let html1X2 = '';
+        if (market1X2) {
           const keyOrder = { home_win: 0, draw: 1, away_win: 2 };
-          const sortedOptions = [...(market.bet_options || [])].sort((a, b) => (keyOrder[a.outcome_key] ?? 99) - (keyOrder[b.outcome_key] ?? 99));
+          const sortedOptions = [...(market1X2.bet_options || [])].sort((a, b) => (keyOrder[a.outcome_key] ?? 99) - (keyOrder[b.outcome_key] ?? 99));
 
-          pickHtml = `
-            <div class="predict-picker-grid">
-              ${sortedOptions.map(opt => {
-                const isSelected = myPred && myPred.option_id === opt.id;
-                let optClass = 'pick-btn';
-                if (isSelected) optClass += ' selected';
-                if (isFinished && opt.is_correct) optClass += ' correct';
-                if (isFinished && isSelected && !opt.is_correct) optClass += ' wrong';
+          html1X2 = `
+            <div>
+              <div class="pred-section-title">
+                <span>1. MAÇ SONUCU TAHMİNİ</span>
+                <span style="color:var(--ucl-cyan);">+10 PUAN</span>
+              </div>
+              <div class="predict-picker-grid" style="margin-top:0.4rem; border-top:none; padding-top:0;">
+                ${sortedOptions.map(opt => {
+                  const isSelected = pred1X2 && pred1X2.option_id === opt.id;
+                  let optClass = 'pick-btn';
+                  if (isSelected) optClass += ' selected';
+                  if (isFinished && opt.is_correct) optClass += ' correct';
+                  if (isFinished && isSelected && !opt.is_correct) optClass += ' wrong';
 
-                const labelCode = opt.outcome_key === 'home_win' ? '1' : (opt.outcome_key === 'draw' ? 'X' : '2');
-                const subTitle = opt.outcome_key === 'home_win' ? 'Ev Sahibi' : (opt.outcome_key === 'draw' ? 'Beraberlik' : 'Deplasman');
+                  const labelCode = opt.outcome_key === 'home_win' ? '1' : (opt.outcome_key === 'draw' ? 'X' : '2');
+                  const subTitle = opt.outcome_key === 'home_win' ? 'Ev Sahibi' : (opt.outcome_key === 'draw' ? 'Beraberlik' : 'Deplasman');
 
-                return `
-                  <button class="${optClass}" ${isLocked ? 'disabled' : ''} data-market-id="${market.id}" data-match-id="${match.id}" data-option-id="${opt.id}">
-                    <span class="pick-code">${labelCode}</span>
-                    <span class="pick-label">${subTitle}</span>
-                  </button>
-                `;
-              }).join('')}
+                  return `
+                    <button class="${optClass}" ${isLocked ? 'disabled' : ''} data-market-id="${market1X2.id}" data-match-id="${match.id}" data-option-id="${opt.id}">
+                      <span class="pick-code">${labelCode}</span>
+                      <span class="pick-label">${subTitle}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Exact Score HTML
+        let htmlScore = '';
+        if (marketScore) {
+          const currentHomePred = predScore?.predicted_home_score ?? '';
+          const currentAwayPred = predScore?.predicted_away_score ?? '';
+          const scoreOptionId = marketScore.bet_options?.[0]?.id;
+
+          htmlScore = `
+            <div>
+              <div class="pred-section-title" style="margin-bottom:0.4rem;">
+                <span>2. MAÇ SKORU TAHMİNİ (TAM SKOR)</span>
+                <span style="color:var(--ucl-gold);">+50 PUAN</span>
+              </div>
+              <div class="score-input-group">
+                <span style="font-weight:700; font-size:0.85rem; color:#fff;">${match.home_team}</span>
+                <input type="number" min="0" max="20" class="score-num-input" id="hs_pred_${match.id}" value="${currentHomePred}" placeholder="0" ${isLocked ? 'disabled' : ''}>
+                <span style="font-weight:800; color:var(--text-muted);">-</span>
+                <input type="number" min="0" max="20" class="score-num-input" id="as_pred_${match.id}" value="${currentAwayPred}" placeholder="0" ${isLocked ? 'disabled' : ''}>
+                <span style="font-weight:700; font-size:0.85rem; color:#fff;">${match.away_team}</span>
+                <button class="btn btn-outline save-score-btn" style="padding:0.4rem 0.75rem; font-size:0.75rem;" ${isLocked ? 'disabled' : ''}
+                  data-match-id="${match.id}" data-market-id="${marketScore.id}" data-option-id="${scoreOptionId}">
+                  Kaydet
+                </button>
+              </div>
+              ${predScore && predScore.predicted_home_score !== null ? `
+                <div style="font-size:0.75rem; text-align:center; margin-top:4px; color:var(--ucl-gold);">
+                  Kaydedilen Skor Tahmininiz: <strong>${predScore.predicted_home_score} - ${predScore.predicted_away_score}</strong>
+                </div>
+              ` : ''}
             </div>
           `;
         }
@@ -203,12 +286,15 @@
               </div>
             </div>
 
-            ${pickHtml}
+            <div class="dual-prediction-box">
+              ${html1X2}
+              ${htmlScore}
+            </div>
           </div>
         `;
       }).join('');
 
-      // Add Click Listeners for Prediction Pick Buttons
+      // Click listener for 1X2 pick buttons
       document.querySelectorAll('.pick-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const target = e.currentTarget;
@@ -226,10 +312,46 @@
             }, { onConflict: 'user_id, market_id' });
 
             if (error) throw error;
-            window.showToast('Tahmininiz başarıyla kaydedildi!', 'success');
+            window.showToast('Maç sonucu tahmininiz kaydedildi! (+10 Puan adayı)', 'success');
             await loadMatches();
           } catch (err) {
-            window.showToast('Tahmin kaydedilemedi: ' + err.message, 'error');
+            window.showToast('Hata: ' + err.message, 'error');
+          }
+        });
+      });
+
+      // Click listener for Save Score buttons
+      document.querySelectorAll('.save-score-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const target = e.currentTarget;
+          const matchId = target.dataset.matchId;
+          const marketId = target.dataset.marketId;
+          const optionId = target.dataset.optionId;
+
+          const homeVal = document.getElementById(`hs_pred_${matchId}`).value;
+          const awayVal = document.getElementById(`as_pred_${matchId}`).value;
+
+          if (homeVal === '' || awayVal === '') {
+            window.showToast('Lütfen her iki skor alanını da doldurun!', 'error');
+            return;
+          }
+
+          try {
+            const { error } = await supabase.from('predictions').upsert({
+              user_id: session.user.id,
+              match_id: matchId,
+              market_id: marketId,
+              option_id: optionId,
+              predicted_home_score: parseInt(homeVal),
+              predicted_away_score: parseInt(awayVal),
+              odds_at_prediction: 1.00
+            }, { onConflict: 'user_id, market_id' });
+
+            if (error) throw error;
+            window.showToast(`Maç skoru tahmininiz kaydedildi: ${homeVal} - ${awayVal} (+50 Puan adayı)`, 'success');
+            await loadMatches();
+          } catch (err) {
+            window.showToast('Hata: ' + err.message, 'error');
           }
         });
       });

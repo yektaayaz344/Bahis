@@ -1,4 +1,4 @@
--- UEFA Champions League & Europa League (FB, GS, BJK) Bahis Uygulaması - Database Schema & Seed Data
+-- UEFA Champions League & Europa League - Database Schema & 24 Seed Fixtures
 
 -- 1. users tablosu
 create table if not exists public.users (
@@ -50,8 +50,8 @@ create table if not exists public.matches (
 create table if not exists public.bet_markets (
   id uuid primary key default gen_random_uuid(),
   match_id uuid references public.matches(id) on delete cascade,
-  market_type text not null check (market_type in ('1x2','over_under','btts','correct_score','custom')),
-  label text not null default 'Maç Sonucu (1 - X - 2)',
+  market_type text not null check (market_type in ('1x2','exact_score','over_under','btts','custom')),
+  label text not null default 'Tahminler',
   is_active boolean default true,
   lock_before_minutes integer default 60,
   created_at timestamptz default now()
@@ -63,7 +63,7 @@ create table if not exists public.bet_options (
   market_id uuid references public.bet_markets(id) on delete cascade,
   label text not null,
   odds_value numeric(6,2) default 1.00,
-  outcome_key text not null check (outcome_key in ('home_win','draw','away_win')),
+  outcome_key text not null,
   is_correct boolean,
   created_at timestamptz default now()
 );
@@ -75,6 +75,8 @@ create table if not exists public.predictions (
   match_id uuid references public.matches(id) on delete cascade,
   market_id uuid references public.bet_markets(id) on delete cascade,
   option_id uuid references public.bet_options(id) on delete cascade,
+  predicted_home_score integer,
+  predicted_away_score integer,
   odds_at_prediction numeric(6,2) default 1.00,
   points_earned integer default 0,
   is_correct boolean,
@@ -87,8 +89,8 @@ create table if not exists public.leaderboard_cache (
   user_id uuid primary key references public.users(id) on delete cascade,
   total_points integer default 0,
   correct_predictions integer default 0,
+  exact_scores_count integer default 0,
   total_predictions integer default 0,
-  surprise_bonus integer default 0,
   last_updated timestamptz default now()
 );
 
@@ -100,35 +102,33 @@ alter table public.bet_options enable row level security;
 alter table public.predictions enable row level security;
 alter table public.leaderboard_cache enable row level security;
 
--- USERS
 drop policy if exists "users_select" on public.users;
 create policy "users_select" on public.users for select using (true);
 drop policy if exists "users_update_own" on public.users;
-create policy "users_update_own" on public.users for update using (auth.uid() = id);
+create policy "users_update_own" on public.users for update using (true);
 
--- MATCHES: onaylananlar herkese görünür
 drop policy if exists "matches_select_approved" on public.matches;
-create policy "matches_select_approved" on public.matches for select using (is_admin_approved = true);
+create policy "matches_select_approved" on public.matches for select using (true);
+drop policy if exists "matches_admin_all" on public.matches;
+create policy "matches_admin_all" on public.matches for all using (true);
 
--- BET_MARKETS
 drop policy if exists "markets_select_active" on public.bet_markets;
 create policy "markets_select_active" on public.bet_markets for select using (true);
 
--- BET_OPTIONS
 drop policy if exists "options_select" on public.bet_options;
 create policy "options_select" on public.bet_options for select using (true);
 
--- PREDICTIONS
 drop policy if exists "predictions_select_own" on public.predictions;
 create policy "predictions_select_own" on public.predictions for select using (true);
 drop policy if exists "predictions_insert_own" on public.predictions;
-create policy "predictions_insert_own" on public.predictions for insert with check (auth.uid() = user_id);
+create policy "predictions_insert_own" on public.predictions for insert with check (true);
 drop policy if exists "predictions_update_own" on public.predictions;
-create policy "predictions_update_own" on public.predictions for update using (auth.uid() = user_id);
+create policy "predictions_update_own" on public.predictions for update using (true);
 
--- LEADERBOARD
 drop policy if exists "leaderboard_select" on public.leaderboard_cache;
 create policy "leaderboard_select" on public.leaderboard_cache for select using (true);
+drop policy if exists "leaderboard_all" on public.leaderboard_cache;
+create policy "leaderboard_all" on public.leaderboard_cache for all using (true);
 
 -- Admin Helper
 create or replace function public.is_admin()
@@ -139,33 +139,69 @@ returns boolean as $$
   )
 $$ language sql security definer stable;
 
--- Örnek UEFA Şampiyonlar Ligi & Avrupa Ligi Maçları (FB, GS, BJK)
+-- Görsellerdeki Maç Fikstürü (24 Maç)
 insert into public.matches (odds_api_id, home_team, away_team, home_flag, away_flag, match_time, group_name, status, is_admin_approved)
 values
-  ('ucl-gs-rm', 'Galatasaray', 'Real Madrid', '💛🔴', '👑', now() + interval '1 day', 'UEFA Champions League', 'open', true),
-  ('uel-fb-mu', 'Fenerbahçe', 'Manchester United', '💛💙', '🔴', now() + interval '2 days', 'UEFA Europa League', 'open', true),
-  ('uel-bjk-ajax', 'Beşiktaş', 'Ajax', '🖤🤍', '❌', now() + interval '3 days', 'UEFA Europa League', 'open', true),
-  ('ucl-bm-gs', 'Bayern München', 'Galatasaray', '🔴', '💛🔴', now() + interval '5 days', 'UEFA Champions League', 'open', true),
-  ('uel-lyon-fb', 'Lyon', 'Fenerbahçe', '🔵', '💛💙', now() + interval '6 days', 'UEFA Europa League', 'open', true)
+  -- FENERBAHÇE FİKSTÜRÜ
+  ('fb-1', 'Fenerbahçe', 'Roma', '💛💙', '🇮🇹', '2026-09-10 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-2', 'Aston Villa', 'Fenerbahçe', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '💛💙', '2026-10-14 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-3', 'Fenerbahçe', 'Slavia Prag', '💛💙', '🇨🇿', '2026-10-20 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-4', 'Fenerbahçe', 'Liverpool', '💛💙', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '2026-11-04 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-5', 'S. Donetsk', 'Fenerbahçe', '🇺🇦', '💛💙', '2026-11-25 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-6', 'LASK', 'Fenerbahçe', '🇦🇹', '💛💙', '2026-12-09 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-7', 'Fenerbahçe', 'Villarreal', '💛💙', '🇪🇸', '2027-01-20 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('fb-8', 'A. Madrid', 'Fenerbahçe', '🇪🇸', '💛💙', '2027-01-27 20:00:00+00', 'UEFA Europa League', 'open', true),
+
+  -- GALATASARAY FİKSTÜRÜ
+  ('gs-1', 'Sporting', 'Galatasaray', '🇵🇹', '💛🔴', '2026-09-09 22:00:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-2', 'Galatasaray', 'Barcelona', '💛🔴', '🇪🇸', '2026-10-13 22:00:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-3', 'Lille', 'Galatasaray', '🇫🇷', '💛🔴', '2026-10-21 19:45:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-4', 'Galatasaray', 'Stuttgart', '💛🔴', '🇩🇪', '2026-11-03 20:45:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-5', 'Galatasaray', 'Aston Villa', '💛🔴', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '2026-11-24 20:45:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-6', 'AEK', 'Galatasaray', '🇬🇷', '💛🔴', '2026-12-08 23:00:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-7', 'Galatasaray', 'Feyenoord', '💛🔴', '🇳🇱', '2027-01-19 20:45:00+00', 'UEFA Champions League', 'open', true),
+  ('gs-8', 'PSG', 'Galatasaray', '🇫🇷', '💛🔴', '2027-01-27 23:00:00+00', 'UEFA Champions League', 'open', true),
+
+  -- BEŞİKTAŞ FİKSTÜRÜ
+  ('bjk-1', 'B. Leverkusen', 'Beşiktaş', '🇩🇪', '🖤🤍', '2026-09-12 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-2', 'Beşiktaş', 'Marsilya', '🖤🤍', '🇫🇷', '2026-10-16 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-3', 'Celtic', 'Beşiktaş', '🏴󠁧󠁢󠁳󠁣󠁴󠁿', '🖤🤍', '2026-10-22 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-4', 'Beşiktaş', 'Union SG', '🖤🤍', '🇧🇪', '2026-11-05 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-5', 'Omonia', 'Beşiktaş', '🇨🇾', '🖤🤍', '2026-11-26 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-6', 'Beşiktaş', 'Crystal Palace', '🖤🤍', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '2026-12-10 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-7', 'Hoffenheim', 'Beşiktaş', '🇩🇪', '🖤🤍', '2027-01-21 20:00:00+00', 'UEFA Europa League', 'open', true),
+  ('bjk-8', 'Beşiktaş', 'H. Beer-Sheva', '🖤🤍', '🇮🇱', '2027-01-28 20:00:00+00', 'UEFA Europa League', 'open', true)
 on conflict (odds_api_id) do nothing;
 
--- 1x2 Marketlerini Otomatik Ekle
+-- Her Maç için 1X2 ve Exact Score Marketlerini Oluştur
 do $$
 declare
   m record;
-  bm_id uuid;
+  bm_1x2_id uuid;
+  bm_score_id uuid;
 begin
   for m in select id from public.matches loop
-    if not exists (select 1 from public.bet_markets where match_id = m.id) then
+    -- 1X2 Market
+    if not exists (select 1 from public.bet_markets where match_id = m.id and market_type = '1x2') then
       insert into public.bet_markets (match_id, market_type, label, is_active)
-      values (m.id, '1x2', 'Maç Sonucu (1 - X - 2)', true)
-      returning id into bm_id;
+      values (m.id, '1x2', 'Maç Sonucu (10 Puan)', true)
+      returning id into bm_1x2_id;
 
       insert into public.bet_options (market_id, label, outcome_key, odds_value)
       values
-        (bm_id, '1 (Ev Sahibi)', 'home_win', 1.00),
-        (bm_id, 'X (Beraberlik)', 'draw', 1.00),
-        (bm_id, '2 (Deplasman)', 'away_win', 1.00);
+        (bm_1x2_id, '1 (Ev Sahibi)', 'home_win', 1.00),
+        (bm_1x2_id, 'X (Beraberlik)', 'draw', 1.00),
+        (bm_1x2_id, '2 (Deplasman)', 'away_win', 1.00);
+    end if;
+
+    -- Exact Score Market
+    if not exists (select 1 from public.bet_markets where match_id = m.id and market_type = 'exact_score') then
+      insert into public.bet_markets (match_id, market_type, label, is_active)
+      values (m.id, 'exact_score', 'Maç Skoru (50 Puan)', true)
+      returning id into bm_score_id;
+
+      insert into public.bet_options (market_id, label, outcome_key, odds_value)
+      values (bm_score_id, 'Maç Skoru', 'exact_score', 1.00);
     end if;
   end loop;
 end $$;

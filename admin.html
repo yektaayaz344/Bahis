@@ -33,7 +33,7 @@
 
   <nav>
     <a class="nav-brand" href="index.html">
-      🏆 UCL & UEL <span class="league-tag" style="background:var(--warning); color:#000;">ADMIN</span>
+      🏆 UCL & UEL <span class="league-tag" style="background:var(--warning); color:#000;">FULL ADMIN</span>
     </a>
     <div class="nav-center" id="navCenter">
       <ul class="nav-links">
@@ -49,21 +49,35 @@
 
   <div class="container animate-fade">
     <header style="margin-bottom:1.5rem;">
-      <h1 class="gradient-text" style="font-size:2.2rem;margin-bottom:0.2rem">Admin Yönetim Paneli</h1>
-      <p style="color:var(--text-muted);font-weight:600;">FB, GS ve BJK Maç Yönetimi, Skor Girme & Puan Hesaplama</p>
+      <h1 class="gradient-text" style="font-size:2.2rem;margin-bottom:0.2rem">Admin Tam Yetki Paneli</h1>
+      <p style="color:var(--text-muted);font-weight:600;">Skor Girme (10 &amp; 50 Puan), Kullanıcı Puanı Ekle/Sil/Düzelt &amp; Fikstür Yönetimi</p>
     </header>
 
     <div class="admin-tabs" style="display:flex; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem;">
-      <button class="admin-tab-btn active" onclick="switchAdminTab('matches')">Maç Yönetimi</button>
-      <button class="admin-tab-btn" onclick="switchAdminTab('addMatch')">+ Yeni Avrupa Maçı Ekle</button>
+      <button class="admin-tab-btn active" onclick="switchAdminTab('matches')">Maç &amp; Skor Yönetimi</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('users')">Kullanıcı &amp; Puan Sil/Ekle</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('addMatch')">+ Yeni Maç Ekle</button>
     </div>
 
     <!-- MAÇ YÖNETİMİ PANELİ -->
     <div class="tab-panel active" id="panelMatches">
       <div class="card">
-        <h3 style="margin-bottom:1rem;">Mevcut Maçlar</h3>
+        <h3 style="margin-bottom:1rem;">Avrupa Fikstürü Maçları (Skor Gir &amp; Puanları Dağıt)</h3>
         <div id="adminMatchesList">
           <div style="text-align:center; padding:2rem; color:var(--ucl-cyan);">Maçlar yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KULLANICI & PUAN YÖNETİMİ PANELİ -->
+    <div class="tab-panel" id="panelUsers">
+      <div class="card">
+        <h3 style="margin-bottom:1rem;">Kullanıcı Listesi &amp; Puan Yönetimi</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.25rem;">
+          İstediğiniz kullanıcının puanını manuel artırabilir, eksiltebilir veya sıfırlayabilirsiniz.
+        </p>
+        <div id="adminUsersList">
+          <div style="text-align:center; padding:2rem; color:var(--ucl-cyan);">Kullanıcılar yükleniyor...</div>
         </div>
       </div>
     </div>
@@ -108,7 +122,7 @@
             <input type="datetime-local" id="matchTime" class="form-input" required>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width:100%;">Maçı Oluştur ve Yayınla (1X2 Market Dahil)</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Maçı Oluştur (1X2 ve Tam Skor Marketli)</button>
         </form>
       </div>
     </div>
@@ -136,8 +150,11 @@
       if (tab === 'matches') {
         document.querySelectorAll('.admin-tab-btn')[0].classList.add('active');
         document.getElementById('panelMatches').classList.add('active');
-      } else {
+      } else if (tab === 'users') {
         document.querySelectorAll('.admin-tab-btn')[1].classList.add('active');
+        document.getElementById('panelUsers').classList.add('active');
+      } else {
+        document.querySelectorAll('.admin-tab-btn')[2].classList.add('active');
         document.getElementById('panelAddMatch').classList.add('active');
       }
     }
@@ -158,6 +175,7 @@
       }
       document.getElementById('logoutBtn').addEventListener('click', logout);
       await loadAdminMatches();
+      await loadAdminUsers();
     }
 
     async function loadAdminMatches() {
@@ -184,7 +202,7 @@
               <th>ORGANİZASYON</th>
               <th>MAÇ</th>
               <th>DURUM</th>
-              <th style="text-align:center;">SKOR GİR & BİTİR</th>
+              <th style="text-align:center;">SKOR GİR &amp; PUANLARI DAĞIT</th>
               <th style="text-align:right;">İŞLEMLER</th>
             </tr>
           </thead>
@@ -210,7 +228,9 @@
                           <input type="number" id="hs_${m.id}" style="width:45px; text-align:center;" class="form-input" min="0" value="0">
                           <span>-</span>
                           <input type="number" id="as_${m.id}" style="width:45px; text-align:center;" class="form-input" min="0" value="0">
-                          <button class="btn btn-primary finish-match-btn" data-id="${m.id}" style="padding:4px 8px; font-size:0.75rem;">Skoru İşle</button>
+                          <button class="btn btn-primary finish-match-btn" data-id="${m.id}" style="padding:4px 8px; font-size:0.75rem;">
+                            Skoru İşle (10/50 Puan)
+                          </button>
                         </div>
                       `}
                   </td>
@@ -224,7 +244,7 @@
         </table>
       `;
 
-      // Finish Match Event Listeners
+      // Finish Match & Distribute Points
       document.querySelectorAll('.finish-match-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const matchId = e.currentTarget.dataset.id;
@@ -236,7 +256,7 @@
           else if (awayScore > homeScore) result = 'away_win';
 
           try {
-            // Update Match Status and Score
+            // Update Match Result
             const { error: matchErr } = await supabase
               .from('matches')
               .update({
@@ -249,35 +269,50 @@
 
             if (matchErr) throw matchErr;
 
-            // Evaluate predictions for this match
-            const { data: markets } = await supabase.from('bet_markets').select('id').eq('match_id', matchId);
-            if (markets && markets.length > 0) {
-              const marketId = markets[0].id;
-              const { data: options } = await supabase.from('bet_options').select('id, outcome_key').eq('market_id', marketId);
+            // Fetch markets
+            const { data: markets } = await supabase.from('bet_markets').select('id, market_type').eq('match_id', matchId);
+            const m1X2 = markets?.find(m => m.market_type === '1x2');
+            const mScore = markets?.find(m => m.market_type === 'exact_score');
 
-              // Mark correct options
+            // Evaluate 1X2 market options
+            if (m1X2) {
+              const { data: options } = await supabase.from('bet_options').select('id, outcome_key').eq('market_id', m1X2.id);
               for (const opt of (options || [])) {
                 const isCorrect = opt.outcome_key === result;
                 await supabase.from('bet_options').update({ is_correct: isCorrect }).eq('id', opt.id);
 
-                // Mark prediction records
                 if (isCorrect) {
-                  await supabase.from('predictions').update({ is_correct: true, points_earned: 1 }).eq('option_id', opt.id);
+                  await supabase.from('predictions').update({ is_correct: true, points_earned: 10 }).eq('option_id', opt.id);
                 } else {
-                  await supabase.from('predictions').update({ is_correct: false, points_earned: 0 }).eq('market_id', marketId).neq('option_id', opt.id);
+                  await supabase.from('predictions').update({ is_correct: false, points_earned: 0 }).eq('market_id', m1X2.id).neq('option_id', opt.id);
                 }
               }
             }
 
-            window.showToast('Skor girildi ve tahminler değerlendirildi!', 'success');
+            // Evaluate Exact Score market
+            if (mScore) {
+              const { data: preds } = await supabase.from('predictions').select('*').eq('market_id', mScore.id);
+              for (const p of (preds || [])) {
+                const isExact = p.predicted_home_score === homeScore && p.predicted_away_score === awayScore;
+                await supabase.from('predictions').update({
+                  is_correct: isExact,
+                  points_earned: isExact ? 50 : 0
+                }).eq('id', p.id);
+              }
+            }
+
+            // Recalculate Leaderboard
+            await updateAllLeaderboards();
+
+            window.showToast(`Skor işlendi (${homeScore}-${awayScore})! Puanlar dağıtıldı.`, 'success');
             await loadAdminMatches();
           } catch (err) {
-            window.showToast('Skor işlenirken hata: ' + err.message, 'error');
+            window.showToast('Hata: ' + err.message, 'error');
           }
         });
       });
 
-      // Delete Match Event Listeners
+      // Delete match
       document.querySelectorAll('.delete-match-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           if (!confirm('Bu maçı silmek istediğinizden emin misiniz?')) return;
@@ -287,6 +322,128 @@
           await loadAdminMatches();
         });
       });
+    }
+
+    async function loadAdminUsers() {
+      const container = document.getElementById('adminUsersList');
+      const { data: users, error } = await supabase.from('users').select('*');
+      if (error) {
+        container.innerHTML = `<div style="color:var(--danger);">Hata: ${error.message}</div>`;
+        return;
+      }
+
+      const { data: cache } = await supabase.from('leaderboard_cache').select('*');
+      const cacheMap = new Map(cache?.map(c => [c.user_id, c.total_points]));
+
+      container.innerHTML = `
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>KULLANICI ADI</th>
+              <th>YETKİ</th>
+              <th style="text-align:center;">MEVCUT PUAN</th>
+              <th style="text-align:right;">PUAN DÜZENLE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => {
+              const pts = cacheMap.get(u.id) ?? 0;
+              return `
+                <tr>
+                  <td>
+                    <strong style="color:#fff;">${u.username}</strong>
+                  </td>
+                  <td>
+                    <span class="status-badge ${u.is_admin ? 'badge-locked' : 'badge-finished'}">
+                      ${u.is_admin ? 'ADMIN' : 'ÜYE'}
+                    </span>
+                  </td>
+                  <td style="text-align:center;">
+                    <span style="font-family:var(--font-display); font-size:1.3rem; font-weight:800; color:var(--ucl-gold);" id="user_pts_${u.id}">
+                      ${pts} Puan
+                    </span>
+                  </td>
+                  <td style="text-align:right;">
+                    <div style="display:inline-flex; gap:6px;">
+                      <button class="btn btn-outline add-pts-btn" data-id="${u.id}" data-amount="10" style="padding:2px 8px; font-size:0.75rem;">+10 Puan</button>
+                      <button class="btn btn-outline add-pts-btn" data-id="${u.id}" data-amount="50" style="padding:2px 8px; font-size:0.75rem;">+50 Puan</button>
+                      <button class="btn btn-danger sub-pts-btn" data-id="${u.id}" data-amount="10" style="padding:2px 8px; font-size:0.75rem;">-10 Puan</button>
+                      <button class="btn btn-danger reset-pts-btn" data-id="${u.id}" style="padding:2px 8px; font-size:0.75rem;">Sıfırla</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // Point adjustments listeners
+      document.querySelectorAll('.add-pts-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const uid = e.currentTarget.dataset.id;
+          const amt = parseInt(e.currentTarget.dataset.amount);
+          await modifyUserPoints(uid, amt);
+        });
+      });
+
+      document.querySelectorAll('.sub-pts-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const uid = e.currentTarget.dataset.id;
+          const amt = -parseInt(e.currentTarget.dataset.amount);
+          await modifyUserPoints(uid, amt);
+        });
+      });
+
+      document.querySelectorAll('.reset-pts-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          if (!confirm('Bu kullanıcının puanını sıfırlamak istediğinize emin misiniz?')) return;
+          const uid = e.currentTarget.dataset.id;
+          await supabase.from('leaderboard_cache').upsert({ user_id: uid, total_points: 0, last_updated: new Date().toISOString() });
+          window.showToast('Puan sıfırlandı.', 'info');
+          await loadAdminUsers();
+        });
+      });
+    }
+
+    async function modifyUserPoints(userId, delta) {
+      const { data: existing } = await supabase.from('leaderboard_cache').select('total_points').eq('user_id', userId).maybeSingle();
+      const current = existing?.total_points ?? 0;
+      const newTotal = Math.max(0, current + delta);
+
+      await supabase.from('leaderboard_cache').upsert({
+        user_id: userId,
+        total_points: newTotal,
+        last_updated: new Date().toISOString()
+      });
+
+      window.showToast(`Puan güncellendi (${newTotal} Puan)`, 'success');
+      await loadAdminUsers();
+    }
+
+    async function updateAllLeaderboards() {
+      const { data: preds } = await supabase.from('predictions').select('user_id, points_earned, is_correct, predicted_home_score');
+      const userSummary = new Map();
+
+      (preds || []).forEach(p => {
+        if (!userSummary.has(p.user_id)) {
+          userSummary.set(p.user_id, { pts: 0, correctCount: 0, totalCount: 0 });
+        }
+        const s = userSummary.get(p.user_id);
+        s.pts += (p.points_earned || 0);
+        s.totalCount += 1;
+        if (p.is_correct) s.correctCount += 1;
+      });
+
+      for (const [uid, stat] of userSummary.entries()) {
+        await supabase.from('leaderboard_cache').upsert({
+          user_id: uid,
+          total_points: stat.pts,
+          correct_predictions: stat.correctCount,
+          total_predictions: stat.totalCount,
+          last_updated: new Date().toISOString()
+        });
+      }
     }
 
     // Create New Match Form Submit
@@ -317,20 +474,29 @@
         if (matchErr) throw matchErr;
 
         // Create 1X2 Market
-        const { data: market, error: mErr } = await supabase.from('bet_markets').insert({
+        const { data: m1x2 } = await supabase.from('bet_markets').insert({
           match_id: match.id,
           market_type: '1x2',
-          label: 'Maç Sonucu (1 - X - 2)',
+          label: 'Maç Sonucu (10 Puan)',
           is_active: true
         }).select().single();
 
-        if (mErr) throw mErr;
-
-        // Create 1X2 Options
         await supabase.from('bet_options').insert([
-          { market_id: market.id, label: '1 (Ev Sahibi)', outcome_key: 'home_win', odds_value: 1.00 },
-          { market_id: market.id, label: 'X (Beraberlik)', outcome_key: 'draw', odds_value: 1.00 },
-          { market_id: market.id, label: '2 (Deplasman)', outcome_key: 'away_win', odds_value: 1.00 }
+          { market_id: m1x2.id, label: '1 (Ev Sahibi)', outcome_key: 'home_win', odds_value: 1.00 },
+          { market_id: m1x2.id, label: 'X (Beraberlik)', outcome_key: 'draw', odds_value: 1.00 },
+          { market_id: m1x2.id, label: '2 (Deplasman)', outcome_key: 'away_win', odds_value: 1.00 }
+        ]);
+
+        // Create Exact Score Market
+        const { data: mScore } = await supabase.from('bet_markets').insert({
+          match_id: match.id,
+          market_type: 'exact_score',
+          label: 'Maç Skoru (50 Puan)',
+          is_active: true
+        }).select().single();
+
+        await supabase.from('bet_options').insert([
+          { market_id: mScore.id, label: 'Maç Skoru', outcome_key: 'exact_score', odds_value: 1.00 }
         ]);
 
         window.showToast('Yeni Avrupa Maçı eklendi!', 'success');

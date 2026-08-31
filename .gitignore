@@ -14,3 +14,4 @@ supabase/config.toml
 # Editor
 .vscode/
 .idea/
+.vercel
