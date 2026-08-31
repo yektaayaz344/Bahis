@@ -37,7 +37,7 @@
       <div>
         <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Liderlik Tablosu</h1>
         <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-          Maç Sonucu: <strong>10 Puan</strong> | Tam Maç Skoru: <strong>50 Puan</strong>
+          Maç Sonucu: <strong>1 Puan</strong> | Golcü Tahmini: <strong>2 Puan</strong> | Tam Skor: <strong>5 Puan</strong>
         </p>
       </div>
     </header>
@@ -82,7 +82,7 @@
       const { data: cache } = await supabase.from('leaderboard_cache').select('*');
       const cacheMap = new Map(cache?.map(c => [c.user_id, c]));
 
-      const { data: predictions } = await supabase.from('predictions').select('user_id, points_earned, is_correct, predicted_home_score');
+      const { data: predictions } = await supabase.from('predictions').select('user_id, points_earned, is_correct, predicted_home_score, predicted_scorer');
 
       const userStatsMap = new Map();
       users.forEach(u => {
@@ -91,19 +91,17 @@
           username: u.username,
           points: c?.total_points ?? 0,
           correct1x2: 0,
-          exactScores: 0,
-          total: 0
+          scorers: 0,
+          exactScores: 0
         });
       });
 
       (predictions || []).forEach(p => {
         const stats = userStatsMap.get(p.user_id);
-        if (stats) {
-          stats.total += 1;
-          if (p.is_correct) {
-            if (p.predicted_home_score !== null) stats.exactScores += 1;
-            else stats.correct1x2 += 1;
-          }
+        if (stats && p.is_correct) {
+          if (p.predicted_home_score !== null) stats.exactScores += 1;
+          else if (p.predicted_scorer) stats.scorers += 1;
+          else stats.correct1x2 += 1;
         }
       });
 
@@ -120,8 +118,9 @@
             <tr>
               <th style="width:70px; text-align:center;">SIRA</th>
               <th>YARIŞMACI</th>
-              <th style="text-align:center;">1X2 BİLME (10P)</th>
-              <th style="text-align:center;">TAM SKOR BİLME (50P)</th>
+              <th style="text-align:center;">1X2 BİLME (1P)</th>
+              <th style="text-align:center;">GOLCÜ BİLME (2P)</th>
+              <th style="text-align:center;">TAM SKOR BİLME (5P)</th>
               <th style="text-align:right;">TOPLAM PUAN</th>
             </tr>
           </thead>
@@ -140,6 +139,9 @@
                   </td>
                   <td style="text-align:center; font-weight:600; color:var(--ucl-cyan);">
                     ${row.correct1x2} Maç
+                  </td>
+                  <td style="text-align:center; font-weight:600; color:var(--success);">
+                    ${row.scorers} Golcü
                   </td>
                   <td style="text-align:center;">
                     <span class="status-badge badge-open" style="font-size:0.9rem; font-family:var(--font-display); font-weight:800; padding:4px 10px; background:rgba(255,215,0,0.15); color:var(--ucl-gold); border-color:rgba(255,215,0,0.3);">

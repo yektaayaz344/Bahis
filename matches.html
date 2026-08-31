@@ -58,6 +58,13 @@
       border-color: var(--ucl-cyan);
       box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
     }
+
+    .team-logo-img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    }
   </style>
 </head>
 <body>
@@ -88,7 +95,7 @@
       <div>
         <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Avrupa Fikstürü (24 Maç)</h1>
         <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-          Her maç için 2 tahmin: <strong>Maç Sonucu (10 Puan)</strong> &amp; <strong>Tam Maç Skoru (50 Puan)</strong>!
+          3 Tahmin: <strong>Maç Sonucu (1 Puan)</strong> | <strong>Golcü Tahmini (2 Puan)</strong> | <strong>Tam Skor (5 Puan)</strong>
         </p>
       </div>
     </header>
@@ -126,7 +133,50 @@
     import { requireAuth, logout, isAdmin } from './js/auth.js';
 
     let session;
-    const TURKISH_TEAMS = ['fenerbahçe', 'fenerbahce', 'galatasaray', 'beşiktaş', 'besiktas', 'fb', 'gs', 'bjk'];
+
+    const TEAM_LOGOS = {
+      'fenerbahçe': 'https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.svg',
+      'galatasaray': 'https://upload.wikimedia.org/wikipedia/commons/3/37/Galatasaray_Star_Logo.svg',
+      'beşiktaş': 'https://upload.wikimedia.org/wikipedia/commons/2/20/Besiktas_JK.svg',
+      'roma': 'https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg',
+      'aston villa': 'https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo_2024.svg',
+      'slavia prag': 'https://upload.wikimedia.org/wikipedia/commons/e/ed/SK_Slavia_Praha_logo.svg',
+      'liverpool': 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+      'shakhtar donetsk': 'https://upload.wikimedia.org/wikipedia/en/a/a1/FC_Shakhtar_Donetsk.svg',
+      's. donetsk': 'https://upload.wikimedia.org/wikipedia/en/a/a1/FC_Shakhtar_Donetsk.svg',
+      'lask': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/LASK_Logo_2023.svg',
+      'villarreal': 'https://upload.wikimedia.org/wikipedia/en/7/70/Villarreal_CF_logo.svg',
+      'atletico madrid': 'https://upload.wikimedia.org/wikipedia/en/c/c1/Atletico_Madrid_logo_%282024%29.svg',
+      'a. madrid': 'https://upload.wikimedia.org/wikipedia/en/c/c1/Atletico_Madrid_logo_%282024%29.svg',
+      'sporting': 'https://upload.wikimedia.org/wikipedia/en/e/e1/Sporting_Clube_de_Portugal_%28logo%29.svg',
+      'barcelona': 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
+      'lille': 'https://upload.wikimedia.org/wikipedia/fr/6/62/Logo_LOSC_Lille_2018.svg',
+      'stuttgart': 'https://upload.wikimedia.org/wikipedia/commons/e/eb/VfB_Stuttgart_1893_Logo.svg',
+      'aek': 'https://upload.wikimedia.org/wikipedia/en/0/04/AEK_Athens_FC_logo.svg',
+      'aek atina': 'https://upload.wikimedia.org/wikipedia/en/0/04/AEK_Athens_FC_logo.svg',
+      'feyenoord': 'https://upload.wikimedia.org/wikipedia/commons/5/52/Feyenoord_logo_2024.svg',
+      'psg': 'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
+      'marsilya': 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Olympique_Marseille_logo.svg',
+      'hoffenheim': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Logo_TSG_1899_Hoffenheim.svg',
+      'crystal palace': 'https://upload.wikimedia.org/wikipedia/en/a/a2/Crystal_Palace_FC_logo.svg',
+      'celtic': 'https://upload.wikimedia.org/wikipedia/en/3/3a/Celtic_FC.svg',
+      'hapoel beer sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
+      'h. beer-sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
+      'bayer leverkusen': 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
+      'b. leverkusen': 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
+      'union sg': 'https://upload.wikimedia.org/wikipedia/en/0/05/Royale_Union_Saint-Gilloise_logo.svg',
+      'union saint-gilloise': 'https://upload.wikimedia.org/wikipedia/en/0/05/Royale_Union_Saint-Gilloise_logo.svg',
+      'omonia': 'https://upload.wikimedia.org/wikipedia/en/4/44/AC_Omonia_logo.svg'
+    };
+
+    function getTeamLogoHtml(teamName, flagEmoji) {
+      const lower = teamName.toLowerCase();
+      const logoUrl = TEAM_LOGOS[lower];
+      if (logoUrl) {
+        return `<img src="${logoUrl}" alt="${teamName}" class="team-logo-img" onerror="this.outerHTML='<span style=\\'font-size:1.8rem;\\'>${flagEmoji || '⚽'}</span>'">`;
+      }
+      return `<span style="font-size:1.8rem;">${flagEmoji || '⚽'}</span>`;
+    }
 
     function getTeamClass(teamName) {
       const t = teamName.toLowerCase();
@@ -186,13 +236,18 @@
         const homeClass = getTeamClass(match.home_team);
         const awayClass = getTeamClass(match.away_team);
 
+        const homeLogoHtml = getTeamLogoHtml(match.home_team, match.home_flag);
+        const awayLogoHtml = getTeamLogoHtml(match.away_team, match.away_flag);
+
         const market1X2 = match.bet_markets?.find(m => m.market_type === '1x2');
+        const marketScorer = match.bet_markets?.find(m => m.market_type === 'goalscorer');
         const marketScore = match.bet_markets?.find(m => m.market_type === 'exact_score');
 
         const pred1X2 = market1X2 ? predMap.get(market1X2.id) : null;
+        const predScorer = marketScorer ? predMap.get(marketScorer.id) : null;
         const predScore = marketScore ? predMap.get(marketScore.id) : null;
 
-        // 1X2 HTML
+        // 1X2 HTML (1 Puan)
         let html1X2 = '';
         if (market1X2) {
           const keyOrder = { home_win: 0, draw: 1, away_win: 2 };
@@ -202,7 +257,7 @@
             <div>
               <div class="pred-section-title">
                 <span>1. MAÇ SONUCU TAHMİNİ</span>
-                <span style="color:var(--ucl-cyan);">+10 PUAN</span>
+                <span style="color:var(--ucl-cyan);">1 PUAN</span>
               </div>
               <div class="predict-picker-grid" style="margin-top:0.4rem; border-top:none; padding-top:0;">
                 ${sortedOptions.map(opt => {
@@ -227,7 +282,35 @@
           `;
         }
 
-        // Exact Score HTML
+        // Goalscorer HTML (2 Puan)
+        let htmlScorer = '';
+        if (marketScorer) {
+          const currentScorerPred = predScorer?.predicted_scorer ?? '';
+          const scorerOptionId = marketScorer.bet_options?.[0]?.id;
+
+          htmlScorer = `
+            <div>
+              <div class="pred-section-title" style="margin-bottom:0.4rem;">
+                <span>2. GOL ATACAK OYUNCU (TEK HAK)</span>
+                <span style="color:var(--success);">2 PUAN</span>
+              </div>
+              <div class="score-input-group" style="gap:0.5rem;">
+                <input type="text" class="form-input" id="scorer_pred_${match.id}" value="${currentScorerPred}" placeholder="örn: Mauro Icardi / En-Nesyri" ${isLocked ? 'disabled' : ''} style="font-weight:600;">
+                <button class="btn btn-outline save-scorer-btn" style="padding:0.5rem 0.88rem; font-size:0.78rem;" ${isLocked ? 'disabled' : ''}
+                  data-match-id="${match.id}" data-market-id="${marketScorer.id}" data-option-id="${scorerOptionId}">
+                  Kaydet
+                </button>
+              </div>
+              ${predScorer && predScorer.predicted_scorer ? `
+                <div style="font-size:0.75rem; text-align:center; margin-top:4px; color:var(--success);">
+                  Kaydedilen Golcü Tahmininiz: <strong>${predScorer.predicted_scorer}</strong>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+
+        // Exact Score HTML (5 Puan)
         let htmlScore = '';
         if (marketScore) {
           const currentHomePred = predScore?.predicted_home_score ?? '';
@@ -237,8 +320,8 @@
           htmlScore = `
             <div>
               <div class="pred-section-title" style="margin-bottom:0.4rem;">
-                <span>2. MAÇ SKORU TAHMİNİ (TAM SKOR)</span>
-                <span style="color:var(--ucl-gold);">+50 PUAN</span>
+                <span>3. TAM MAÇ SKORU</span>
+                <span style="color:var(--ucl-gold);">5 PUAN</span>
               </div>
               <div class="score-input-group">
                 <span style="font-weight:700; font-size:0.85rem; color:#fff;">${match.home_team}</span>
@@ -269,7 +352,7 @@
 
             <div class="match-teams-display">
               <div class="team-box ${homeClass}">
-                <div class="team-badge-circle">${match.home_flag || '⚽'}</div>
+                <div class="team-badge-circle">${homeLogoHtml}</div>
                 <span class="team-name-text">${match.home_team}</span>
               </div>
 
@@ -281,13 +364,14 @@
               </div>
 
               <div class="team-box ${awayClass}">
-                <div class="team-badge-circle">${match.away_flag || '⚽'}</div>
+                <div class="team-badge-circle">${awayLogoHtml}</div>
                 <span class="team-name-text">${match.away_team}</span>
               </div>
             </div>
 
             <div class="dual-prediction-box">
               ${html1X2}
+              ${htmlScorer}
               ${htmlScore}
             </div>
           </div>
@@ -312,7 +396,40 @@
             }, { onConflict: 'user_id, market_id' });
 
             if (error) throw error;
-            window.showToast('Maç sonucu tahmininiz kaydedildi! (+10 Puan adayı)', 'success');
+            window.showToast('Maç sonucu tahmininiz kaydedildi! (+1 Puan adayı)', 'success');
+            await loadMatches();
+          } catch (err) {
+            window.showToast('Hata: ' + err.message, 'error');
+          }
+        });
+      });
+
+      // Click listener for Save Scorer buttons
+      document.querySelectorAll('.save-scorer-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const target = e.currentTarget;
+          const matchId = target.dataset.matchId;
+          const marketId = target.dataset.marketId;
+          const optionId = target.dataset.optionId;
+          const scorerVal = document.getElementById(`scorer_pred_${matchId}`).value.trim();
+
+          if (!scorerVal) {
+            window.showToast('Lütfen gol atacağını düşündüğünüz futbolcu adını girin!', 'error');
+            return;
+          }
+
+          try {
+            const { error } = await supabase.from('predictions').upsert({
+              user_id: session.user.id,
+              match_id: matchId,
+              market_id: marketId,
+              option_id: optionId,
+              predicted_scorer: scorerVal,
+              odds_at_prediction: 1.00
+            }, { onConflict: 'user_id, market_id' });
+
+            if (error) throw error;
+            window.showToast(`Golcü tahmininiz kaydedildi: ${scorerVal} (+2 Puan adayı)`, 'success');
             await loadMatches();
           } catch (err) {
             window.showToast('Hata: ' + err.message, 'error');
@@ -348,7 +465,7 @@
             }, { onConflict: 'user_id, market_id' });
 
             if (error) throw error;
-            window.showToast(`Maç skoru tahmininiz kaydedildi: ${homeVal} - ${awayVal} (+50 Puan adayı)`, 'success');
+            window.showToast(`Maç skoru tahmininiz kaydedildi: ${homeVal} - ${awayVal} (+5 Puan adayı)`, 'success');
             await loadMatches();
           } catch (err) {
             window.showToast('Hata: ' + err.message, 'error');

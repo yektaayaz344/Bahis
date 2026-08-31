@@ -36,27 +36,27 @@
     <header style="margin-bottom:2rem;">
       <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Tahmin İstatistiklerim</h1>
       <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-        FB, GS ve BJK Avrupa maçlarındaki tahmin başarım ve puanlarınız.
+        FB, GS ve BJK Avrupa maçlarındaki tahminleriniz ve kazanılan puanlar.
       </p>
     </header>
 
     <!-- Stats Cards Grid -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
       <div class="card" style="text-align:center;">
         <div style="font-size:0.75rem; color:var(--ucl-gold); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TOPLAM PUANIM</div>
         <div id="statPoints" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-gold);">0</div>
       </div>
       <div class="card" style="text-align:center;">
-        <div style="font-size:0.75rem; color:var(--ucl-cyan); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">DOĞRU MAÇ SONUCU (10P)</div>
+        <div style="font-size:0.75rem; color:var(--ucl-cyan); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">1X2 BİLME (1P)</div>
         <div id="stat1x2" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-cyan);">0</div>
       </div>
       <div class="card" style="text-align:center;">
-        <div style="font-size:0.75rem; color:var(--success); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TAM MAÇ SKORU (50P)</div>
-        <div id="statExact" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--success);">0</div>
+        <div style="font-size:0.75rem; color:var(--success); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">GOLCÜ BİLME (2P)</div>
+        <div id="statScorer" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--success);">0</div>
       </div>
       <div class="card" style="text-align:center;">
-        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TOPLAM TAHMİN</div>
-        <div id="statTotal" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:#fff;">0</div>
+        <div style="font-size:0.75rem; color:var(--ucl-gold); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TAM SKOR (5P)</div>
+        <div id="statExact" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-gold);">0</div>
       </div>
     </div>
 
@@ -103,19 +103,20 @@
         return;
       }
 
-      let total = predictions ? predictions.length : 0;
       let count1x2 = 0;
+      let countScorer = 0;
       let countExact = 0;
 
       (predictions || []).forEach(p => {
         if (p.is_correct) {
           if (p.predicted_home_score !== null) countExact++;
+          else if (p.predicted_scorer) countScorer++;
           else count1x2++;
         }
       });
 
-      document.getElementById('statTotal').textContent = total;
       document.getElementById('stat1x2').textContent = count1x2;
+      document.getElementById('statScorer').textContent = countScorer;
       document.getElementById('statExact').textContent = countExact;
 
       const historyDiv = document.getElementById('historyContainer');
@@ -131,21 +132,27 @@
               <th>MAÇ</th>
               <th>TAHMİN TÜRÜ</th>
               <th style="text-align:center;">TAHMİNİNİZ</th>
-              <th style="text-align:center;">SKOR</th>
+              <th style="text-align:center;">SONUÇ / GOLCÜLER</th>
               <th style="text-align:right;">KAZANILAN PUAN</th>
             </tr>
           </thead>
           <tbody>
             ${predictions.map(p => {
               const match = p.matches;
-              const market = p.bet_markets;
               const opt = p.bet_options;
               const isFinished = match?.status === 'finished';
               const isScorePred = p.predicted_home_score !== null;
+              const isScorerPred = p.predicted_scorer !== '';
 
+              let predType = 'Maç Sonucu 1X2 (1P)';
               let pickText = '';
+
               if (isScorePred) {
+                predType = 'Tam Maç Skoru (5P)';
                 pickText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
+              } else if (isScorerPred) {
+                predType = 'Golcü Tahmini (2P)';
+                pickText = p.predicted_scorer;
               } else {
                 pickText = opt?.outcome_key === 'home_win' ? '1 (Ev Sahibi)' : (opt?.outcome_key === 'draw' ? 'X (Beraberlik)' : '2 (Deplasman)');
               }
@@ -163,13 +170,13 @@
                     <span style="font-weight:700; color:#fff;">${match ? match.home_team : '-'} vs ${match ? match.away_team : '-'}</span>
                   </td>
                   <td>
-                    <span style="font-size:0.8rem; color:var(--ucl-cyan);">${isScorePred ? 'Tam Maç Skoru (50P)' : 'Maç Sonucu 1X2 (10P)'}</span>
+                    <span style="font-size:0.8rem; color:var(--ucl-cyan);">${predType}</span>
                   </td>
                   <td style="text-align:center; font-weight:700; color:var(--ucl-gold);">
                     ${pickText}
                   </td>
-                  <td style="text-align:center; font-weight:700;">
-                    ${isFinished ? `${match.home_score} - ${match.away_score}` : 'VS'}
+                  <td style="text-align:center; font-size:0.85rem;">
+                    ${isFinished ? `${match.home_score} - ${match.away_score} ${match.goalscorers ? `(${match.goalscorers})` : ''}` : 'VS'}
                   </td>
                   <td style="text-align:right;">
                     ${ptsBadge}
