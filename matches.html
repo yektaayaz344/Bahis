@@ -167,51 +167,50 @@
       { id: 'bjk-8', home: 'Omonia', away: 'Beşiktaş', date: '2027-01-28T20:00:00Z', league: 'UEFA Europa League' }
     ];
 
-    // RESMİ YÜKSEK ÇÖZÜNÜRLÜKLÜ KULÜP LOGOLARI (TÜM TAKIMLAR İÇİN)
-    const OFFICIAL_TEAM_LOGOS = {
-      'fenerbahçe': 'https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.svg',
-      'fenerbahce': 'https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.svg',
-      'galatasaray': 'https://upload.wikimedia.org/wikipedia/commons/3/37/Galatasaray_Star_Logo.svg',
-      'beşiktaş': 'https://upload.wikimedia.org/wikipedia/commons/2/20/Besiktas_JK.svg',
-      'besiktas': 'https://upload.wikimedia.org/wikipedia/commons/2/20/Besiktas_JK.svg',
-      'roma': 'https://upload.wikimedia.org/wikipedia/en/f/f7/AS_Roma_logo_%282017%29.svg',
-      'aston villa': 'https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo_2024.svg',
-      'slavia prag': 'https://upload.wikimedia.org/wikipedia/commons/e/ed/SK_Slavia_Praha_logo.svg',
-      'liverpool': 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
-      'shakhtar donetsk': 'https://upload.wikimedia.org/wikipedia/en/a/a1/FC_Shakhtar_Donetsk.svg',
-      's. donetsk': 'https://upload.wikimedia.org/wikipedia/en/a/a1/FC_Shakhtar_Donetsk.svg',
-      'lask': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/LASK_Logo_2023.svg',
-      'villarreal': 'https://upload.wikimedia.org/wikipedia/en/7/70/Villarreal_CF_logo.svg',
-      'atletico madrid': 'https://upload.wikimedia.org/wikipedia/en/c/c1/Atletico_Madrid_logo_%282024%29.svg',
-      'a. madrid': 'https://upload.wikimedia.org/wikipedia/en/c/c1/Atletico_Madrid_logo_%282024%29.svg',
-      'sporting': 'https://upload.wikimedia.org/wikipedia/en/e/e1/Sporting_Clube_de_Portugal_%28logo%29.svg',
-      'barcelona': 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
-      'lille': 'https://upload.wikimedia.org/wikipedia/fr/6/62/Logo_LOSC_Lille_2018.svg',
-      'stuttgart': 'https://upload.wikimedia.org/wikipedia/commons/e/eb/VfB_Stuttgart_1893_Logo.svg',
-      'aek': 'https://upload.wikimedia.org/wikipedia/en/0/04/AEK_Athens_FC_logo.svg',
-      'aek atina': 'https://upload.wikimedia.org/wikipedia/en/0/04/AEK_Athens_FC_logo.svg',
-      'feyenoord': 'https://upload.wikimedia.org/wikipedia/commons/5/52/Feyenoord_logo_2024.svg',
-      'psg': 'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
-      'marsilya': 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Olympique_Marseille_logo.svg',
-      'hoffenheim': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Logo_TSG_1899_Hoffenheim.svg',
-      'crystal palace': 'https://upload.wikimedia.org/wikipedia/en/a/a2/Crystal_Palace_FC_logo.svg',
-      'celtic': 'https://upload.wikimedia.org/wikipedia/en/3/3a/Celtic_FC.svg',
-      'hapoel beer sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
-      'h. beer-sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
-      'bayer leverkusen': 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
-      'b. leverkusen': 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
-      'union sg': 'https://upload.wikimedia.org/wikipedia/en/0/05/Royale_Union_Saint-Gilloise_logo.svg',
-      'union saint-gilloise': 'https://upload.wikimedia.org/wikipedia/en/0/05/Royale_Union_Saint-Gilloise_logo.svg',
-      'omonia': 'https://upload.wikimedia.org/wikipedia/en/4/44/AC_Omonia_logo.svg'
+    // LOKAL VE YÜKSEK ÇÖZÜNÜRLÜKLÜ ORİJİNAL KULÜP AMBLEM EŞLEŞTİRMELERİ
+    const LOCAL_TEAM_LOGOS = {
+      'fenerbahçe': 'assets/logos/fenerbahce.png',
+      'fenerbahce': 'assets/logos/fenerbahce.png',
+      'galatasaray': 'assets/logos/galatasaray.png',
+      'beşiktaş': 'assets/logos/besiktas.png',
+      'besiktas': 'assets/logos/besiktas.png',
+      'roma': 'assets/logos/roma.png',
+      'aston villa': 'assets/logos/aston-villa.png',
+      'slavia prag': 'assets/logos/slavia-prag.png',
+      'liverpool': 'assets/logos/liverpool.png',
+      'shakhtar donetsk': 'assets/logos/s-donetsk.png',
+      's. donetsk': 'assets/logos/s-donetsk.png',
+      'lask': 'assets/logos/lask.png',
+      'villarreal': 'assets/logos/villarreal.png',
+      'atletico madrid': 'assets/logos/a-madrid.png',
+      'a. madrid': 'assets/logos/a-madrid.png',
+      'sporting': 'assets/logos/sporting.png',
+      'barcelona': 'assets/logos/barcelona.png',
+      'lille': 'assets/logos/lille.png',
+      'stuttgart': 'assets/logos/stuttgart.png',
+      'aek': 'assets/logos/aek-atina.png',
+      'aek atina': 'assets/logos/aek-atina.png',
+      'feyenoord': 'assets/logos/feyenoord.png',
+      'psg': 'assets/logos/psg.png',
+      'marsilya': 'assets/logos/marsilya.png',
+      'hoffenheim': 'assets/logos/hoffenheim.png',
+      'crystal palace': 'assets/logos/crystal-palace.png',
+      'celtic': 'assets/logos/celtic.png',
+      'hapoel beer sheva': 'assets/logos/h-beer-sheva.png',
+      'h. beer-sheva': 'assets/logos/h-beer-sheva.png',
+      'bayer leverkusen': 'assets/logos/bayer-leverkusen.png',
+      'b. leverkusen': 'assets/logos/bayer-leverkusen.png',
+      'union sg': 'assets/logos/union-saint-gilloise.png',
+      'union saint-gilloise': 'assets/logos/union-saint-gilloise.png',
+      'omonia': 'assets/logos/omonia.png'
     };
 
     function getTeamLogoHtml(teamName) {
       const lower = (teamName || '').toLowerCase().trim();
-      const logoUrl = OFFICIAL_TEAM_LOGOS[lower];
+      const logoPath = LOCAL_TEAM_LOGOS[lower];
 
-      // Orijinal Kulüp Amblemi (CORS/Image error olursa şık monogram rozeti)
-      if (logoUrl) {
-        return `<img src="${logoUrl}" alt="${teamName}" class="team-logo-img" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/footium/club-logos/main/logos/${encodeURIComponent(teamName)}.png';">`;
+      if (logoPath) {
+        return `<img src="${logoPath}" alt="${teamName}" class="team-logo-img">`;
       }
       return `<div style="width:48px;height:48px;border-radius:50%;background:var(--ucl-blue);border:2px solid var(--ucl-cyan);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:0.9rem;">${teamName.substring(0,3).toUpperCase()}</div>`;
     }
@@ -229,7 +228,6 @@
       const { data: existing } = await supabase.from('matches').select('id, odds_api_id');
       const existingIds = new Set(existing?.map(m => m.odds_api_id));
 
-      let added = false;
       for (const item of ALL_24_FIXTURES) {
         if (!existingIds.has(item.id)) {
           const { data: m } = await supabase.from('matches').insert({
@@ -243,8 +241,7 @@
           }).select('id').single();
 
           if (m) {
-            added = true;
-            // 1X2 Market
+            // 1. 1X2 Market
             const { data: m1 } = await supabase.from('bet_markets').insert({
               match_id: m.id, market_type: '1x2', label: 'Maç Sonucu (1 Puan)', is_active: true
             }).select('id').single();
@@ -256,7 +253,7 @@
               ]);
             }
 
-            // Scorer Market
+            // 2. Scorer Market
             const { data: m2 } = await supabase.from('bet_markets').insert({
               match_id: m.id, market_type: 'goalscorer', label: 'Gol Atacak Oyuncu (2 Puan)', is_active: true
             }).select('id').single();
@@ -266,7 +263,7 @@
               ]);
             }
 
-            // Exact Score Market
+            // 3. Exact Score Market
             const { data: m3 } = await supabase.from('bet_markets').insert({
               match_id: m.id, market_type: 'exact_score', label: 'Maç Skoru (5 Puan)', is_active: true
             }).select('id').single();
