@@ -102,7 +102,7 @@
 
     <div id="matchesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1.5rem">
       <div class="card" style="grid-column:1/-1; text-align:center; padding:3rem;">
-        <div style="color:var(--ucl-cyan); font-family:var(--font-display); font-size:1.5rem;">Fikstür Yükleniyor...</div>
+        <div style="color:var(--ucl-cyan); font-family:var(--font-display); font-size:1.5rem;">24 Avrupa Maçı Yükleniyor...</div>
       </div>
     </div>
   </div>
@@ -134,7 +134,40 @@
 
     let session;
 
-    // RESMİ LOGO URL LİSTESİ (Kalp ve Emoji yerini orijinal yüksek kaliteli kulüp logoları aldı)
+    // TÜM 24 MAÇIN EKSİKSİZ GÜNCEL FİKSTÜRÜ
+    const ALL_24_FIXTURES = [
+      // FENERBAHÇE — UEFA ŞAMPİYONLAR LİGİ (8 MAÇ)
+      { id: 'fb-1', home: 'Fenerbahçe', away: 'Roma', date: '2026-09-10T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-2', home: 'Aston Villa', away: 'Fenerbahçe', date: '2026-10-14T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-3', home: 'Fenerbahçe', away: 'Slavia Prag', date: '2026-10-20T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-4', home: 'Fenerbahçe', away: 'Liverpool', date: '2026-11-04T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-5', home: 'S. Donetsk', away: 'Fenerbahçe', date: '2026-11-25T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-6', home: 'LASK', away: 'Fenerbahçe', date: '2026-12-09T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-7', home: 'Fenerbahçe', away: 'Villarreal', date: '2027-01-20T20:00:00Z', league: 'UEFA Champions League' },
+      { id: 'fb-8', home: 'A. Madrid', away: 'Fenerbahçe', date: '2027-01-27T20:00:00Z', league: 'UEFA Champions League' },
+
+      // GALATASARAY — UEFA ŞAMPİYONLAR LİGİ (8 MAÇ)
+      { id: 'gs-1', home: 'Sporting', away: 'Galatasaray', date: '2026-09-09T22:00:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-2', home: 'Galatasaray', away: 'Barcelona', date: '2026-10-13T22:00:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-3', home: 'Lille', away: 'Galatasaray', date: '2026-10-21T19:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-4', home: 'Galatasaray', away: 'Stuttgart', date: '2026-11-03T20:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-5', home: 'Galatasaray', away: 'Aston Villa', date: '2026-11-24T20:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-6', home: 'AEK Atina', away: 'Galatasaray', date: '2026-12-08T23:00:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-7', home: 'Galatasaray', away: 'Feyenoord', date: '2027-01-19T20:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-8', home: 'PSG', away: 'Galatasaray', date: '2027-01-27T23:00:00Z', league: 'UEFA Champions League' },
+
+      // BEŞİKTAŞ — UEFA AVRUPA LİGİ (8 MAÇ)
+      { id: 'bjk-1', home: 'Beşiktaş', away: 'Marsilya', date: '2026-09-17T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-2', home: 'Hoffenheim', away: 'Beşiktaş', date: '2026-10-15T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-3', home: 'Beşiktaş', away: 'Crystal Palace', date: '2026-10-22T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-4', home: 'Celtic', away: 'Beşiktaş', date: '2026-11-05T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-5', home: 'Beşiktaş', away: 'Hapoel Beer Sheva', date: '2026-11-26T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-6', home: 'Bayer Leverkusen', away: 'Beşiktaş', date: '2026-12-10T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-7', home: 'Beşiktaş', away: 'Union Saint-Gilloise', date: '2027-01-21T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-8', home: 'Omonia', away: 'Beşiktaş', date: '2027-01-28T20:00:00Z', league: 'UEFA Europa League' }
+    ];
+
+    // RESMİ YÜKSEK ÇÖZÜNÜRLÜKLÜ KULÜP LOGOLARI (TÜM TAKIMLAR İÇİN)
     const OFFICIAL_TEAM_LOGOS = {
       'fenerbahçe': 'https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.svg',
       'fenerbahce': 'https://upload.wikimedia.org/wikipedia/tr/8/86/Fenerbah%C3%A7e_SK.svg',
@@ -165,7 +198,6 @@
       'celtic': 'https://upload.wikimedia.org/wikipedia/en/3/3a/Celtic_FC.svg',
       'hapoel beer sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
       'h. beer-sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
-      'hapoel beer sheva': 'https://upload.wikimedia.org/wikipedia/en/d/dc/Hapoel_Be%27er_Sheva_FC.svg',
       'bayer leverkusen': 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
       'b. leverkusen': 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg',
       'union sg': 'https://upload.wikimedia.org/wikipedia/en/0/05/Royale_Union_Saint-Gilloise_logo.svg',
@@ -176,10 +208,12 @@
     function getTeamLogoHtml(teamName) {
       const lower = (teamName || '').toLowerCase().trim();
       const logoUrl = OFFICIAL_TEAM_LOGOS[lower];
+
+      // Orijinal Kulüp Amblemi (CORS/Image error olursa şık monogram rozeti)
       if (logoUrl) {
-        return `<img src="${logoUrl}" alt="${teamName}" class="team-logo-img" onerror="this.outerHTML='<span style=\\'font-size:1.6rem; font-weight:800; color:var(--ucl-gold);\\'>${teamName.substring(0,3).toUpperCase()}</span>'">`;
+        return `<img src="${logoUrl}" alt="${teamName}" class="team-logo-img" crossorigin="anonymous" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/footium/club-logos/main/logos/${encodeURIComponent(teamName)}.png';">`;
       }
-      return `<span style="font-size:1.4rem; font-weight:800; color:var(--ucl-gold);">${teamName.substring(0,3).toUpperCase()}</span>`;
+      return `<div style="width:48px;height:48px;border-radius:50%;background:var(--ucl-blue);border:2px solid var(--ucl-cyan);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:0.9rem;">${teamName.substring(0,3).toUpperCase()}</div>`;
     }
 
     function getTeamClass(teamName) {
@@ -188,6 +222,62 @@
       if (t.includes('galata')) return 'team-gs';
       if (t.includes('beşik') || t.includes('besik')) return 'team-bjk';
       return '';
+    }
+
+    async function ensureAll24FixturesInDb() {
+      // 24 maçın tamamının eksiksiz Supabase veritabanında olduğundan emin ol
+      const { data: existing } = await supabase.from('matches').select('id, odds_api_id');
+      const existingIds = new Set(existing?.map(m => m.odds_api_id));
+
+      let added = false;
+      for (const item of ALL_24_FIXTURES) {
+        if (!existingIds.has(item.id)) {
+          const { data: m } = await supabase.from('matches').insert({
+            odds_api_id: item.id,
+            home_team: item.home,
+            away_team: item.away,
+            match_time: item.date,
+            group_name: item.league,
+            status: 'open',
+            is_admin_approved: true
+          }).select('id').single();
+
+          if (m) {
+            added = true;
+            // 1X2 Market
+            const { data: m1 } = await supabase.from('bet_markets').insert({
+              match_id: m.id, market_type: '1x2', label: 'Maç Sonucu (1 Puan)', is_active: true
+            }).select('id').single();
+            if (m1) {
+              await supabase.from('bet_options').insert([
+                { market_id: m1.id, label: '1 (Ev Sahibi)', outcome_key: 'home_win', odds_value: 1.00 },
+                { market_id: m1.id, label: 'X (Beraberlik)', outcome_key: 'draw', odds_value: 1.00 },
+                { market_id: m1.id, label: '2 (Deplasman)', outcome_key: 'away_win', odds_value: 1.00 }
+              ]);
+            }
+
+            // Scorer Market
+            const { data: m2 } = await supabase.from('bet_markets').insert({
+              match_id: m.id, market_type: 'goalscorer', label: 'Gol Atacak Oyuncu (2 Puan)', is_active: true
+            }).select('id').single();
+            if (m2) {
+              await supabase.from('bet_options').insert([
+                { market_id: m2.id, label: 'Golcü Tahmini', outcome_key: 'goalscorer', odds_value: 1.00 }
+              ]);
+            }
+
+            // Exact Score Market
+            const { data: m3 } = await supabase.from('bet_markets').insert({
+              match_id: m.id, market_type: 'exact_score', label: 'Maç Skoru (5 Puan)', is_active: true
+            }).select('id').single();
+            if (m3) {
+              await supabase.from('bet_options').insert([
+                { market_id: m3.id, label: 'Maç Skoru', outcome_key: 'exact_score', odds_value: 1.00 }
+              ]);
+            }
+          }
+        }
+      }
     }
 
     async function ensureMarketExists(matchId, marketType, label) {
@@ -216,6 +306,7 @@
       if (isAdmin(session)) document.getElementById('adminLink').style.display = 'block';
 
       document.getElementById('logoutBtn').addEventListener('click', logout);
+      await ensureAll24FixturesInDb();
       await loadMatches();
     }
 
@@ -241,12 +332,7 @@
       const predMap = new Map(myPredictions?.map(p => [p.market_id, p]));
 
       if (!matches || matches.length === 0) {
-        grid.innerHTML = `
-          <div class="card" style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:3.5rem;">
-            <h3>Şu an aktif maç bulunmuyor.</h3>
-            <p style="margin-top:0.5rem;">Admin panelinden <strong>"🏆 Güncel 24 Avrupa Maçını Yükle"</strong> butonuna basarak maçları yükleyebilirsiniz.</p>
-          </div>
-        `;
+        grid.innerHTML = `<div class="card" style="text-align:center;padding:3rem;">Aktif maç bulunamadı.</div>`;
         return;
       }
 
@@ -272,7 +358,7 @@
         const predScorer = marketScorer ? predMap.get(marketScorer.id) : null;
         const predScore = marketScore ? predMap.get(marketScore.id) : null;
 
-        // 1X2 HTML (1 Puan)
+        // 1. Maç Sonucu (1 Puan)
         const keyOrder = { home_win: 0, draw: 1, away_win: 2 };
         const sortedOptions = [...(market1X2?.bet_options || [
           { outcome_key: 'home_win', label: '1 (Ev Sahibi)', id: 'opt_1' },
@@ -308,9 +394,8 @@
           </div>
         `;
 
-        // Goalscorer HTML (2 Puan)
+        // 2. Golcü Tahmini (2 Puan)
         const currentScorerPred = predScorer?.predicted_scorer ?? '';
-
         const htmlScorer = `
           <div>
             <div class="pred-section-title" style="margin-bottom:0.4rem;">
@@ -332,10 +417,9 @@
           </div>
         `;
 
-        // Exact Score HTML (5 Puan)
+        // 3. Tam Maç Skoru (5 Puan)
         const currentHomePred = predScore?.predicted_home_score ?? '';
         const currentAwayPred = predScore?.predicted_away_score ?? '';
-
         const htmlScore = `
           <div>
             <div class="pred-section-title" style="margin-bottom:0.4rem;">

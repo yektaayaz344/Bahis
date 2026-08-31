@@ -1,6 +1,5 @@
--- UEFA Champions League & Europa League - Schema & 24 Updated Matches + 3-Tier Predictions
+-- UEFA Champions League & Europa League - Schema & 24 Matches Fixture Seeding
 
--- 1. users tablosu
 create table if not exists public.users (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null,
@@ -10,7 +9,6 @@ create table if not exists public.users (
   created_at timestamptz default now()
 );
 
--- Auth trigger
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
@@ -28,7 +26,6 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- 2. matches tablosu
 create table if not exists public.matches (
   id uuid primary key default gen_random_uuid(),
   odds_api_id text unique not null,
@@ -49,7 +46,6 @@ create table if not exists public.matches (
   created_at timestamptz default now()
 );
 
--- 3. bet_markets tablosu
 create table if not exists public.bet_markets (
   id uuid primary key default gen_random_uuid(),
   match_id uuid references public.matches(id) on delete cascade,
@@ -60,7 +56,6 @@ create table if not exists public.bet_markets (
   created_at timestamptz default now()
 );
 
--- 4. bet_options tablosu
 create table if not exists public.bet_options (
   id uuid primary key default gen_random_uuid(),
   market_id uuid references public.bet_markets(id) on delete cascade,
@@ -71,7 +66,6 @@ create table if not exists public.bet_options (
   created_at timestamptz default now()
 );
 
--- 5. predictions tablosu
 create table if not exists public.predictions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.users(id) on delete cascade,
@@ -88,7 +82,6 @@ create table if not exists public.predictions (
   unique(user_id, market_id)
 );
 
--- 6. leaderboard_cache tablosu
 create table if not exists public.leaderboard_cache (
   user_id uuid primary key references public.users(id) on delete cascade,
   total_points integer default 0,
@@ -99,7 +92,7 @@ create table if not exists public.leaderboard_cache (
   last_updated timestamptz default now()
 );
 
--- Row Level Security (RLS)
+-- RLS
 alter table public.users enable row level security;
 alter table public.matches enable row level security;
 alter table public.bet_markets enable row level security;
