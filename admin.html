@@ -53,10 +53,26 @@
       <p style="color:var(--text-muted);font-weight:600;">Skor Girme (10 &amp; 50 Puan), Kullanıcı Puanı Ekle/Sil/Düzelt &amp; Fikstür Yönetimi</p>
     </header>
 
+    <!-- HIZLI AKSİYON BUTONLARI -->
+    <div class="card" style="margin-bottom:1.5rem; background:rgba(0,102,255,0.08); border-color:rgba(0,217,255,0.3);">
+      <h3 style="font-size:1.1rem; margin-bottom:0.75rem; color:var(--ucl-gold);">⚡ Hızlı Fikstür &amp; Temizleme İşlemleri</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+        <button id="btnImportFixtures" class="btn btn-primary" style="background:var(--gradient-gold); color:#000; font-weight:800;">
+          🏆 24 Avrupa Maçını Otomatik Çek / Yükle (FB, GS, BJK)
+        </button>
+        <button id="btnDeleteWorldCup" class="btn btn-outline" style="border-color:var(--warning); color:var(--warning);">
+          🌍 Dünya Kupası Maçlarını Temizle
+        </button>
+        <button id="btnDeleteAllMatches" class="btn btn-danger">
+          🗑️ TÜM MAÇLARI SİL
+        </button>
+      </div>
+    </div>
+
     <div class="admin-tabs" style="display:flex; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem;">
       <button class="admin-tab-btn active" onclick="switchAdminTab('matches')">Maç &amp; Skor Yönetimi</button>
       <button class="admin-tab-btn" onclick="switchAdminTab('users')">Kullanıcı &amp; Puan Sil/Ekle</button>
-      <button class="admin-tab-btn" onclick="switchAdminTab('addMatch')">+ Yeni Maç Ekle</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('addMatch')">+ Yeni Manuel Maç Ekle</button>
     </div>
 
     <!-- MAÇ YÖNETİMİ PANELİ -->
@@ -166,6 +182,39 @@
 
     let session;
 
+    // Görsellerdeki Maç Listesi (24 Maç)
+    const FIXTURES_SEED = [
+      // FENERBAHÇE
+      { id: 'fb-1', home: 'Fenerbahçe', away: 'Roma', home_flag: '💛💙', away_flag: '🇮🇹', date: '2026-09-10T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-2', home: 'Aston Villa', away: 'Fenerbahçe', home_flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', away_flag: '💛💙', date: '2026-10-14T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-3', home: 'Fenerbahçe', away: 'Slavia Prag', home_flag: '💛💙', away_flag: '🇨🇿', date: '2026-10-20T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-4', home: 'Fenerbahçe', away: 'Liverpool', home_flag: '💛💙', away_flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', date: '2026-11-04T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-5', home: 'S. Donetsk', away: 'Fenerbahçe', home_flag: '🇺🇦', away_flag: '💛💙', date: '2026-11-25T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-6', home: 'LASK', away: 'Fenerbahçe', home_flag: '🇦🇹', away_flag: '💛💙', date: '2026-12-09T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-7', home: 'Fenerbahçe', away: 'Villarreal', home_flag: '💛💙', away_flag: '🇪🇸', date: '2027-01-20T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'fb-8', home: 'A. Madrid', away: 'Fenerbahçe', home_flag: '🇪🇸', away_flag: '💛💙', date: '2027-01-27T20:00:00Z', league: 'UEFA Europa League' },
+
+      // GALATASARAY
+      { id: 'gs-1', home: 'Sporting', away: 'Galatasaray', home_flag: '🇵🇹', away_flag: '💛🔴', date: '2026-09-09T22:00:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-2', home: 'Galatasaray', away: 'Barcelona', home_flag: '💛🔴', away_flag: '🇪🇸', date: '2026-10-13T22:00:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-3', home: 'Lille', away: 'Galatasaray', home_flag: '🇫🇷', away_flag: '💛🔴', date: '2026-10-21T19:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-4', home: 'Galatasaray', away: 'Stuttgart', home_flag: '💛🔴', away_flag: '🇩🇪', date: '2026-11-03T20:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-5', home: 'Galatasaray', away: 'Aston Villa', home_flag: '💛🔴', away_flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', date: '2026-11-24T20:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-6', home: 'AEK', away: 'Galatasaray', home_flag: '🇬🇷', away_flag: '💛🔴', date: '2026-12-08T23:00:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-7', home: 'Galatasaray', away: 'Feyenoord', home_flag: '💛🔴', away_flag: '🇳🇱', date: '2027-01-19T20:45:00Z', league: 'UEFA Champions League' },
+      { id: 'gs-8', home: 'PSG', away: 'Galatasaray', home_flag: '🇫🇷', away_flag: '💛🔴', date: '2027-01-27T23:00:00Z', league: 'UEFA Champions League' },
+
+      // BEŞİKTAŞ
+      { id: 'bjk-1', home: 'B. Leverkusen', away: 'Beşiktaş', home_flag: '🇩🇪', away_flag: '🖤🤍', date: '2026-09-12T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-2', home: 'Beşiktaş', away: 'Marsilya', home_flag: '🖤🤍', away_flag: '🇫🇷', date: '2026-10-16T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-3', home: 'Celtic', away: 'Beşiktaş', home_flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', away_flag: '🖤🤍', date: '2026-10-22T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-4', home: 'Beşiktaş', away: 'Union SG', home_flag: '🖤🤍', away_flag: '🇧🇪', date: '2026-11-05T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-5', home: 'Omonia', away: 'Beşiktaş', home_flag: '🇨🇾', away_flag: '🖤🤍', date: '2026-11-26T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-6', home: 'Beşiktaş', away: 'Crystal Palace', home_flag: '🖤🤍', away_flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', date: '2026-12-10T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-7', home: 'Hoffenheim', away: 'Beşiktaş', home_flag: '🇩🇪', away_flag: '🖤🤍', date: '2027-01-21T20:00:00Z', league: 'UEFA Europa League' },
+      { id: 'bjk-8', home: 'Beşiktaş', away: 'H. Beer-Sheva', home_flag: '🖤🤍', away_flag: '🇮🇱', date: '2027-01-28T20:00:00Z', league: 'UEFA Europa League' },
+    ];
+
     async function init() {
       session = await requireAuth();
       if (!session || !isAdmin(session)) {
@@ -174,8 +223,124 @@
         return;
       }
       document.getElementById('logoutBtn').addEventListener('click', logout);
+      bindActionButtons();
       await loadAdminMatches();
       await loadAdminUsers();
+    }
+
+    function bindActionButtons() {
+      // 24 Avrupa Maçını Otomatik Çek / Yükle
+      document.getElementById('btnImportFixtures').addEventListener('click', async () => {
+        if (!confirm('Görsellerdeki 24 Avrupa maçı (FB, GS, BJK) veritabanına yüklensin mi?')) return;
+        try {
+          let count = 0;
+          for (const item of FIXTURES_SEED) {
+            // Upsert match
+            const { data: match, error: mErr } = await supabase.from('matches').upsert({
+              odds_api_id: item.id,
+              home_team: item.home,
+              away_team: item.away,
+              home_flag: item.home_flag,
+              away_flag: item.away_flag,
+              match_time: item.date,
+              group_name: item.league,
+              status: 'open',
+              is_admin_approved: true
+            }, { onConflict: 'odds_api_id' }).select().single();
+
+            if (match) {
+              count++;
+              // Check / Add 1X2 market
+              const { data: existing1X2 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', '1x2').maybeSingle();
+              let m1x2Id = existing1X2?.id;
+              if (!m1x2Id) {
+                const { data: new1X2 } = await supabase.from('bet_markets').insert({
+                  match_id: match.id,
+                  market_type: '1x2',
+                  label: 'Maç Sonucu (10 Puan)',
+                  is_active: true
+                }).select().single();
+                m1x2Id = new1X2?.id;
+              }
+              if (m1x2Id) {
+                const { data: exOpts } = await supabase.from('bet_options').select('id').eq('market_id', m1x2Id);
+                if (!exOpts || exOpts.length === 0) {
+                  await supabase.from('bet_options').insert([
+                    { market_id: m1x2Id, label: '1 (Ev Sahibi)', outcome_key: 'home_win', odds_value: 1.00 },
+                    { market_id: m1x2Id, label: 'X (Beraberlik)', outcome_key: 'draw', odds_value: 1.00 },
+                    { market_id: m1x2Id, label: '2 (Deplasman)', outcome_key: 'away_win', odds_value: 1.00 }
+                  ]);
+                }
+              }
+
+              // Check / Add Exact Score market
+              const { data: existingScore } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'exact_score').maybeSingle();
+              let mScoreId = existingScore?.id;
+              if (!mScoreId) {
+                const { data: newScore } = await supabase.from('bet_markets').insert({
+                  match_id: match.id,
+                  market_type: 'exact_score',
+                  label: 'Maç Skoru (50 Puan)',
+                  is_active: true
+                }).select().single();
+                mScoreId = newScore?.id;
+              }
+              if (mScoreId) {
+                const { data: exScoreOpts } = await supabase.from('bet_options').select('id').eq('market_id', mScoreId);
+                if (!exScoreOpts || exScoreOpts.length === 0) {
+                  await supabase.from('bet_options').insert([
+                    { market_id: mScoreId, label: 'Maç Skoru', outcome_key: 'exact_score', odds_value: 1.00 }
+                  ]);
+                }
+              }
+            }
+          }
+          window.showToast(`${count} maç başarıyla sisteme yüklendi ve aktifleştirildi!`, 'success');
+          await loadAdminMatches();
+        } catch (err) {
+          window.showToast('Hata: ' + err.message, 'error');
+        }
+      });
+
+      // Dünya Kupası / Eski Maçları Temizle
+      document.getElementById('btnDeleteWorldCup').addEventListener('click', async () => {
+        if (!confirm('Eski Dünya Kupası veya taslak maçlar silinsin mi?')) return;
+        try {
+          const { data: allMatches } = await supabase.from('matches').select('id, group_name');
+          const toDelete = (allMatches || []).filter(m => {
+            const g = (m.group_name || '').toLowerCase();
+            return g.includes('world') || g.includes('fifa') || g.includes('wc');
+          }).map(m => m.id);
+
+          if (toDelete.length > 0) {
+            await supabase.from('matches').delete().in('id', toDelete);
+            window.showToast(`${toDelete.length} eski maç silindi!`, 'success');
+          } else {
+            window.showToast('Temizlenecek eski maç bulunamadı.', 'info');
+          }
+          await loadAdminMatches();
+        } catch (err) {
+          window.showToast('Hata: ' + err.message, 'error');
+        }
+      });
+
+      // Tüm Maçları Sil
+      document.getElementById('btnDeleteAllMatches').addEventListener('click', async () => {
+        if (!confirm('Sistemdeki TÜM MAÇLARI silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) return;
+        try {
+          const { data: allMatches } = await supabase.from('matches').select('id');
+          const ids = (allMatches || []).map(m => m.id);
+          if (ids.length > 0) {
+            await supabase.from('matches').delete().in('id', ids);
+            window.showToast('Sistemdeki tüm maçlar silindi.', 'info');
+          } else {
+            window.showToast('Silinecek maç yok.', 'info');
+          }
+          await loadAdminMatches();
+        } catch (err) {
+          window.showToast('Hata: ' + err.message, 'error');
+        }
+      });
     }
 
     async function loadAdminMatches() {
@@ -191,7 +356,12 @@
       }
 
       if (!matches || matches.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Henüz maç eklenmedi.</div>`;
+        container.innerHTML = `
+          <div style="text-align:center; padding:3rem; color:var(--text-muted);">
+            <p style="margin-bottom:1rem; font-size:1.1rem;">Henüz sistemde maç bulunmuyor.</p>
+            <p>Yukarıdaki <strong>"24 Avrupa Maçını Otomatik Çek / Yükle"</strong> butonuna basarak tüm fikstürü saniyeler içinde ekleyebilirsiniz!</p>
+          </div>
+        `;
         return;
       }
 
@@ -256,7 +426,6 @@
           else if (awayScore > homeScore) result = 'away_win';
 
           try {
-            // Update Match Result
             const { error: matchErr } = await supabase
               .from('matches')
               .update({
@@ -269,12 +438,10 @@
 
             if (matchErr) throw matchErr;
 
-            // Fetch markets
             const { data: markets } = await supabase.from('bet_markets').select('id, market_type').eq('match_id', matchId);
             const m1X2 = markets?.find(m => m.market_type === '1x2');
             const mScore = markets?.find(m => m.market_type === 'exact_score');
 
-            // Evaluate 1X2 market options
             if (m1X2) {
               const { data: options } = await supabase.from('bet_options').select('id, outcome_key').eq('market_id', m1X2.id);
               for (const opt of (options || [])) {
@@ -289,7 +456,6 @@
               }
             }
 
-            // Evaluate Exact Score market
             if (mScore) {
               const { data: preds } = await supabase.from('predictions').select('*').eq('market_id', mScore.id);
               for (const p of (preds || [])) {
@@ -301,9 +467,7 @@
               }
             }
 
-            // Recalculate Leaderboard
             await updateAllLeaderboards();
-
             window.showToast(`Skor işlendi (${homeScore}-${awayScore})! Puanlar dağıtıldı.`, 'success');
             await loadAdminMatches();
           } catch (err) {
@@ -422,7 +586,7 @@
     }
 
     async function updateAllLeaderboards() {
-      const { data: preds } = await supabase.from('predictions').select('user_id, points_earned, is_correct, predicted_home_score');
+      const { data: preds } = await supabase.from('predictions').select('user_id, points_earned, is_correct');
       const userSummary = new Map();
 
       (preds || []).forEach(p => {
