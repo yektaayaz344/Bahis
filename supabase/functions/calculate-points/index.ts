@@ -5,10 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-function calcPoints(odds: number): number {
-  return Math.floor(odds * 10)
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -26,7 +22,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Maç sonucu girilmemiş' }), { status: 400, headers: corsHeaders })
     }
 
-    // Bu maça ait tüm market id'leri
     const { data: marketRows } = await supabase
       .from('bet_markets')
       .select('id')
@@ -34,7 +29,6 @@ Deno.serve(async (req) => {
 
     const marketIds = marketRows?.map(m => m.id) ?? []
 
-    // bet_options doğru/yanlış işaretle
     const { data: options } = await supabase
       .from('bet_options')
       .select('id, outcome_key, market_id')
@@ -46,17 +40,16 @@ Deno.serve(async (req) => {
       }).eq('id', opt.id)
     }
 
-    // Tahminleri puanla
     const { data: preds } = await supabase
       .from('predictions')
-      .select('id, user_id, option_id, odds_at_prediction')
+      .select('id, user_id, option_id')
       .eq('match_id', match_id)
 
     const userPoints: Record<string, { total: number; correct: number; count: number }> = {}
 
     for (const pred of preds ?? []) {
       const isCorrect = options?.find(o => o.id === pred.option_id)?.outcome_key === match.result
-      const points = isCorrect ? calcPoints(Number(pred.odds_at_prediction)) : 0
+      const points = isCorrect ? 1 : 0
 
       await supabase.from('predictions').update({
         is_correct: isCorrect,
@@ -69,7 +62,6 @@ Deno.serve(async (req) => {
       userPoints[pred.user_id].count   += 1
     }
 
-    // leaderboard_cache güncelle
     for (const [userId, pts] of Object.entries(userPoints)) {
       const { data: existing } = await supabase
         .from('leaderboard_cache')

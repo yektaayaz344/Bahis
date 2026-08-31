@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Giriş Yap | WC2026</title>
+  <title>Giriş Yap | UCL & UEL Bahis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,16 +15,11 @@
       justify-content: center;
       min-height: 100vh;
       padding: 1.5rem;
-      background-image:
-        radial-gradient(ellipse 90% 60% at 15% 15%, rgba(0,242,254,0.09) 0%, transparent 55%),
-        radial-gradient(ellipse 70% 50% at 85% 85%, rgba(79,172,254,0.09) 0%, transparent 55%),
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: auto, auto, 44px 44px;
     }
 
     .auth-wrap {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
     }
 
     .auth-logo {
@@ -33,7 +28,7 @@
     }
 
     .logo-emoji {
-      font-size: 3.25rem;
+      font-size: 3.5rem;
       display: block;
       margin-bottom: 0.5rem;
       animation: float 3.5s ease-in-out infinite;
@@ -41,16 +36,16 @@
 
     @keyframes float {
       0%, 100% { transform: translateY(0) rotate(-5deg); }
-      50%       { transform: translateY(-9px) rotate(5deg); }
+      50%       { transform: translateY(-8px) rotate(5deg); }
     }
 
     .auth-logo h1 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 3.25rem;
+      font-family: var(--font-display);
+      font-size: 3rem;
       font-weight: 800;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       line-height: 1;
-      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 60%, #f093fb 100%);
+      background: var(--gradient-ucl);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -58,36 +53,28 @@
 
     .auth-logo p {
       color: var(--text-muted);
-      font-size: 0.82rem;
-      margin-top: 0.375rem;
+      font-size: 0.88rem;
+      margin-top: 0.4rem;
+      font-weight: 600;
       letter-spacing: 0.05em;
     }
 
     .auth-card {
       background: var(--bg-card);
-      border: 1px solid var(--glass-border);
+      border: 1px solid rgba(0, 102, 255, 0.2);
       border-radius: var(--radius-lg);
       padding: 2rem;
       position: relative;
       overflow: hidden;
+      box-shadow: var(--shadow-card);
     }
 
     .auth-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #00f2fe, #4facfe 50%, #f093fb);
-    }
-
-    .auth-card::after {
-      content: '';
-      position: absolute;
-      bottom: -40px; right: -40px;
-      width: 140px; height: 140px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,242,254,0.06) 0%, transparent 70%);
-      pointer-events: none;
+      height: 3px;
+      background: var(--gradient-ucl);
     }
 
     .auth-tabs {
@@ -96,27 +83,27 @@
       margin-bottom: 1.75rem;
       border-radius: var(--radius-sm);
       background: rgba(255,255,255,0.04);
-      padding: 3px;
+      padding: 4px;
     }
 
     .auth-tab {
       flex: 1;
-      padding: 0.55rem;
+      padding: 0.6rem;
       background: none;
       border: none;
       border-radius: calc(var(--radius-sm) - 2px);
       color: var(--text-muted);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .auth-tab.active {
-      background: var(--bg-dark);
-      color: var(--text-main);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      background: var(--gradient-ucl);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 102, 255, 0.4);
     }
 
     .auth-panel { display: none; }
@@ -125,42 +112,42 @@
     .btn-auth {
       width: 100%;
       padding: 0.8rem;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       letter-spacing: 0.05em;
-      margin-top: 0.25rem;
+      margin-top: 0.5rem;
       font-weight: 700;
     }
 
     .auth-message {
       display: none;
       border-radius: var(--radius-sm);
-      padding: 0.7rem 0.875rem;
+      padding: 0.75rem;
       font-size: 0.82rem;
-      margin-top: 0.875rem;
+      margin-top: 1rem;
       line-height: 1.5;
     }
 
     .auth-message.error {
-      background: rgba(255,71,87,0.09);
-      border: 1px solid rgba(255,71,87,0.25);
+      background: rgba(255,51,102,0.1);
+      border: 1px solid rgba(255,51,102,0.3);
       color: var(--danger);
     }
 
     .auth-message.success {
-      background: rgba(34,197,94,0.09);
-      border: 1px solid rgba(34,197,94,0.25);
+      background: rgba(0,230,118,0.1);
+      border: 1px solid rgba(0,230,118,0.3);
       color: var(--success);
     }
   </style>
 </head>
-<body class="animate-fade">
+<body>
   <div id="toastContainer"></div>
 
   <div class="auth-wrap">
     <div class="auth-logo">
-      <span class="logo-emoji">⚽</span>
-      <h1>WC2026</h1>
-      <p>Arkadaş Bahis Platformu</p>
+      <span class="logo-emoji">🏆</span>
+      <h1>UCL & UEL BAHİS</h1>
+      <p>FB • GS • BJK Avrupa Tahminleri</p>
     </div>
 
     <div class="auth-card">
@@ -172,13 +159,13 @@
       <!-- GİRİŞ -->
       <div class="auth-panel active" id="panelLogin">
         <form id="loginForm">
-          <div class="input-group">
+          <div class="form-group">
             <label for="email">E-Posta</label>
-            <input type="email" id="email" placeholder="ornek@mail.com" required autocomplete="email">
+            <input type="email" id="email" class="form-input" placeholder="ornek@mail.com" required autocomplete="email">
           </div>
-          <div class="input-group" style="margin-bottom:0.75rem">
+          <div class="form-group">
             <label for="password">Şifre</label>
-            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+            <input type="password" id="password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
           </div>
           <button type="submit" class="btn btn-primary btn-auth">Giriş Yap</button>
           <div id="loginError" class="auth-message error"></div>
@@ -188,20 +175,21 @@
       <!-- KAYIT -->
       <div class="auth-panel" id="panelSignup">
         <form id="signupForm">
-          <div class="input-group">
+          <div class="form-group">
             <label for="signupUsername">Kullanıcı Adı</label>
-            <input type="text" id="signupUsername" placeholder="örn: kerem07" required minlength="3" maxlength="20" autocomplete="username">
+            <input type="text" id="signupUsername" class="form-input" placeholder="örn: fenerbahce1907" required minlength="3" maxlength="20" autocomplete="username">
           </div>
-          <div class="input-group">
+          <div class="form-group">
             <label for="signupEmail">E-Posta</label>
-            <input type="email" id="signupEmail" placeholder="ornek@mail.com" required autocomplete="email">
+            <input type="email" id="signupEmail" class="form-input" placeholder="ornek@mail.com" required autocomplete="email">
           </div>
-          <div class="input-group" style="margin-bottom:0.75rem">
+          <div class="form-group">
             <label for="signupPassword">Şifre</label>
-            <input type="password" id="signupPassword" placeholder="En az 6 karakter" required minlength="6" autocomplete="new-password">
+            <input type="password" id="signupPassword" class="form-input" placeholder="En az 6 karakter" required minlength="6" autocomplete="new-password">
           </div>
-          <button type="submit" class="btn btn-primary btn-auth">Kayıt Ol</button>
-          <div id="signupMessage" class="auth-message"></div>
+          <button type="submit" class="btn btn-primary btn-auth">Hesap Oluştur</button>
+          <div id="signupError" class="auth-message error"></div>
+          <div id="signupSuccess" class="auth-message success"></div>
         </form>
       </div>
     </div>
@@ -209,56 +197,69 @@
 
   <script>
     function switchTab(tab) {
-      document.getElementById('panelLogin').classList.toggle('active', tab === 'login');
-      document.getElementById('panelSignup').classList.toggle('active', tab === 'signup');
-      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-      document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+      document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+      if (tab === 'login') {
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('panelLogin').classList.add('active');
+      } else {
+        document.getElementById('tabSignup').classList.add('active');
+        document.getElementById('panelSignup').classList.add('active');
+      }
     }
   </script>
 
   <script type="module">
-    import { login, signup } from './js/auth.js';
+    import { supabase } from './js/supabase.js';
 
-    // Giriş
+    // Oturum kontrolü
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      window.location.href = './matches.html';
+    }
+
+    // Login Form Submit
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
-      const errEl = document.getElementById('loginError');
-      btn.disabled = true;
-      btn.textContent = 'Giriş yapılıyor...';
-      errEl.style.display = 'none';
-      const { error } = await login(
-        document.getElementById('email').value,
-        document.getElementById('password').value
-      );
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('loginError');
+      errorDiv.style.display = 'none';
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        errEl.textContent = error.message === 'Invalid login credentials' ? 'Hatalı e-posta veya şifre.' : error.message;
-        errEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Giriş Yap';
+        errorDiv.textContent = error.message === 'Invalid login credentials' ? 'E-posta veya şifre hatalı.' : error.message;
+        errorDiv.style.display = 'block';
+      } else {
+        window.location.href = './matches.html';
       }
     });
 
-    // Kayıt
+    // Signup Form Submit
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
-      const msgEl = document.getElementById('signupMessage');
-      btn.disabled = true;
-      btn.textContent = 'Kayıt yapılıyor...';
-      msgEl.style.display = 'none';
       const username = document.getElementById('signupUsername').value.trim();
-      const email    = document.getElementById('signupEmail').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
       const password = document.getElementById('signupPassword').value;
-      const { error } = await signup(email, password, username);
+      const errorDiv = document.getElementById('signupError');
+      const successDiv = document.getElementById('signupSuccess');
+
+      errorDiv.style.display = 'none';
+      successDiv.style.display = 'none';
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { username } }
+      });
+
       if (error) {
-        msgEl.className = 'auth-message error';
-        msgEl.textContent = error.message;
-        msgEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Kayıt Ol';
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
       } else {
-        await login(email, password);
+        successDiv.textContent = 'Kayıt başarılı! Yönlendiriliyorsunuz...';
+        successDiv.style.display = 'block';
+        setTimeout(() => { window.location.href = './matches.html'; }, 1200);
       }
     });
   </script>

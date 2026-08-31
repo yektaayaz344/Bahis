@@ -3,71 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sıralama | WC2026</title>
+  <title>Sıralama | UCL & UEL Bahis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .podium-row td { background: rgba(255,210,0,0.04); }
-    .rank-row.rank-2 td { background: rgba(192,192,192,0.03); }
-    .rank-row.rank-3 td { background: rgba(205,127,50,0.03); }
-    .my-row td { background: rgba(0,242,254,0.05) !important; }
-
-    .table-wrap {
-      background: var(--bg-card);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-
-    .lb-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 1.25rem;
-      border-bottom: 1px solid var(--glass-border);
-      overflow-x: auto;
-    }
-    .lb-tab-btn {
-      padding: 0.6rem 1.1rem;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      cursor: pointer;
-      white-space: nowrap;
-      margin-bottom: -1px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .lb-tab-btn:hover { color: var(--text-main); }
-    .lb-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-    .league-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .league-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-    .league-card-info { flex: 1; }
-    .league-card-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
-    .league-card-meta { font-size: 0.72rem; color: var(--text-muted); }
-  </style>
 </head>
 <body>
   <div id="toastContainer"></div>
 
   <nav>
-    <a class="nav-brand" href="index.html">WC2026 ⚽</a>
+    <a class="nav-brand" href="index.html">
+      🏆 UCL & UEL <span class="league-tag">FB • GS • BJK</span>
+    </a>
     <div class="nav-center" id="navCenter">
       <ul class="nav-links">
         <li><a href="matches.html">Maçlar</a></li>
@@ -85,111 +33,27 @@
   </nav>
 
   <div class="container animate-fade">
-    <header style="margin-bottom:1.5rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+    <header style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem">
       <div>
-        <h1 style="font-size:2.25rem;margin-bottom:0.2rem">Sıralama</h1>
-        <p style="color:var(--text-muted);font-size:0.875rem">En iyi tahminciler burada yarışıyor.</p>
+        <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Liderlik Tablosu</h1>
+        <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
+          En çok doğru tahmin yapan yarışmacılar (1 - X - 2 Doğru Tahmin Sayısı)
+        </p>
       </div>
-      <button class="btn btn-outline" style="font-size:0.8rem;padding:0.4rem 0.875rem" onclick="window.openCreateLeagueModal()">+ Lig Oluştur</button>
     </header>
 
-    <!-- Tabs -->
-    <div class="lb-tabs" id="lbTabs">
-      <button class="lb-tab-btn active" data-tab="genel" onclick="window.switchLbTab('genel', null)">Genel</button>
-      <button class="lb-tab-btn" data-tab="ligler" onclick="window.switchLbTab('ligler', null)">Ligler</button>
-    </div>
-
-    <!-- Genel Sıralama -->
-    <div id="lbPanel-genel">
-      <div class="table-wrap">
-        <table class="leaderboard-table" id="leaderboardTable">
-          <thead>
-            <tr>
-              <th style="width:56px">#</th>
-              <th>Kullanıcı</th>
-              <th>Doğru / Toplam</th>
-              <th>İsabet %</th>
-              <th style="text-align:right">Puan</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboardBody">
-            <tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Ligler Paneli -->
-    <div id="lbPanel-ligler" style="display:none">
-      <div id="leagueListWrap">
-        <div style="color:var(--text-muted);font-size:0.85rem;padding:1rem 0">Yükleniyor...</div>
-      </div>
-    </div>
-
-    <!-- Dinamik Lig Tabları -->
-    <div id="lbPanel-league" style="display:none">
-      <div class="table-wrap">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th style="width:56px">#</th>
-              <th>Kullanıcı</th>
-              <th>Doğru / Toplam</th>
-              <th>İsabet %</th>
-              <th style="text-align:right">Puan</th>
-            </tr>
-          </thead>
-          <tbody id="leagueLeaderboardBody">
-            <tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Create League Modal -->
-  <div id="createLeagueModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1000;justify-content:center;align-items:center;backdrop-filter:blur(5px)">
-    <div style="background:var(--bg-elevated);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:1.875rem;width:100%;max-width:400px;margin:1rem;position:relative">
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gradient-primary);border-radius:var(--radius-lg) var(--radius-lg) 0 0"></div>
-      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem;font-family:var(--font-display)">Lig Oluştur</h3>
-      <div class="input-group">
-        <label>Lig Adı</label>
-        <input type="text" id="leagueNameInput" placeholder="Ör: Ofis Ligi, Arkadaş Grubu...">
-      </div>
-      <div style="display:flex;gap:0.625rem;margin-top:1rem">
-        <button class="btn btn-primary" style="flex:1" onclick="window.createLeague()">Oluştur</button>
-        <button class="btn btn-ghost" onclick="window.closeCreateLeagueModal()">İptal</button>
+    <div class="card">
+      <div id="leaderboardContent">
+        <div style="text-align:center; padding:2.5rem; color:var(--ucl-cyan); font-family:var(--font-display); font-size:1.4rem;">
+          Liderlik Tablosu Yükleniyor...
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    window.showToast = function(message, type) {
-      type = type || 'info';
-      var container = document.getElementById('toastContainer');
-      var toast = document.createElement('div');
-      toast.className = 'toast toast-' + type;
-      var icons = { success: '✓', error: '✗', info: 'i' };
-      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
-      container.appendChild(toast);
-      setTimeout(function() { toast.classList.add('show'); }, 10);
-      setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 300); }, 3500);
-    };
-
     document.getElementById('hamburger').addEventListener('click', function() {
       document.getElementById('navCenter').classList.toggle('open');
-    });
-
-    window.openCreateLeagueModal = function() {
-      document.getElementById('createLeagueModal').style.display = 'flex';
-      setTimeout(() => document.getElementById('leagueNameInput').focus(), 50);
-    };
-    window.closeCreateLeagueModal = function() {
-      document.getElementById('createLeagueModal').style.display = 'none';
-      document.getElementById('leagueNameInput').value = '';
-    };
-    document.getElementById('createLeagueModal').addEventListener('click', function(e) {
-      if (e.target === this) window.closeCreateLeagueModal();
     });
   </script>
 
@@ -197,229 +61,101 @@
     import { supabase } from './js/supabase.js';
     import { requireAuth, logout, isAdmin } from './js/auth.js';
 
-    let currentUserId = null;
-
     async function init() {
       const session = await requireAuth();
       if (!session) return;
-      currentUserId = session.user.id;
       if (isAdmin(session)) document.getElementById('adminLink').style.display = 'block';
       document.getElementById('logoutBtn').addEventListener('click', logout);
 
       await loadLeaderboard();
-      await loadUserLeagues();
     }
-
-    // ── Genel Sıralama ───────────────────────────────────────────────────────
 
     async function loadLeaderboard() {
-      const body = document.getElementById('leaderboardBody');
-      const { data: leaderboard, error } = await supabase
-        .from('leaderboard_cache')
-        .select('*, users(username, avatar_color, is_bot)')
-        .order('total_points', { ascending: false });
+      const container = document.getElementById('leaderboardContent');
 
-      if (error) { body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:2rem">Hata: ${error.message}</td></tr>`; return; }
+      // Fetch users and their correct predictions tally
+      const { data: users, error: userError } = await supabase.from('users').select('id, username');
+      if (userError) {
+        container.innerHTML = `<div style="color:var(--danger); padding:1rem;">Hata: ${userError.message}</div>`;
+        return;
+      }
 
-      const filtered = (leaderboard || []).filter(e => !e.users?.is_bot);
+      const { data: predictions, error: predError } = await supabase
+        .from('predictions')
+        .select('user_id, is_correct');
 
-      if (!filtered.length) { body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:3rem">Henüz puan yok.</td></tr>`; return; }
+      if (predError) {
+        container.innerHTML = `<div style="color:var(--danger); padding:1rem;">Hata: ${predError.message}</div>`;
+        return;
+      }
 
-      body.innerHTML = filtered.map((entry, i) => renderRow(entry, i + 1, currentUserId)).join('');
-    }
-
-    function renderRow(entry, rank, myId) {
-      const username = entry.users?.username || '?';
-      const initial  = username.charAt(0).toUpperCase();
-      const isMe     = entry.user_id === myId;
-      const rate     = entry.total_predictions > 0 ? Math.round(entry.correct_predictions / entry.total_predictions * 100) : 0;
-      return `<tr class="rank-row rank-${rank} ${isMe ? 'my-row' : ''}">
-        <td><div class="rank-badge rank-badge-${rank}">${rank}</div></td>
-        <td><div class="user-cell">
-          <div class="avatar" style="background:${entry.users?.avatar_color||'var(--primary)'}">${initial}</div>
-          <span class="username ${isMe?'me':''}">${username}${isMe?' (Sen)':''}</span>
-        </div></td>
-        <td>
-          <span class="correct-count">${entry.correct_predictions}</span><span class="muted"> / ${entry.total_predictions}</span>
-          <div class="acc-bar"><div style="width:${rate}%"></div></div>
-        </td>
-        <td style="font-family:var(--font-display);font-weight:700;color:var(--text-muted)">${rate}%</td>
-        <td style="text-align:right"><span class="points-display">${entry.total_points}</span></td>
-      </tr>`;
-    }
-
-    // ── Lig Tabları ──────────────────────────────────────────────────────────
-
-    async function loadUserLeagues() {
-      const { data: memberships } = await supabase
-        .from('league_members')
-        .select('league_id, leagues(id, name)')
-        .eq('user_id', currentUserId);
-
-      const tabBar = document.getElementById('lbTabs');
-
-      (memberships || []).forEach(m => {
-        const league = m.leagues;
-        if (!league) return;
-        const btn = document.createElement('button');
-        btn.className = 'lb-tab-btn';
-        btn.dataset.tab = 'league-' + league.id;
-        btn.textContent = league.name;
-        btn.onclick = () => window.switchLbTab('league', league.id);
-        tabBar.appendChild(btn);
-      });
-    }
-
-    window.switchLbTab = async function(tab, leagueId) {
-      document.querySelectorAll('.lb-tab-btn').forEach(b => {
-        const isActive = leagueId
-          ? b.dataset.tab === 'league-' + leagueId
-          : b.dataset.tab === tab;
-        b.classList.toggle('active', isActive);
+      // Aggregate user stats
+      const userStatsMap = new Map();
+      users.forEach(u => {
+        userStatsMap.set(u.id, { username: u.username, total: 0, correct: 0 });
       });
 
-      document.getElementById('lbPanel-genel').style.display   = tab === 'genel'   ? '' : 'none';
-      document.getElementById('lbPanel-ligler').style.display  = tab === 'ligler'  ? '' : 'none';
-      document.getElementById('lbPanel-league').style.display  = tab === 'league'  ? '' : 'none';
-
-      if (tab === 'ligler') await loadAllLeagues();
-      if (tab === 'league' && leagueId) await loadLeagueLeaderboard(leagueId);
-    };
-
-    // ── Ligler Listesi ───────────────────────────────────────────────────────
-
-    async function loadAllLeagues() {
-      const wrap = document.getElementById('leagueListWrap');
-      wrap.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem">Yükleniyor...</div>';
-
-      const [{ data: leagues }, { data: myMemberships }] = await Promise.all([
-        supabase.from('leagues').select('id, name, created_by, created_at, league_members(count)').order('created_at', { ascending: false }),
-        supabase.from('league_members').select('league_id').eq('user_id', currentUserId),
-      ]);
-
-      const myLeagueIds = new Set((myMemberships || []).map(m => m.league_id));
-
-      if (!leagues?.length) {
-        wrap.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:2rem 0;text-align:center">Henüz lig yok. "Lig Oluştur" ile başla!</div>';
-        return;
-      }
-
-      wrap.innerHTML = `<div class="league-list">${leagues.map(lg => {
-        const memberCount = lg.league_members?.[0]?.count ?? 0;
-        const isMember    = myLeagueIds.has(lg.id);
-        const isOwner     = lg.created_by === currentUserId;
-        return `<div class="league-card">
-          <div class="league-card-info">
-            <div class="league-card-name">${lg.name}</div>
-            <div class="league-card-meta">${memberCount} üye${isOwner ? ' · Senin ligin' : ''}</div>
-          </div>
-          <div style="display:flex;gap:0.5rem;flex-shrink:0">
-            ${isMember
-              ? `<button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.625rem" onclick="window.switchLbTab('league','${lg.id}')">Sıralama</button>
-                 ${!isOwner ? `<button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.625rem;color:var(--danger)" onclick="window.leaveLeague('${lg.id}')">Çık</button>` : ''}`
-              : `<button class="btn btn-outline" style="font-size:0.75rem;padding:0.3rem 0.75rem" onclick="window.joinLeague('${lg.id}')">Katıl</button>`
-            }
-          </div>
-        </div>`;
-      }).join('')}</div>`;
-    }
-
-    async function loadLeagueLeaderboard(leagueId) {
-      const body = document.getElementById('leagueLeaderboardBody');
-      body.innerHTML = '<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">Yükleniyor...</td></tr>';
-
-      const { data: members } = await supabase
-        .from('league_members')
-        .select('user_id')
-        .eq('league_id', leagueId);
-
-      if (!members?.length) {
-        body.innerHTML = '<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">Bu ligde henüz üye yok.</td></tr>';
-        return;
-      }
-
-      const memberIds = members.map(m => m.user_id);
-
-      const { data: lb, error } = await supabase
-        .from('leaderboard_cache')
-        .select('*, users(username, avatar_color, is_bot)')
-        .in('user_id', memberIds)
-        .order('total_points', { ascending: false });
-
-      if (error || !lb?.length) {
-        body.innerHTML = '<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">Henüz puan yok.</td></tr>';
-        return;
-      }
-
-      body.innerHTML = lb.filter(e => !e.users?.is_bot).map((entry, i) => renderRow(entry, i + 1, currentUserId)).join('');
-    }
-
-    // ── Lig İşlemleri ────────────────────────────────────────────────────────
-
-    window.createLeague = async function() {
-      const name = document.getElementById('leagueNameInput').value.trim();
-      if (!name) return showToast('Lig adı boş olamaz.', 'error');
-
-      const { data: league, error } = await supabase
-        .from('leagues')
-        .insert({ name, created_by: currentUserId })
-        .select()
-        .single();
-
-      if (error) return showToast('Hata: ' + error.message, 'error');
-
-      // Auto-join
-      await supabase.from('league_members').insert({ league_id: league.id, user_id: currentUserId });
-
-      window.closeCreateLeagueModal();
-      showToast(`"${name}" ligi oluşturuldu!`, 'success');
-
-      // Add tab and navigate
-      const tabBar = document.getElementById('lbTabs');
-      const btn = document.createElement('button');
-      btn.className = 'lb-tab-btn';
-      btn.dataset.tab = 'league-' + league.id;
-      btn.textContent = league.name;
-      btn.onclick = () => window.switchLbTab('league', league.id);
-      tabBar.insertBefore(btn, tabBar.lastElementChild);
-
-      window.switchLbTab('league', league.id);
-    };
-
-    window.joinLeague = async function(leagueId) {
-      const { error } = await supabase.from('league_members').insert({ league_id: leagueId, user_id: currentUserId });
-      if (error) return showToast('Hata: ' + error.message, 'error');
-      showToast('Lige katıldın!', 'success');
-      await loadAllLeagues();
-
-      // Add tab
-      const { data: lg } = await supabase.from('leagues').select('id, name').eq('id', leagueId).single();
-      if (lg) {
-        const tabBar = document.getElementById('lbTabs');
-        if (!tabBar.querySelector(`[data-tab="league-${lg.id}"]`)) {
-          const btn = document.createElement('button');
-          btn.className = 'lb-tab-btn';
-          btn.dataset.tab = 'league-' + lg.id;
-          btn.textContent = lg.name;
-          btn.onclick = () => window.switchLbTab('league', lg.id);
-          tabBar.insertBefore(btn, tabBar.lastElementChild);
+      (predictions || []).forEach(p => {
+        const stats = userStatsMap.get(p.user_id);
+        if (stats) {
+          stats.total += 1;
+          if (p.is_correct === true) stats.correct += 1;
         }
+      });
+
+      const leaderList = Array.from(userStatsMap.values()).sort((a, b) => {
+        if (b.correct !== a.correct) return b.correct - a.correct;
+        return a.total - b.total; // Tie-breaker: fewer total picks for same correct count
+      });
+
+      if (leaderList.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Henüz sıralama verisi bulunmuyor.</div>`;
+        return;
       }
-    };
 
-    window.leaveLeague = async function(leagueId) {
-      if (!confirm('Bu ligden ayrılmak istediğine emin misin?')) return;
-      const { error } = await supabase.from('league_members').delete().eq('league_id', leagueId).eq('user_id', currentUserId);
-      if (error) return showToast('Hata: ' + error.message, 'error');
-      showToast('Ligden ayrıldın.', 'success');
+      container.innerHTML = `
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th style="width:70px; text-align:center;">SIRA</th>
+              <th>YARIŞMACI</th>
+              <th style="text-align:center;">TOPLAM TAHMİN</th>
+              <th style="text-align:center;">DOĞRU TAHMİN</th>
+              <th style="text-align:right;">BAŞARI YÜZDESİ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${leaderList.map((row, index) => {
+              const rank = index + 1;
+              const rankClass = rank === 1 ? 'rank-1' : (rank === 2 ? 'rank-2' : (rank === 3 ? 'rank-3' : ''));
+              const pct = row.total > 0 ? ((row.correct / row.total) * 100).toFixed(1) : '0.0';
 
-      // Remove tab
-      const tab = document.getElementById('lbTabs').querySelector(`[data-tab="league-${leagueId}"]`);
-      if (tab) tab.remove();
-
-      window.switchLbTab('ligler', null);
-      await loadAllLeagues();
-    };
+              return `
+                <tr>
+                  <td style="text-align:center;">
+                    <span class="rank-badge ${rankClass}">${rank}</span>
+                  </td>
+                  <td>
+                    <span style="font-weight:700; font-size:1.05rem; color:#fff;">${row.username}</span>
+                  </td>
+                  <td style="text-align:center; font-weight:600; color:var(--text-muted);">
+                    ${row.total}
+                  </td>
+                  <td style="text-align:center;">
+                    <span class="status-badge badge-open" style="font-size:0.95rem; font-family:var(--font-display); font-weight:800; padding:4px 12px;">
+                      ${row.correct} Doğru
+                    </span>
+                  </td>
+                  <td style="text-align:right; font-family:var(--font-display); font-size:1.1rem; font-weight:800; color:var(--ucl-cyan);">
+                    %${pct}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
 
     init();
   </script>

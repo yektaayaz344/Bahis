@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>İstatistiklerim | WC2026</title>
+  <title>İstatistiklerim | UCL & UEL Bahis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,9 @@
   <div id="toastContainer"></div>
 
   <nav>
-    <a class="nav-brand" href="index.html">WC2026 ⚽</a>
+    <a class="nav-brand" href="index.html">
+      🏆 UCL & UEL <span class="league-tag">FB • GS • BJK</span>
+    </a>
     <div class="nav-center" id="navCenter">
       <ul class="nav-links">
         <li><a href="matches.html">Maçlar</a></li>
@@ -31,67 +33,43 @@
   </nav>
 
   <div class="container animate-fade">
-    <header style="margin-bottom:2rem">
-      <p style="color:var(--text-muted);font-size:0.8rem;letter-spacing:0.06em;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;margin-bottom:0.25rem">Hoş geldin</p>
-      <h1 style="font-size:2.25rem;margin-bottom:0.2rem" id="welcomeUser">—</h1>
-      <p style="color:var(--text-muted);font-size:0.875rem">Performansını analiz et.</p>
+    <header style="margin-bottom:2rem;">
+      <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Tahmin İstatistiklerim</h1>
+      <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
+        FB, GS ve BJK Avrupa maçlarındaki tahmin başarım ve geçmişiniz.
+      </p>
     </header>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Toplam Puan</div>
-        <div class="stat-value" id="statTotalPoints">—</div>
-        <div class="stat-sub">genel sıralamada</div>
+    <!-- Stats Cards Grid -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; margin-bottom:2rem;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">TOPLAM TAHMİN</div>
+        <div id="statTotal" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:#fff;">0</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Başarı Oranı</div>
-        <div class="stat-value success-val" id="statSuccessRate">—</div>
-        <div class="stat-sub" id="statCorrect" style="color:var(--text-muted)">—</div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--success); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">DOĞRU TAHMİN</div>
+        <div id="statCorrect" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--success);">0</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Sıralama</div>
-        <div class="stat-value accent-val" id="statRank">—</div>
-        <div class="stat-sub">genel sıralamada</div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--danger); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">YANLIŞ TAHMİN</div>
+        <div id="statWrong" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--danger);">0</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:0.75rem; color:var(--ucl-cyan); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem;">BAŞARI ORANI</div>
+        <div id="statAccuracy" style="font-family:var(--font-display); font-size:2.5rem; font-weight:800; color:var(--ucl-cyan);">%0</div>
       </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
-      <h2 style="font-size:1.5rem">Tahmin Geçmişi</h2>
-    </div>
-
-    <div id="historyList" style="display:flex;flex-direction:column;gap:0.75rem">
-      <div class="skeleton" style="height:72px;border-radius:var(--radius-lg)"></div>
-      <div class="skeleton" style="height:72px;border-radius:var(--radius-lg)"></div>
-      <div class="skeleton" style="height:72px;border-radius:var(--radius-lg)"></div>
-    </div>
-
-    <div style="margin-top:2.5rem">
-      <h2 style="font-size:1.5rem;margin-bottom:0.25rem">Bot Karşılaştırması</h2>
-      <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:1.25rem">3 farklı strateji uygulayan botların performansı.</p>
-      <div id="botStatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
-        <div class="skeleton" style="height:110px;border-radius:var(--radius-lg)"></div>
-        <div class="skeleton" style="height:110px;border-radius:var(--radius-lg)"></div>
-        <div class="skeleton" style="height:110px;border-radius:var(--radius-lg)"></div>
+    <!-- Prediction History Card -->
+    <div class="card">
+      <h3 style="margin-bottom:1rem; font-size:1.2rem;">Tahmin Geçmişim</h3>
+      <div id="historyContainer">
+        <div style="text-align:center; padding:2rem; color:var(--text-muted);">Tahminler yükleniyor...</div>
       </div>
     </div>
   </div>
 
   <script>
-    window.showToast = function(message, type) {
-      type = type || 'info';
-      var container = document.getElementById('toastContainer');
-      var toast = document.createElement('div');
-      toast.className = 'toast toast-' + type;
-      var icons = { success: '✓', error: '✗', info: 'i' };
-      toast.innerHTML = '<span class="toast-icon">' + (icons[type]||'i') + '</span><span>' + message + '</span>';
-      container.appendChild(toast);
-      setTimeout(function() { toast.classList.add('show'); }, 10);
-      setTimeout(function() {
-        toast.classList.remove('show');
-        setTimeout(function() { toast.remove(); }, 300);
-      }, 3500);
-    };
-
     document.getElementById('hamburger').addEventListener('click', function() {
       document.getElementById('navCenter').classList.toggle('open');
     });
@@ -105,111 +83,100 @@
       const session = await requireAuth();
       if (!session) return;
       if (isAdmin(session)) document.getElementById('adminLink').style.display = 'block';
-      const { data: userData } = await supabase.from('users').select('username').eq('id', session.user.id).single();
-      if (userData?.username) document.getElementById('welcomeUser').textContent = userData.username;
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
       await loadStats(session.user.id);
-      await loadHistory(session.user.id);
-      await loadBotStats();
     }
 
     async function loadStats(userId) {
-      const [statsRes, allRes] = await Promise.all([
-        supabase.from('leaderboard_cache').select('*').eq('user_id', userId).maybeSingle(),
-        supabase.from('leaderboard_cache').select('user_id, total_points').order('total_points', { ascending: false })
-      ]);
-      const stats = statsRes.data;
-      const all   = allRes.data || [];
-      const rank  = all.findIndex(r => r.user_id === userId) + 1;
-
-      if (stats) {
-        document.getElementById('statTotalPoints').textContent = stats.total_points;
-        document.getElementById('statRank').textContent = rank > 0 ? '#' + rank : '—';
-        const rate = stats.total_predictions > 0 ? Math.round(stats.correct_predictions / stats.total_predictions * 100) : 0;
-        document.getElementById('statSuccessRate').textContent = '%' + rate;
-        document.getElementById('statCorrect').textContent = stats.correct_predictions + '/' + stats.total_predictions + ' tahmin';
-      } else {
-        document.getElementById('statTotalPoints').textContent = '0';
-        document.getElementById('statRank').textContent = '—';
-        document.getElementById('statSuccessRate').textContent = '%0';
-        document.getElementById('statCorrect').textContent = '0/0 tahmin';
-      }
-    }
-
-    async function loadHistory(userId) {
-      const list = document.getElementById('historyList');
-      const { data: preds, error } = await supabase
+      const { data: predictions, error } = await supabase
         .from('predictions')
-        .select('*, matches(home_team,away_team,home_flag,away_flag,home_score,away_score,status), bet_options(label,odds_value)')
+        .select('*, matches(*), bet_options(*)')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) { list.innerHTML = `<div class="card" style="color:var(--danger)">Hata: ${error.message}</div>`; return; }
-      if (!preds?.length) { list.innerHTML = `<div class="card"><div class="empty-state">Henüz tahmin yapmamışsın.<br><a href="matches.html" style="color:var(--primary);text-decoration:none;font-weight:600">Maçlar sayfasına git →</a></div></div>`; return; }
-
-      list.innerHTML = preds.map(p => {
-        const isFinished = p.matches?.status === 'finished';
-        const statusText = !isFinished ? 'Bekliyor' : (p.is_correct ? 'Kazandı' : 'Kaybetti');
-        const statusClass = !isFinished ? 'pred-pending' : (p.is_correct ? 'pred-win' : 'pred-loss');
-        return `<div class="pred-history-item ${statusClass}">
-          <div>
-            <div class="pred-match">${p.matches?.home_flag} ${p.matches?.home_team} vs ${p.matches?.away_team} ${p.matches?.away_flag}</div>
-          </div>
-          <div>
-            <div class="pred-choice">Seçim: <strong>${p.bet_options?.label}</strong> @ ${Number(p.odds_at_prediction).toFixed(1)}</div>
-          </div>
-          <div class="pred-status-col">
-            <span class="pred-status-badge ${statusClass}">${statusText}</span>
-            ${isFinished ? `<span class="pred-score">${p.matches?.home_score} - ${p.matches?.away_score}</span>` : ''}
-          </div>
-          <div class="pred-points">
-            ${p.is_correct ? `+${p.points_earned}` : (isFinished ? '0' : '—')}<span>puan</span>
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    async function loadBotStats() {
-      const grid = document.getElementById('botStatsGrid');
-      const { data: bots } = await supabase
-        .from('users')
-        .select('id, username, leaderboard_cache(*)')
-        .eq('is_bot', true);
-
-      if (!bots?.length) {
-        grid.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;grid-column:1/-1">Botlar henüz kurulmamış.</div>';
+      if (error) {
+        document.getElementById('historyContainer').innerHTML = `<div style="color:var(--danger);">Hata: ${error.message}</div>`;
         return;
       }
 
-      const icons = { Favorici: '🎯', Riskci: '🎲', Ortanci: '⚖️' };
-      const descs = { Favorici: 'En favoriyi seçer', Riskci: 'En risklisini seçer', Ortanci: 'Ortanca seçer' };
+      let total = predictions ? predictions.length : 0;
+      let correct = 0;
+      let wrong = 0;
+      let pending = 0;
 
-      grid.innerHTML = bots.map(bot => {
-        const lb   = bot.leaderboard_cache;
-        const pts  = lb?.total_points ?? 0;
-        const cor  = lb?.correct_predictions ?? 0;
-        const tot  = lb?.total_predictions ?? 0;
-        const rate = tot > 0 ? Math.round(cor / tot * 100) : 0;
-        const icon = icons[bot.username] || '🤖';
-        const desc = descs[bot.username] || '';
-        return `<div class="stat-card" style="text-align:center">
-          <div style="font-size:1.75rem;margin-bottom:0.25rem">${icon}</div>
-          <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.15rem">${bot.username}</div>
-          <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.75rem">${desc}</div>
-          <div style="display:flex;justify-content:center;gap:1.25rem">
-            <div>
-              <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:800;color:var(--primary)">${pts}</div>
-              <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">puan</div>
-            </div>
-            <div>
-              <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:800;color:var(--success)">${rate}%</div>
-              <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">${cor}/${tot}</div>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
+      (predictions || []).forEach(p => {
+        if (p.matches?.status === 'finished') {
+          if (p.is_correct === true) correct++;
+          else wrong++;
+        } else {
+          pending++;
+        }
+      });
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statCorrect').textContent = correct;
+      document.getElementById('statWrong').textContent = wrong;
+      const accuracyPct = (correct + wrong) > 0 ? ((correct / (correct + wrong)) * 100).toFixed(1) : '0';
+      document.getElementById('statAccuracy').textContent = `%${accuracyPct}`;
+
+      const historyDiv = document.getElementById('historyContainer');
+      if (!predictions || predictions.length === 0) {
+        historyDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Henüz hiç tahmin yapmadınız.</div>`;
+        return;
+      }
+
+      historyDiv.innerHTML = `
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>MAÇ</th>
+              <th>ORGANİZASYON</th>
+              <th style="text-align:center;">TAHMİNİNİZ</th>
+              <th style="text-align:center;">SKOR</th>
+              <th style="text-align:right;">DURUM</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${predictions.map(p => {
+              const match = p.matches;
+              const opt = p.bet_options;
+              const isFinished = match?.status === 'finished';
+
+              let statusBadge = '<span class="status-badge badge-open">BEKLİYOR</span>';
+              if (isFinished) {
+                statusBadge = p.is_correct
+                  ? '<span class="status-badge badge-open" style="background:rgba(0,230,118,0.2); color:var(--success);">DOĞRU (+1 Puan)</span>'
+                  : '<span class="status-badge badge-finished" style="background:rgba(255,51,102,0.2); color:var(--danger);">YANLIŞ</span>';
+              }
+
+              const pickCode = opt?.outcome_key === 'home_win' ? '1 (Ev Sahibi)' : (opt?.outcome_key === 'draw' ? 'X (Beraberlik)' : '2 (Deplasman)');
+
+              return `
+                <tr>
+                  <td>
+                    <span style="font-weight:700; color:#fff;">${match ? match.home_team : '-'} vs ${match ? match.away_team : '-'}</span>
+                  </td>
+                  <td>
+                    <span style="font-size:0.8rem; color:var(--ucl-cyan);">${match ? match.group_name : '-'}</span>
+                  </td>
+                  <td style="text-align:center; font-weight:700; color:var(--ucl-gold);">
+                    ${pickCode}
+                  </td>
+                  <td style="text-align:center; font-weight:700;">
+                    ${isFinished ? `${match.home_score} - ${match.away_score}` : 'VS'}
+                  </td>
+                  <td style="text-align:right;">
+                    ${statusBadge}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
-    document.getElementById('logoutBtn').addEventListener('click', logout);
     init();
   </script>
 </body>
