@@ -141,7 +141,7 @@
 
   <!-- ═══ TAB 3: TAHMİNLER ═══ -->
   <div class="tab-panel" id="panelPredictions">
-    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;">Her tahmini tek tek puanla. <strong style="color:var(--ucl-cyan);">✓</strong> varsayılan puanı verir, <strong style="color:var(--danger);">✗</strong> sıfırlar, kutuya yazıp <strong>Kaydet</strong> özel puan verir, <strong>↺</strong> tekrar "bekliyor"a çeker. Golcü tahminleri otomatik puanlanmaz — buradan değerlendirilir.</p>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;">Maç bittikten sonra <strong>her tahmini tek tek puanlarsın</strong> — oyuncuya göre gruplu (1X2 · Golcü · Skor). <strong style="color:var(--ucl-cyan);">✓</strong> varsayılan puan, <strong style="color:var(--danger);">✗</strong> sıfır, kutuya yazıp <strong>Kaydet</strong> özel puan, <strong>↺</strong> tekrar "bekliyor". Turuncu kenarlı satırlar henüz puanlanmadı. İstersen <strong>🤖 otomatik ver</strong> ile 1X2 &amp; Skoru maç sonucuna göre doldurup sadece golcüleri elle verirsin.</p>
     <label style="font-size:.78rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:.35rem;">MAÇA GÖRE FİLTRELE</label>
     <select id="predMatchFilter" class="pred-match-select" onchange="loadPredictionsForMatch()">
       <option value="">— Maç seçin —</option>
@@ -381,12 +381,12 @@ async function loadAdminMatches() {
 
       ${!fin ? `
       <div class="match-score-row">
-        <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKOR GİR &amp; PUANDağıt:</span>
+        <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKORU KAYDET (puanlar elle):</span>
         <input type="number" class="mini-input" id="hs_${m.id}" min="0" value="0">
         <span style="font-weight:800;color:var(--text-muted);">-</span>
         <input type="number" class="mini-input" id="as_${m.id}" min="0" value="0">
         <input type="text" class="scorer-txt" id="sc_${m.id}" placeholder="Golcüler: Icardi, En-Nesyri...">
-        <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;">✅ İşle (1P·2P·5P)</button>
+        <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;">💾 Skoru Kaydet → Tahminlere Git</button>
       </div>` : `
       <div style="margin-top:.35rem;">
         <button class="btn btn-outline btn-xs redo-toggle" data-id="${m.id}">🔄 Skoru Güncelle</button>
@@ -448,36 +448,24 @@ async function processResult(matchId, hs, as, sc) {
   try {
     const { error:mErr } = await supabase.from('matches').update({ home_score:hs, away_score:as, goalscorers:sc, result, status:'finished' }).eq('id',matchId);
     if (mErr) throw mErr;
+    // Skor bilgisi olarak bet_options is_correct'ini işaretle (matches.html renklendirmesi için),
+    // AMA hiçbir tahmini otomatik puanlama. Tüm tahminler "bekliyor"a çekilir; admin
+    // "Tahminler" sekmesinden 1X2 · Golcü · Skor hepsini tek tek dağıtır.
     const { data:mkts } = await supabase.from('bet_markets').select('id,market_type').eq('match_id',matchId);
     const m1 = mkts?.find(m=>m.market_type==='1x2');
-    const m2 = mkts?.find(m=>m.market_type==='goalscorer');
-    const m3 = mkts?.find(m=>m.market_type==='exact_score');
-    // 1X2
     if (m1) {
       const { data:opts } = await supabase.from('bet_options').select('id,outcome_key').eq('market_id',m1.id);
-      const correctOpt = (opts||[]).find(o=>o.outcome_key===result);
       for (const o of (opts||[])) await supabase.from('bet_options').update({is_correct:o.outcome_key===result}).eq('id',o.id);
-      if (correctOpt) {
-        await supabase.from('predictions').update({is_correct:true,points_earned:1}).eq('option_id',correctOpt.id);
-        await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('market_id',m1.id).neq('option_id',correctOpt.id);
-      } else await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('market_id',m1.id);
     }
-    // Golcü — OTOMATİK PUANLANMAZ. Admin "Tahminler" sekmesinden tek tek değerlendirir
-    // (yazım farkları: "Icardi" / "ıcardi" / "icardı" adil eşleşmez). Sadece "bekliyor"a çekilir.
-    if (m2) {
-      await supabase.from('predictions').update({ is_correct:null, points_earned:0 }).eq('market_id',m2.id);
-    }
-    // Tam skor
-    if (m3) {
-      const { data:preds } = await supabase.from('predictions').select('*').eq('market_id',m3.id);
-      for (const p of (preds||[])) {
-        const exact = p.predicted_home_score===hs && p.predicted_away_score===as;
-        await supabase.from('predictions').update({is_correct:exact,points_earned:exact?5:0}).eq('id',p.id);
-      }
-    }
+    const marketIds = (mkts||[]).map(m=>m.id);
+    if (marketIds.length) await supabase.from('predictions').update({ is_correct:null, points_earned:0 }).in('market_id', marketIds);
     await recalcAll();
-    showToast(`✅ ${hs}-${as} işlendi! 1X2 + Tam Skor puanlandı. Golcü tahminlerini "Tahminler" sekmesinden tek tek değerlendirin.`, 'success');
+    showToast(`✅ Skor kaydedildi: ${hs}-${as}. Şimdi "Tahminler" sekmesinden bu maçı seçip puanları tek tek dağıt.`, 'success');
     await loadAdminMatches(); await loadStats();
+    // Otomatik olarak Tahminler sekmesine geç ve maçı seç
+    switchTab('predictions');
+    const sel = document.getElementById('predMatchFilter');
+    if (sel) { sel.value = matchId; loadPredictionsForMatch(); }
   } catch(err) { showToast('Hata: '+err.message, 'error'); }
 }
 
@@ -618,44 +606,73 @@ async function populateMatchSelects() {
   document.getElementById('delPredMatchSel').innerHTML = base;
 }
 
+const DEF_PTS = { '1x2':1, 'goalscorer':2, 'exact_score':5 };
+const TYPE_ORDER = { 'goalscorer':0, 'exact_score':1, '1x2':2 };
+
 window.loadPredictionsForMatch = async function() {
   const matchId = document.getElementById('predMatchFilter').value;
   const el = document.getElementById('predList'), st = document.getElementById('predStats');
   if (!matchId) { el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--text-muted);">Maç seçin.</div>`; st.style.display='none'; return; }
 
-  const [{ data:preds }, { data:users }] = await Promise.all([
-    supabase.from('predictions').select('*,bet_markets(market_type,label),bet_options(label,outcome_key)').eq('match_id',matchId).order('created_at',{ascending:false}),
-    supabase.from('users').select('id,username')
+  const [{ data:preds }, { data:users }, { data:match }] = await Promise.all([
+    supabase.from('predictions').select('*,bet_markets(market_type,label),bet_options(label,outcome_key)').eq('match_id',matchId),
+    supabase.from('users').select('id,username'),
+    supabase.from('matches').select('home_team,away_team,home_score,away_score,result,goalscorers,status').eq('id',matchId).maybeSingle()
   ]);
   const uMap = new Map((users||[]).map(u=>[u.id,u.username]));
 
   if (!preds?.length) { el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--text-muted);">Tahmin yok.</div>`; st.style.display='none'; return; }
 
-  const totalPts = (preds||[]).reduce((s,p)=>s+(p.points_earned||0),0);
-  const correct = (preds||[]).filter(p=>p.is_correct).length;
+  const totalPts = preds.reduce((s,p)=>s+(p.points_earned||0),0);
+  const gradedCount = preds.filter(p=>p.is_correct!==null && p.is_correct!==undefined).length;
   st.innerHTML = `
-    <div class="stat-card"><div class="stat-val" style="color:var(--ucl-cyan)">${preds.length}</div><div class="stat-lbl">Toplam</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:var(--success)">${correct}</div><div class="stat-lbl">Doğru</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:var(--ucl-gold)">${totalPts}</div><div class="stat-lbl">Puan</div></div>`;
+    <div class="stat-card"><div class="stat-val" style="color:var(--ucl-cyan)">${preds.length}</div><div class="stat-lbl">Tahmin</div></div>
+    <div class="stat-card"><div class="stat-val" id="predProgress" style="color:var(--success)">${gradedCount}/${preds.length}</div><div class="stat-lbl">Puanlanan</div></div>
+    <div class="stat-card"><div class="stat-val" id="predTotalPts" style="color:var(--ucl-gold)">${totalPts}</div><div class="stat-lbl">Dağıtılan Puan</div></div>`;
   st.style.display = 'grid';
   st.style.gridTemplateColumns = 'repeat(3,1fr)';
 
-  const DEF_PTS = { '1x2':1, 'goalscorer':2, 'exact_score':5 };
-  const ORDER = { 'goalscorer':0, 'exact_score':1, '1x2':2 };
-  preds.sort((a,b) => (ORDER[a.bet_markets?.market_type] ?? 9) - (ORDER[b.bet_markets?.market_type] ?? 9));
+  const scoreLine = match && match.home_score!==null
+    ? `<strong style="color:var(--ucl-gold);">${match.home_team} ${match.home_score} - ${match.away_score} ${match.away_team}</strong>${match.goalscorers?` · Golcüler: <strong style="color:#fff;">${match.goalscorers}</strong>`:''}`
+    : `<span style="color:var(--danger);">Skor girilmemiş — önce "Maçlar" sekmesinden skoru kaydet.</span>`;
 
-  el.innerHTML = preds.map(p => {
-    const mType = p.bet_markets?.market_type||'—';
-    const defPts = DEF_PTS[mType] ?? 1;
-    const tLabel = mType==='1x2'?`Sonuç (${defPts}P)`:mType==='goalscorer'?`Golcü (${defPts}P)`:mType==='exact_score'?`Tam Skor (${defPts}P)`:mType;
-    const uname = uMap.get(p.user_id)||p.user_id.substring(0,8)+'…';
-    let pText = '';
-    if (p.predicted_home_score!==null && p.predicted_home_score!==undefined) pText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
-    else if (p.predicted_scorer?.trim()) pText = p.predicted_scorer;
-    else pText = p.bet_options?.label||p.bet_options?.outcome_key||'—';
-    return `
-    <div class="pred-row">
-      <span class="pred-user">👤 ${uname}</span>
+  // Kullanıcıya göre grupla — her oyuncunun 3 kategorisi bir arada
+  const byUser = new Map();
+  preds.forEach(p => { if(!byUser.has(p.user_id)) byUser.set(p.user_id,[]); byUser.get(p.user_id).push(p); });
+  const groups = [...byUser.entries()].map(([uid,arr]) => {
+    arr.sort((a,b)=>(TYPE_ORDER[a.bet_markets?.market_type]??9)-(TYPE_ORDER[b.bet_markets?.market_type]??9));
+    return { uid, uname: uMap.get(uid)||uid.substring(0,8)+'…', arr };
+  }).sort((a,b)=>a.uname.localeCompare(b.uname,'tr'));
+
+  el.innerHTML = `
+    <div style="padding:.6rem .7rem;font-size:.8rem;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:.4rem;">${scoreLine}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;padding:0 .3rem .6rem;">
+      <button id="autoSuggestBtn" class="btn btn-outline btn-xs">🤖 1X2 &amp; Skoru otomatik ver (bekleyenler)</button>
+      <button id="zeroRestBtn" class="btn btn-ghost btn-xs">Kalan bekleyenlere 0P</button>
+    </div>
+    ${groups.map(g => `
+      <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;margin-bottom:.55rem;overflow:hidden;">
+        <div style="padding:.45rem .7rem;background:rgba(0,217,255,.06);font-weight:800;color:#fff;font-size:.85rem;">👤 ${g.uname}</div>
+        ${g.arr.map(p => predRowHtml(p)).join('')}
+      </div>`).join('')}
+  `;
+
+  bindGradeButtons(el);
+  document.getElementById('autoSuggestBtn').addEventListener('click', () => autoSuggest(match));
+  document.getElementById('zeroRestBtn').addEventListener('click', zeroRemaining);
+};
+
+function predRowHtml(p) {
+  const mType = p.bet_markets?.market_type||'—';
+  const defPts = DEF_PTS[mType] ?? 1;
+  const tLabel = mType==='1x2'?`Sonuç (${defPts}P)`:mType==='goalscorer'?`Golcü (${defPts}P)`:mType==='exact_score'?`Tam Skor (${defPts}P)`:mType;
+  let pText = '';
+  if (p.predicted_home_score!==null && p.predicted_home_score!==undefined) pText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
+  else if (p.predicted_scorer?.trim()) pText = p.predicted_scorer;
+  else pText = p.bet_options?.label||p.bet_options?.outcome_key||'—';
+  const graded = p.is_correct!==null && p.is_correct!==undefined;
+  return `
+    <div class="pred-row" id="prow_${p.id}" data-graded="${graded?1:0}" style="${graded?'':'border-left:3px solid var(--warning);'}">
       <span class="pred-type">${tLabel}</span>
       <span class="pred-val">→ <strong style="color:#fff;">${pText}</strong></span>
       <span id="pstat_${p.id}">${gradeBadge(p.is_correct, p.points_earned)}</span>
@@ -668,8 +685,9 @@ window.loadPredictionsForMatch = async function() {
       </div>
       <button class="btn btn-danger btn-xs del-pred-btn" data-id="${p.id}" data-uid="${p.user_id}">🗑️</button>
     </div>`;
-  }).join('');
+}
 
+function bindGradeButtons(el) {
   el.querySelectorAll('.grade-btn').forEach(btn => btn.addEventListener('click', async e => {
     const d = e.currentTarget.dataset;
     const ok = d.ok==='1' ? true : d.ok==='0' ? false : null;
@@ -688,7 +706,14 @@ window.loadPredictionsForMatch = async function() {
     showToast('Tahmin silindi.','info');
     await loadPredictionsForMatch(); await loadStats();
   }));
-};
+}
+
+function refreshPredProgress() {
+  const rows = document.querySelectorAll('#predList .pred-row');
+  const done = [...rows].filter(r => r.dataset.graded==='1').length;
+  const prog = document.getElementById('predProgress');
+  if (prog) prog.textContent = `${done}/${rows.length}`;
+}
 
 function gradeBadge(isCorrect, pts) {
   if (isCorrect===null || isCorrect===undefined)
@@ -704,9 +729,48 @@ async function gradePrediction(id, uid, pts, ok) {
   await recalcUser(uid);
   const stat = document.getElementById(`pstat_${id}`);
   if (stat) stat.innerHTML = gradeBadge(ok, pts);
+  const row = document.getElementById(`prow_${id}`);
+  if (row) {
+    row.dataset.graded = (ok===null) ? '0' : '1';
+    row.style.borderLeft = (ok===null) ? '3px solid var(--warning)' : '';
+  }
+  refreshPredProgress();
   showToast(ok===null ? 'Bekliyor\'a çekildi.' : `Puanlandı → ${pts}P`, 'success');
   await loadStats();
-  await loadAdminUsers();
+}
+
+// Sadece BEKLEYEN 1X2 ve Tam Skor tahminlerini maç sonucuna göre otomatik puanlar. Golcüye dokunmaz.
+async function autoSuggest(match) {
+  if (!match || match.home_score===null) { showToast('Önce maç skorunu kaydet.','error'); return; }
+  const matchId = document.getElementById('predMatchFilter').value;
+  const { data:preds } = await supabase.from('predictions')
+    .select('*,bet_markets(market_type),bet_options(outcome_key)').eq('match_id',matchId);
+  let n = 0;
+  for (const p of (preds||[])) {
+    if (p.is_correct!==null && p.is_correct!==undefined) continue;
+    const mt = p.bet_markets?.market_type;
+    if (mt==='1x2') {
+      const ok = p.bet_options?.outcome_key === match.result;
+      await supabase.from('predictions').update({is_correct:ok,points_earned:ok?1:0}).eq('id',p.id); n++;
+    } else if (mt==='exact_score') {
+      const ok = p.predicted_home_score===match.home_score && p.predicted_away_score===match.away_score;
+      await supabase.from('predictions').update({is_correct:ok,points_earned:ok?5:0}).eq('id',p.id); n++;
+    }
+  }
+  await recalcAll();
+  showToast(`${n} tahmin otomatik puanlandı (1X2 + Tam Skor). Golcüleri elle ver.`,'success');
+  await loadPredictionsForMatch(); await loadStats();
+}
+
+async function zeroRemaining() {
+  if (!confirm('Kalan tüm BEKLEYEN tahminlere 0 puan verilsin mi?')) return;
+  const matchId = document.getElementById('predMatchFilter').value;
+  const { data:preds } = await supabase.from('predictions').select('id,user_id,is_correct').eq('match_id',matchId);
+  const pend = (preds||[]).filter(p=>p.is_correct===null || p.is_correct===undefined);
+  for (const p of pend) await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('id',p.id);
+  await recalcAll();
+  showToast(`${pend.length} bekleyen tahmin 0P olarak kapatıldı.`,'info');
+  await loadPredictionsForMatch(); await loadStats();
 }
 
 // ── SİSTEM ────────────────────────────────
