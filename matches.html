@@ -559,7 +559,7 @@
           }
 
           try {
-            let marketId = target.dataset.matchId;
+            let marketId = target.dataset.marketId;
             if (!marketId) {
               marketId = await ensureMarketExists(matchId, 'goalscorer', 'Gol Atacak Oyuncu (2 Puan)');
             }
