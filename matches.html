@@ -343,10 +343,18 @@
 
       const { data: myPredictions } = await supabase
         .from('predictions')
-        .select('*')
+        .select('*, bet_markets(market_type), bet_options(outcome_key, label)')
         .eq('user_id', session.user.id);
 
-      const predMap = new Map(myPredictions?.map(p => [p.market_id, p]));
+      // Aynı maç+tip için birden fazla market satırı oluşabildiğinden (import / ensureMarket
+      // yolları), tahmini market_id yerine "matchId:marketType" ile de eşliyoruz ki
+      // kullanıcı ne kaydettiyse sonradan mutlaka görebilsin.
+      const predMap = new Map();
+      (myPredictions || []).forEach(p => {
+        if (p.market_id) predMap.set(p.market_id, p);
+        const mt = p.bet_markets?.market_type;
+        if (mt) predMap.set(`${p.match_id}:${mt}`, p);
+      });
 
       if (!matches || matches.length === 0) {
         grid.innerHTML = `<div class="card" style="text-align:center;padding:3rem;">Aktif maç bulunamadı.</div>`;
@@ -389,9 +397,9 @@
         const marketScorer = match.bet_markets?.find(m => m.market_type === 'goalscorer');
         const marketScore = match.bet_markets?.find(m => m.market_type === 'exact_score');
 
-        const pred1X2 = market1X2 ? predMap.get(market1X2.id) : null;
-        const predScorer = marketScorer ? predMap.get(marketScorer.id) : null;
-        const predScore = marketScore ? predMap.get(marketScore.id) : null;
+        const pred1X2 = predMap.get(`${match.id}:1x2`) || (market1X2 ? predMap.get(market1X2.id) : null);
+        const predScorer = predMap.get(`${match.id}:goalscorer`) || (marketScorer ? predMap.get(marketScorer.id) : null);
+        const predScore = predMap.get(`${match.id}:exact_score`) || (marketScore ? predMap.get(marketScore.id) : null);
 
         // 1. Maç Sonucu (1 Puan)
         const keyOrder = { home_win: 0, draw: 1, away_win: 2 };
@@ -409,7 +417,10 @@
             </div>
             <div class="predict-picker-grid" style="margin-top:0.4rem; border-top:none; padding-top:0;">
               ${sortedOptions.map(opt => {
-                const isSelected = pred1X2 && pred1X2.option_id === opt.id;
+                const isSelected = pred1X2 && (
+                  pred1X2.option_id === opt.id ||
+                  (pred1X2.bet_options?.outcome_key && pred1X2.bet_options.outcome_key === opt.outcome_key)
+                );
                 let optClass = 'pick-btn';
                 if (isSelected) optClass += ' selected';
                 if (isFinished && opt.is_correct) optClass += ' correct';
@@ -426,6 +437,16 @@
                 `;
               }).join('')}
             </div>
+            ${pred1X2 ? `
+              <div style="font-size:0.75rem; text-align:center; margin-top:4px; color:var(--ucl-cyan);">
+                Kaydedilen Sonuç Tahmininiz: <strong>${
+                  (pred1X2.bet_options?.outcome_key || '') === 'home_win' ? '1 (Ev Sahibi)' :
+                  (pred1X2.bet_options?.outcome_key || '') === 'draw' ? 'X (Beraberlik)' :
+                  (pred1X2.bet_options?.outcome_key || '') === 'away_win' ? '2 (Deplasman)' :
+                  (pred1X2.bet_options?.label || '—')
+                }</strong>
+              </div>
+            ` : ''}
           </div>
         `;
 
