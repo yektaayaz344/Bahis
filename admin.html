@@ -419,14 +419,20 @@
             // 1. Maç Sonucu (1 Puan)
             if (m1X2) {
               const { data: options } = await supabase.from('bet_options').select('id, outcome_key').eq('market_id', m1X2.id);
+              const correctOpt = (options || []).find(o => o.outcome_key === result);
+              // Mark all options is_correct
               for (const opt of (options || [])) {
-                const isCorrect = opt.outcome_key === result;
-                await supabase.from('bet_options').update({ is_correct: isCorrect }).eq('id', opt.id);
-                if (isCorrect) {
-                  await supabase.from('predictions').update({ is_correct: true, points_earned: 1 }).eq('option_id', opt.id);
-                } else {
-                  await supabase.from('predictions').update({ is_correct: false, points_earned: 0 }).eq('market_id', m1X2.id).neq('option_id', opt.id);
-                }
+                await supabase.from('bet_options').update({ is_correct: opt.outcome_key === result }).eq('id', opt.id);
+              }
+              if (correctOpt) {
+                // Award points to users who picked the correct option
+                await supabase.from('predictions').update({ is_correct: true, points_earned: 1 }).eq('option_id', correctOpt.id);
+                // Zero out everyone else in this market who didn't pick correct
+                await supabase.from('predictions').update({ is_correct: false, points_earned: 0 })
+                  .eq('market_id', m1X2.id).neq('option_id', correctOpt.id);
+              } else {
+                // No correct option found - zero everyone
+                await supabase.from('predictions').update({ is_correct: false, points_earned: 0 }).eq('market_id', m1X2.id);
               }
             }
 

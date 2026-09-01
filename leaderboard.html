@@ -99,8 +99,8 @@
       (predictions || []).forEach(p => {
         const stats = userStatsMap.get(p.user_id);
         if (stats && p.is_correct) {
-          if (p.predicted_home_score !== null) stats.exactScores += 1;
-          else if (p.predicted_scorer) stats.scorers += 1;
+          if (p.predicted_home_score !== null && p.predicted_home_score !== undefined) stats.exactScores += 1;
+          else if (p.predicted_scorer && p.predicted_scorer.trim() !== '') stats.scorers += 1;
           else stats.correct1x2 += 1;
         }
       });

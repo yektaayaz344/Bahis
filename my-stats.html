@@ -109,8 +109,8 @@
 
       (predictions || []).forEach(p => {
         if (p.is_correct) {
-          if (p.predicted_home_score !== null) countExact++;
-          else if (p.predicted_scorer) countScorer++;
+          if (p.predicted_home_score !== null && p.predicted_home_score !== undefined) countExact++;
+          else if (p.predicted_scorer && p.predicted_scorer.trim() !== '') countScorer++;
           else count1x2++;
         }
       });
@@ -141,8 +141,8 @@
               const match = p.matches;
               const opt = p.bet_options;
               const isFinished = match?.status === 'finished';
-              const isScorePred = p.predicted_home_score !== null;
-              const isScorerPred = p.predicted_scorer !== '';
+              const isScorePred = p.predicted_home_score !== null && p.predicted_home_score !== undefined;
+              const isScorerPred = !!(p.predicted_scorer && p.predicted_scorer.trim() !== '');
 
               let predType = 'Maç Sonucu 1X2 (1P)';
               let pickText = '';
