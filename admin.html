@@ -3,687 +3,775 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin | UCL & UEL Bahis</title>
+  <title>Admin Paneli | UCL &amp; UEL Bahis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .admin-tab-btn {
-      padding: 0.65rem 1.2rem;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      font-family: var(--font-display);
-      font-size: 0.9rem;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .admin-tab-btn.active { color: var(--ucl-cyan); border-bottom-color: var(--ucl-cyan); }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .admin-tabs { display:flex; flex-wrap:wrap; gap:.25rem; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:1.5rem; }
+    .admin-tab-btn { padding:.6rem 1rem; background:none; border:none; border-bottom:3px solid transparent; color:var(--text-muted); font-family:var(--font-display); font-size:.8rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; cursor:pointer; transition:all .2s; margin-bottom:-1px; }
+    .admin-tab-btn:hover { color:#fff; }
+    .admin-tab-btn.active { color:var(--ucl-cyan); border-bottom-color:var(--ucl-cyan); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card { background:rgba(18,27,58,.7); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius-sm); padding:1rem; text-align:center; }
+    .stat-val { font-family:var(--font-display); font-size:2rem; font-weight:800; line-height:1; }
+    .stat-lbl { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-top:.3rem; }
+    .match-admin-row { background:rgba(18,27,58,.5); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius-sm); padding:1rem; margin-bottom:.75rem; }
+    .match-admin-header { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .match-admin-controls { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; }
+    .match-score-row { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; padding:.6rem; background:rgba(0,0,0,.2); border-radius:6px; margin-top:.5rem; }
+    .mini-input { width:50px; height:34px; text-align:center; font-family:var(--font-display); font-size:1.1rem; font-weight:800; background:rgba(18,27,58,.9); border:1px solid rgba(0,217,255,.3); border-radius:6px; color:#fff; }
+    .mini-input:focus { outline:none; border-color:var(--ucl-cyan); }
+    .scorer-txt { flex:1; min-width:140px; height:34px; font-size:.8rem; padding:0 .6rem; background:rgba(18,27,58,.9); border:1px solid rgba(255,255,255,.15); border-radius:6px; color:#fff; }
+    .scorer-txt:focus { outline:none; border-color:var(--ucl-cyan); }
+    .user-row { background:rgba(18,27,58,.5); border:1px solid rgba(255,255,255,.07); border-radius:var(--radius-sm); padding:.8rem 1rem; margin-bottom:.6rem; display:flex; align-items:center; flex-wrap:wrap; gap:.6rem; }
+    .user-info { flex:1; min-width:110px; }
+    .user-pts { font-family:var(--font-display); font-size:1.5rem; font-weight:800; color:var(--ucl-gold); min-width:70px; text-align:center; }
+    .pts-btns { display:flex; flex-wrap:wrap; gap:3px; }
+    .btn-xs { padding:3px 8px; font-size:.7rem; }
+    .pred-match-select, .sys-select { width:100%; padding:.55rem .7rem; background:rgba(18,27,58,.9); border:1px solid rgba(255,255,255,.15); border-radius:var(--radius-sm); color:#fff; font-size:.88rem; margin-bottom:.8rem; }
+    .pred-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; padding:.55rem .7rem; border-bottom:1px solid rgba(255,255,255,.05); font-size:.83rem; }
+    .pred-row:last-child { border-bottom:none; }
+    .pred-user { font-weight:700; color:#fff; min-width:90px; }
+    .pred-type { color:var(--ucl-cyan); font-size:.72rem; min-width:85px; }
+    .pred-val { flex:1; color:var(--text-muted); }
+    .tool-card { background:rgba(18,27,58,.5); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius-sm); padding:1.1rem; margin-bottom:.9rem; }
+    .tool-card h4 { font-family:var(--font-display); font-size:.85rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ucl-gold); margin-bottom:.35rem; }
+    .tool-card p { font-size:.8rem; color:var(--text-muted); margin-bottom:.65rem; }
+    .tool-btn-row { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .scroll-box { max-height:500px; overflow-y:auto; padding-right:4px; }
+    .scroll-box::-webkit-scrollbar { width:4px; }
+    .scroll-box::-webkit-scrollbar-thumb { background:rgba(0,217,255,.3); border-radius:2px; }
+    #editModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:999; align-items:center; justify-content:center; }
+    #editModal.open { display:flex; }
+    .modal-box { background:var(--card-bg); border:1px solid rgba(0,217,255,.3); border-radius:var(--radius); padding:1.75rem; width:100%; max-width:460px; margin:1rem; }
+    .modal-box h3 { margin-bottom:1rem; }
   </style>
 </head>
 <body>
-  <div id="toastContainer"></div>
+<div id="toastContainer"></div>
 
-  <nav>
-    <a class="nav-brand" href="index.html">
-      🏆 UCL & UEL <span class="league-tag" style="background:var(--warning); color:#000;">FULL ADMIN</span>
-    </a>
-    <div class="nav-center" id="navCenter">
-      <ul class="nav-links">
-        <li><a href="matches.html">Maçlar</a></li>
-        <li><a href="leaderboard.html">Sıralama</a></li>
-        <li><a href="admin.html" class="active">Admin Paneli</a></li>
-      </ul>
+<!-- Edit Modal -->
+<div id="editModal">
+  <div class="modal-box">
+    <h3 class="gradient-text">✏️ Maçı Düzenle</h3>
+    <input type="hidden" id="editMatchId">
+    <div class="form-group"><label>Ev Sahibi</label><input type="text" id="editHomeTeam" class="form-input"></div>
+    <div class="form-group"><label>Deplasman</label><input type="text" id="editAwayTeam" class="form-input"></div>
+    <div class="form-group"><label>Tarih &amp; Saat</label><input type="datetime-local" id="editMatchTime" class="form-input"></div>
+    <div class="form-group"><label>Organizasyon</label>
+      <select id="editGroupName" class="form-input">
+        <option value="UEFA Champions League">UEFA Champions League</option>
+        <option value="UEFA Europa League">UEFA Europa League</option>
+      </select>
     </div>
-    <div class="nav-actions">
-      <button id="logoutBtn" class="btn btn-ghost" style="padding:0.4rem 0.875rem;font-size:0.8rem">Çıkış</button>
+    <div class="form-group"><label>Durum</label>
+      <select id="editStatus" class="form-input">
+        <option value="open">Açık</option>
+        <option value="locked">Kilitli</option>
+        <option value="finished">Bitti</option>
+        <option value="draft">Taslak</option>
+      </select>
     </div>
-  </nav>
-
-  <div class="container animate-fade">
-    <header style="margin-bottom:1.5rem;">
-      <h1 class="gradient-text" style="font-size:2.2rem;margin-bottom:0.2rem">Admin Tam Yetki Paneli</h1>
-      <p style="color:var(--text-muted);font-weight:600;">Skor &amp; Golcü Girme (1P - 2P - 5P), Kullanıcı Puan Yönetimi &amp; Fikstür Yükleme</p>
-    </header>
-
-    <!-- HIZLI AKSİYON BUTONLARI -->
-    <div class="card" style="margin-bottom:1.5rem; background:rgba(0,102,255,0.08); border-color:rgba(0,217,255,0.3);">
-      <h3 style="font-size:1.1rem; margin-bottom:0.75rem; color:var(--ucl-gold);">⚡ Hızlı Fikstür &amp; Temizleme İşlemleri</h3>
-      <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-        <button id="btnImportFixtures" class="btn btn-primary" style="background:var(--gradient-gold); color:#000; font-weight:800;">
-          🏆 Güncel 24 Avrupa Maçını Temizle &amp; Yükle (FB, GS, BJK)
-        </button>
-        <button id="btnDeleteAllMatches" class="btn btn-danger">
-          🗑️ TÜM MAÇLARI SİL &amp; SIFIRLA
-        </button>
-      </div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;">
+      <button id="saveEditBtn" class="btn btn-primary" style="flex:1">Kaydet</button>
+      <button onclick="document.getElementById('editModal').classList.remove('open')" class="btn btn-ghost" style="flex:1">İptal</button>
     </div>
+  </div>
+</div>
 
-    <div class="admin-tabs" style="display:flex; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem;">
-      <button class="admin-tab-btn active" onclick="switchAdminTab('matches')">Maç &amp; Skor/Golcü İşleme</button>
-      <button class="admin-tab-btn" onclick="switchAdminTab('users')">Kullanıcı &amp; Puan Sil/Ekle</button>
-      <button class="admin-tab-btn" onclick="switchAdminTab('addMatch')">+ Yeni Manuel Maç Ekle</button>
+<nav>
+  <a class="nav-brand" href="index.html">🏆 UCL &amp; UEL <span class="league-tag" style="background:var(--warning);color:#000;">⚡ ADMIN</span></a>
+  <div class="nav-actions">
+    <a href="matches.html" class="btn btn-ghost" style="padding:.4rem .875rem;font-size:.8rem">Maçlar</a>
+    <button id="logoutBtn" class="btn btn-ghost" style="padding:.4rem .875rem;font-size:.8rem">Çıkış</button>
+  </div>
+</nav>
+
+<div class="container animate-fade">
+  <header style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h1 class="gradient-text" style="font-size:2rem;margin-bottom:.2rem;">⚙️ Tam Yetki Admin Paneli</h1>
+      <p style="color:var(--text-muted);font-weight:600;font-size:.83rem;">Maç · Kullanıcı · Tahmin · Sistem — Tam Kontrol</p>
     </div>
+    <button id="refreshAllBtn" class="btn btn-outline" style="font-size:.8rem;">🔄 Yenile</button>
+  </header>
 
-    <!-- MAÇ YÖNETİMİ PANELİ -->
-    <div class="tab-panel active" id="panelMatches">
-      <div class="card">
-        <h3 style="margin-bottom:1rem;">Avrupa Fikstürü Maçları (Skor/Golcü Gir &amp; Puanları Dağıt)</h3>
-        <div id="adminMatchesList">
-          <div style="text-align:center; padding:2rem; color:var(--ucl-cyan);">Maçlar yükleniyor...</div>
-        </div>
-      </div>
+  <!-- Overview -->
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-val" id="ovMatches" style="color:var(--ucl-cyan)">—</div><div class="stat-lbl">Toplam Maç</div></div>
+    <div class="stat-card"><div class="stat-val" id="ovUsers" style="color:var(--success)">—</div><div class="stat-lbl">Üye</div></div>
+    <div class="stat-card"><div class="stat-val" id="ovPreds" style="color:var(--ucl-gold)">—</div><div class="stat-lbl">Tahmin</div></div>
+    <div class="stat-card"><div class="stat-val" id="ovOpen" style="color:var(--success)">—</div><div class="stat-lbl">Açık Maç</div></div>
+    <div class="stat-card"><div class="stat-val" id="ovLocked" style="color:var(--warning)">—</div><div class="stat-lbl">Kilitli Maç</div></div>
+    <div class="stat-card"><div class="stat-val" id="ovFinished" style="color:var(--danger)">—</div><div class="stat-lbl">Biten Maç</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="admin-tabs">
+    <button class="admin-tab-btn active" onclick="switchTab('matches')">⚽ Maçlar</button>
+    <button class="admin-tab-btn" onclick="switchTab('users')">👥 Kullanıcılar</button>
+    <button class="admin-tab-btn" onclick="switchTab('predictions')">🎯 Tahminler</button>
+    <button class="admin-tab-btn" onclick="switchTab('system')">🛠️ Sistem</button>
+    <button class="admin-tab-btn" onclick="switchTab('addMatch')">➕ Yeni Maç</button>
+  </div>
+
+  <!-- ═══ TAB 1: MAÇLAR ═══ -->
+  <div class="tab-panel active" id="panelMatches">
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+      <button id="btnLockAll" class="btn btn-warning" style="font-size:.8rem;">🔒 Tümünü Kilitle</button>
+      <button id="btnUnlockAll" class="btn btn-outline" style="font-size:.8rem;">🔓 Tümünü Aç</button>
+      <button id="btnImportFixtures" class="btn btn-primary" style="font-size:.8rem;background:var(--gradient-gold);color:#000;font-weight:800;">📥 24 Fikstürü Yükle</button>
+      <button id="btnDeleteAllMatches" class="btn btn-danger" style="font-size:.8rem;">🗑️ Tüm Maçları Sil</button>
     </div>
+    <div class="scroll-box" id="adminMatchesList"><div style="text-align:center;padding:2rem;color:var(--ucl-cyan);">Yükleniyor...</div></div>
+  </div>
 
-    <!-- KULLANICI & PUAN YÖNETİMİ PANELİ -->
-    <div class="tab-panel" id="panelUsers">
-      <div class="card">
-        <h3 style="margin-bottom:1rem;">Kullanıcı Listesi &amp; Puan Yönetimi</h3>
-        <div id="adminUsersList">
-          <div style="text-align:center; padding:2rem; color:var(--ucl-cyan);">Kullanıcılar yükleniyor...</div>
-        </div>
-      </div>
+  <!-- ═══ TAB 2: KULLANICILAR ═══ -->
+  <div class="tab-panel" id="panelUsers">
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+      <button id="btnResetAllPoints" class="btn btn-danger" style="font-size:.8rem;">🔴 Tüm Puanları Sıfırla</button>
+      <button id="btnRecalcAll" class="btn btn-outline" style="font-size:.8rem;">🔁 Puanları Yeniden Hesapla</button>
     </div>
+    <div class="scroll-box" id="adminUsersList"><div style="text-align:center;padding:2rem;color:var(--ucl-cyan);">Yükleniyor...</div></div>
+  </div>
 
-    <!-- YENİ MAÇ EKLE PANELİ -->
-    <div class="tab-panel" id="panelAddMatch">
-      <div class="card" style="max-width:600px;">
-        <h3 style="margin-bottom:1.25rem;">Yeni UCL / UEL Maçı Oluştur</h3>
-        <form id="createMatchForm">
-          <div class="form-group">
-            <label for="groupName">Organizasyon / Lig</label>
-            <select id="groupName" class="form-input" required>
-              <option value="UEFA Champions League">UEFA Champions League (Şampiyonlar Ligi)</option>
-              <option value="UEFA Europa League">UEFA Europa League (Avrupa Ligi)</option>
-            </select>
-          </div>
-
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-            <div class="form-group">
-              <label for="homeTeam">Ev Sahibi Takım</label>
-              <input type="text" id="homeTeam" class="form-input" placeholder="örn: Galatasaray" required>
-            </div>
-            <div class="form-group">
-              <label for="homeFlag">Ev Sahibi Amblem/Emoji</label>
-              <input type="text" id="homeFlag" class="form-input" placeholder="örn: 💛🔴" value="💛🔴">
-            </div>
-          </div>
-
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-            <div class="form-group">
-              <label for="awayTeam">Deplasman Takımı</label>
-              <input type="text" id="awayTeam" class="form-input" placeholder="örn: Real Madrid" required>
-            </div>
-            <div class="form-group">
-              <label for="awayFlag">Deplasman Amblem/Emoji</label>
-              <input type="text" id="awayFlag" class="form-input" placeholder="örn: 👑" value="👑">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="matchTime">Maç Tarihi ve Saati</label>
-            <input type="datetime-local" id="matchTime" class="form-input" required>
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="width:100%;">Maçı Oluştur (1X2, Golcü ve Tam Skor Marketli)</button>
-        </form>
-      </div>
+  <!-- ═══ TAB 3: TAHMİNLER ═══ -->
+  <div class="tab-panel" id="panelPredictions">
+    <label style="font-size:.78rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:.35rem;">MAÇA GÖRE FİLTRELE</label>
+    <select id="predMatchFilter" class="pred-match-select" onchange="loadPredictionsForMatch()">
+      <option value="">— Maç seçin —</option>
+    </select>
+    <div id="predStats" style="display:none;" class="stat-grid"></div>
+    <div class="card scroll-box" id="predList" style="padding:.4rem;">
+      <div style="text-align:center;padding:1.5rem;color:var(--text-muted);">Yukarıdan bir maç seçin.</div>
     </div>
   </div>
 
-  <script>
-    window.showToast = function(message, type) {
-      type = type || 'info';
-      var container = document.getElementById('toastContainer');
-      var toast = document.createElement('div');
-      toast.className = 'toast toast-' + type;
-      var icons = { success: '✓', error: '✗', info: 'ℹ' };
-      toast.innerHTML = '<span>' + (icons[type]||'ℹ') + '</span><span>' + message + '</span>';
-      container.appendChild(toast);
-      setTimeout(function() { toast.classList.add('show'); }, 10);
-      setTimeout(function() {
-        toast.classList.remove('show');
-        setTimeout(function() { toast.remove(); }, 300);
-      }, 3500);
-    };
+  <!-- ═══ TAB 4: SİSTEM ═══ -->
+  <div class="tab-panel" id="panelSystem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1rem;">
 
-    function switchAdminTab(tab) {
-      document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      if (tab === 'matches') {
-        document.querySelectorAll('.admin-tab-btn')[0].classList.add('active');
-        document.getElementById('panelMatches').classList.add('active');
-      } else if (tab === 'users') {
-        document.querySelectorAll('.admin-tab-btn')[1].classList.add('active');
-        document.getElementById('panelUsers').classList.add('active');
-      } else {
-        document.querySelectorAll('.admin-tab-btn')[2].classList.add('active');
-        document.getElementById('panelAddMatch').classList.add('active');
+      <div class="tool-card">
+        <h4>⚽ Toplu Kilitleme</h4>
+        <p>Biten maçlar hariç tümünü kilitle veya aç.</p>
+        <div class="tool-btn-row">
+          <button id="s_btnLockAll" class="btn btn-warning" style="font-size:.8rem;">🔒 Tümünü Kilitle</button>
+          <button id="s_btnUnlockAll" class="btn btn-outline" style="font-size:.8rem;">🔓 Tümünü Aç</button>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <h4>🏆 Liderlik Tablosu</h4>
+        <p>Tüm tahminlerden sıfırdan puan hesapla ve cache güncelle.</p>
+        <div class="tool-btn-row">
+          <button id="s_btnFullRecalc" class="btn btn-primary" style="font-size:.8rem;">🔁 Tam Yeniden Hesapla</button>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <h4>🗑️ Maça Ait Tahminleri Sil</h4>
+        <p>Sadece seçili maçın tahminlerini sil.</p>
+        <select id="delPredMatchSel" class="sys-select"><option value="">— Maç seçin —</option></select>
+        <button id="s_btnDeleteMatchPreds" class="btn btn-danger" style="font-size:.8rem;">🗑️ Tahminleri Sil</button>
+      </div>
+
+      <div class="tool-card">
+        <h4>📥 Fikstür Yönetimi</h4>
+        <p>24 maçı sıfırdan yükle veya eksikleri ekle.</p>
+        <div class="tool-btn-row">
+          <button id="s_btnImportFresh" class="btn btn-primary" style="font-size:.8rem;background:var(--gradient-gold);color:#000;font-weight:800;">📥 Sıfırdan Yükle</button>
+          <button id="s_btnImportSafe" class="btn btn-outline" style="font-size:.8rem;">📋 Eksikleri Ekle</button>
+        </div>
+      </div>
+
+      <div class="tool-card" style="border-color:rgba(255,51,102,.3);background:rgba(255,51,102,.05);">
+        <h4 style="color:var(--danger);">☢️ Nükleer Seçenekler</h4>
+        <p>Tüm sistemi sıfırlar. GERİ ALINAMAZ!</p>
+        <div class="tool-btn-row">
+          <button id="s_btnNukeAllPreds" class="btn btn-danger" style="font-size:.8rem;">☢️ Tüm Tahminleri Sil</button>
+          <button id="s_btnNukeLeaderboard" class="btn btn-danger" style="font-size:.8rem;">☢️ Liderliği Sıfırla</button>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <h4>📊 Sistem Durumu</h4>
+        <p>Anlık istatistikler.</p>
+        <div id="systemStatus" style="font-size:.82rem;color:var(--text-muted);">Yükleniyor...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5: YENİ MAÇ ═══ -->
+  <div class="tab-panel" id="panelAddMatch">
+    <div class="card" style="max-width:540px;">
+      <h3 style="margin-bottom:1.25rem;">Yeni Maç Oluştur</h3>
+      <form id="createMatchForm">
+        <div class="form-group"><label>Organizasyon / Lig</label>
+          <select id="groupName" class="form-input" required>
+            <option value="UEFA Champions League">UEFA Champions League</option>
+            <option value="UEFA Europa League">UEFA Europa League</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group"><label>Ev Sahibi</label><input type="text" id="homeTeam" class="form-input" placeholder="Galatasaray" required></div>
+          <div class="form-group"><label>Deplasman</label><input type="text" id="awayTeam" class="form-input" placeholder="Real Madrid" required></div>
+        </div>
+        <div class="form-group"><label>Tarih &amp; Saat</label><input type="datetime-local" id="matchTime" class="form-input" required></div>
+        <div class="form-group"><label>Başlangıç Durumu</label>
+          <select id="matchStatusNew" class="form-input">
+            <option value="open">Açık</option>
+            <option value="draft">Taslak (Görünmez)</option>
+            <option value="locked">Kilitli</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:.5rem;">✅ Maçı Oluştur (3 Market)</button>
+      </form>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  window.showToast = function(msg, type) {
+    type = type || 'info';
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type;
+    var icons = { success:'✓', error:'✗', info:'ℹ', warning:'⚠' };
+    t.innerHTML = '<span>' + (icons[type]||'ℹ') + '</span><span>' + msg + '</span>';
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('show'); }, 10);
+    setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 3500);
+  };
+  function switchTab(tab) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    var map = { matches:'panelMatches', users:'panelUsers', predictions:'panelPredictions', system:'panelSystem', addMatch:'panelAddMatch' };
+    document.getElementById(map[tab]).classList.add('active');
+    var idx = Object.keys(map).indexOf(tab);
+    document.querySelectorAll('.admin-tab-btn')[idx].classList.add('active');
+  }
+</script>
+
+<script type="module">
+import { supabase } from './js/supabase.js';
+import { requireAuth, logout, isAdmin } from './js/auth.js';
+
+let session;
+
+const FIXTURES = [
+  { id:'fb-1', home:'Fenerbahçe', away:'Roma', date:'2026-09-10T16:45:00Z', league:'UEFA Champions League' },
+  { id:'fb-2', home:'Aston Villa', away:'Fenerbahçe', date:'2026-10-14T19:00:00Z', league:'UEFA Champions League' },
+  { id:'fb-3', home:'Fenerbahçe', away:'Slavia Prag', date:'2026-10-20T16:45:00Z', league:'UEFA Champions League' },
+  { id:'fb-4', home:'Fenerbahçe', away:'Liverpool', date:'2026-11-04T16:45:00Z', league:'UEFA Champions League' },
+  { id:'fb-5', home:'Shakhtar Donetsk', away:'Fenerbahçe', date:'2026-11-25T19:00:00Z', league:'UEFA Champions League' },
+  { id:'fb-6', home:'LASK Linz', away:'Fenerbahçe', date:'2026-12-09T19:00:00Z', league:'UEFA Champions League' },
+  { id:'fb-7', home:'Fenerbahçe', away:'Villarreal', date:'2027-01-20T16:45:00Z', league:'UEFA Champions League' },
+  { id:'fb-8', home:'Atletico Madrid', away:'Fenerbahçe', date:'2027-01-27T19:00:00Z', league:'UEFA Champions League' },
+  { id:'gs-1', home:'Sporting', away:'Galatasaray', date:'2026-09-09T19:00:00Z', league:'UEFA Champions League' },
+  { id:'gs-2', home:'Galatasaray', away:'Barcelona', date:'2026-10-13T19:00:00Z', league:'UEFA Champions League' },
+  { id:'gs-3', home:'Lille', away:'Galatasaray', date:'2026-10-21T16:45:00Z', league:'UEFA Champions League' },
+  { id:'gs-4', home:'Galatasaray', away:'Stuttgart', date:'2026-11-03T16:45:00Z', league:'UEFA Champions League' },
+  { id:'gs-5', home:'Galatasaray', away:'Aston Villa', date:'2026-11-24T16:45:00Z', league:'UEFA Champions League' },
+  { id:'gs-6', home:'AEK Atina', away:'Galatasaray', date:'2026-12-08T19:00:00Z', league:'UEFA Champions League' },
+  { id:'gs-7', home:'Galatasaray', away:'Feyenoord', date:'2027-01-19T16:45:00Z', league:'UEFA Champions League' },
+  { id:'gs-8', home:'PSG', away:'Galatasaray', date:'2027-01-27T19:00:00Z', league:'UEFA Champions League' },
+  { id:'bjk-1', home:'Beşiktaş', away:'Marsilya', date:'2026-09-17T19:00:00Z', league:'UEFA Europa League' },
+  { id:'bjk-2', home:'Hoffenheim', away:'Beşiktaş', date:'2026-10-15T19:00:00Z', league:'UEFA Europa League' },
+  { id:'bjk-3', home:'Beşiktaş', away:'Crystal Palace', date:'2026-10-22T19:00:00Z', league:'UEFA Europa League' },
+  { id:'bjk-4', home:'Celtic', away:'Beşiktaş', date:'2026-11-05T19:00:00Z', league:'UEFA Europa League' },
+  { id:'bjk-5', home:'Beşiktaş', away:'Hapoel Beer-Sheva', date:'2026-11-26T16:45:00Z', league:'UEFA Europa League' },
+  { id:'bjk-6', home:'Bayer Leverkusen', away:'Beşiktaş', date:'2026-12-10T19:00:00Z', league:'UEFA Europa League' },
+  { id:'bjk-7', home:'Beşiktaş', away:'Union Saint-Gilloise', date:'2027-01-21T16:45:00Z', league:'UEFA Europa League' },
+  { id:'bjk-8', home:'Omonia', away:'Beşiktaş', date:'2027-01-28T19:00:00Z', league:'UEFA Europa League' }
+];
+
+async function init() {
+  session = await requireAuth();
+  if (!session || !isAdmin(session)) { alert('Erişim reddedildi!'); window.location.href='./matches.html'; return; }
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('refreshAllBtn').addEventListener('click', refreshAll);
+  document.getElementById('saveEditBtn').addEventListener('click', saveEditMatch);
+  bindMatchButtons();
+  bindUserButtons();
+  bindSystemButtons();
+  bindAddMatchForm();
+  await refreshAll();
+}
+
+async function refreshAll() {
+  await Promise.all([loadStats(), loadAdminMatches(), loadAdminUsers(), populateMatchSelects(), loadSystemStatus()]);
+}
+
+// ── Stats ─────────────────────────────────
+async function loadStats() {
+  const [{ count:mc }, { count:uc }, { count:pc }, { data:ms }] = await Promise.all([
+    supabase.from('matches').select('id', { count:'exact', head:true }),
+    supabase.from('users').select('id', { count:'exact', head:true }),
+    supabase.from('predictions').select('id', { count:'exact', head:true }),
+    supabase.from('matches').select('status')
+  ]);
+  document.getElementById('ovMatches').textContent = mc ?? '—';
+  document.getElementById('ovUsers').textContent = uc ?? '—';
+  document.getElementById('ovPreds').textContent = pc ?? '—';
+  const sts = ms || [];
+  document.getElementById('ovOpen').textContent = sts.filter(m => m.status === 'open').length;
+  document.getElementById('ovLocked').textContent = sts.filter(m => m.status === 'locked').length;
+  document.getElementById('ovFinished').textContent = sts.filter(m => m.status === 'finished').length;
+}
+
+async function loadSystemStatus() {
+  const { data:lp } = await supabase.from('predictions').select('created_at').order('created_at',{ascending:false}).limit(1).maybeSingle();
+  const { data:top } = await supabase.from('leaderboard_cache').select('user_id,total_points').order('total_points',{ascending:false}).limit(1).maybeSingle();
+  const { data:topU } = top ? await supabase.from('users').select('username').eq('id', top.user_id).maybeSingle() : { data:null };
+  document.getElementById('systemStatus').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:.35rem;">
+      <div>🕐 <strong>Son Tahmin:</strong> ${lp ? new Date(lp.created_at).toLocaleString('tr-TR') : 'Yok'}</div>
+      <div>🥇 <strong>Lider:</strong> ${topU?.username ?? '—'} ${top ? '('+top.total_points+' P)' : ''}</div>
+      <div style="color:var(--success);">✅ Sistem çevrimiçi</div>
+    </div>`;
+}
+
+// ── MAÇLAR ────────────────────────────────
+function bindMatchButtons() {
+  document.getElementById('btnLockAll').addEventListener('click', () => bulkStatus('locked'));
+  document.getElementById('btnUnlockAll').addEventListener('click', () => bulkStatus('open'));
+  document.getElementById('btnImportFixtures').addEventListener('click', () => importFixtures(true));
+  document.getElementById('btnDeleteAllMatches').addEventListener('click', deleteAllMatches);
+}
+
+async function loadAdminMatches() {
+  const el = document.getElementById('adminMatchesList');
+  const { data:matches, error } = await supabase.from('matches').select('*').order('match_time',{ascending:true});
+  if (error) { el.innerHTML = `<div style="color:var(--danger);">Hata: ${error.message}</div>`; return; }
+  if (!matches?.length) { el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Maç yok. Fikstür yükleyin.</div>`; return; }
+
+  el.innerHTML = matches.map(m => {
+    const fin = m.status === 'finished';
+    const comp = (m.group_name||'').toLowerCase().includes('europa') ? 'comp-uel' : 'comp-ucl';
+    const sBadge = fin ? 'badge-finished' : m.status==='locked' ? 'badge-locked' : 'badge-open';
+    const sLabel = fin ? 'BİTTİ' : m.status==='locked' ? '🔒 KİLİTLİ' : m.status==='draft' ? 'TASLAK' : 'AÇIK';
+    const dt = new Date(m.match_time).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const timeISO = new Date(m.match_time); const localISO = new Date(timeISO.getTime()-timeISO.getTimezoneOffset()*60000).toISOString().slice(0,16);
+
+    return `
+    <div class="match-admin-row">
+      <div class="match-admin-header">
+        <span class="competition-badge ${comp}" style="font-size:.68rem;">${m.group_name}</span>
+        <span style="font-weight:800;color:#fff;flex:1;">${m.home_team} <span style="color:var(--text-muted)">vs</span> ${m.away_team}</span>
+        <span style="font-size:.76rem;color:var(--text-muted);">📅 ${dt}</span>
+        <span class="status-badge ${sBadge}" style="font-size:.7rem;">${sLabel}</span>
+        ${fin ? `<span style="font-family:var(--font-display);font-size:1.05rem;font-weight:800;color:var(--ucl-gold);">${m.home_score}-${m.away_score}</span>` : ''}
+      </div>
+      ${fin ? `<div style="font-size:.76rem;color:var(--text-muted);margin-top:4px;">Golcüler: <strong style="color:#fff;">${m.goalscorers||'—'}</strong></div>` : ''}
+
+      <div class="match-admin-controls">
+        ${m.status!=='finished' ? `<button class="btn btn-warning btn-xs toggle-lock" data-id="${m.id}" data-status="${m.status}">${m.status==='locked'?'🔓 Kilidi Aç':'🔒 Kilitle'}</button>` : ''}
+        <button class="btn btn-outline btn-xs edit-btn"
+          data-id="${m.id}" data-home="${m.home_team.replace(/"/g,'&quot;')}" data-away="${m.away_team.replace(/"/g,'&quot;')}"
+          data-time="${localISO}" data-group="${m.group_name}" data-status="${m.status}">✏️ Düzenle</button>
+        <button class="btn btn-danger btn-xs del-match" data-id="${m.id}">🗑️ Sil</button>
+      </div>
+
+      ${!fin ? `
+      <div class="match-score-row">
+        <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKOR GİR &amp; PUANDağıt:</span>
+        <input type="number" class="mini-input" id="hs_${m.id}" min="0" value="0">
+        <span style="font-weight:800;color:var(--text-muted);">-</span>
+        <input type="number" class="mini-input" id="as_${m.id}" min="0" value="0">
+        <input type="text" class="scorer-txt" id="sc_${m.id}" placeholder="Golcüler: Icardi, En-Nesyri...">
+        <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;">✅ İşle (1P·2P·5P)</button>
+      </div>` : `
+      <div style="margin-top:.35rem;">
+        <button class="btn btn-outline btn-xs redo-toggle" data-id="${m.id}">🔄 Skoru Güncelle</button>
+        <div class="match-score-row" id="redo_${m.id}" style="display:none;margin-top:.4rem;">
+          <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">YENİ SKOR:</span>
+          <input type="number" class="mini-input" id="hs2_${m.id}" min="0" value="${m.home_score??0}">
+          <span style="font-weight:800;color:var(--text-muted);">-</span>
+          <input type="number" class="mini-input" id="as2_${m.id}" min="0" value="${m.away_score??0}">
+          <input type="text" class="scorer-txt" id="sc2_${m.id}" value="${m.goalscorers??''}" placeholder="Golcüler">
+          <button class="btn btn-warning btn-xs proc-match" data-id="${m.id}" data-redo="1" style="white-space:nowrap;">🔄 Güncelle</button>
+        </div>
+      </div>`}
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.toggle-lock').forEach(btn => btn.addEventListener('click', async e => {
+    const id = e.currentTarget.dataset.id, cur = e.currentTarget.dataset.status;
+    const nxt = cur==='locked' ? 'open' : 'locked';
+    await supabase.from('matches').update({status:nxt}).eq('id',id);
+    showToast(`Maç ${nxt==='locked'?'kilitlendi':'açıldı'}.`, 'success');
+    await loadAdminMatches(); await loadStats();
+  }));
+
+  el.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', e => {
+    const b = e.currentTarget;
+    document.getElementById('editMatchId').value = b.dataset.id;
+    document.getElementById('editHomeTeam').value = b.dataset.home;
+    document.getElementById('editAwayTeam').value = b.dataset.away;
+    document.getElementById('editMatchTime').value = b.dataset.time;
+    document.getElementById('editGroupName').value = b.dataset.group;
+    document.getElementById('editStatus').value = b.dataset.status;
+    document.getElementById('editModal').classList.add('open');
+  }));
+
+  el.querySelectorAll('.del-match').forEach(btn => btn.addEventListener('click', async e => {
+    if (!confirm('Bu maçı silmek istediğinizden emin misiniz? Tahminler de silinir.')) return;
+    await supabase.from('matches').delete().eq('id', e.currentTarget.dataset.id);
+    showToast('Maç silindi.', 'info');
+    await loadAdminMatches(); await loadStats();
+  }));
+
+  el.querySelectorAll('.proc-match').forEach(btn => btn.addEventListener('click', async e => {
+    const id = e.currentTarget.dataset.id, isRedo = e.currentTarget.dataset.redo;
+    const px = isRedo ? '2' : '';
+    const hs = parseInt(document.getElementById(`hs${px}_${id}`)?.value)||0;
+    const as = parseInt(document.getElementById(`as${px}_${id}`)?.value)||0;
+    const sc = (document.getElementById(`sc${px}_${id}`)?.value||'').trim();
+    await processResult(id, hs, as, sc);
+  }));
+
+  el.querySelectorAll('.redo-toggle').forEach(btn => btn.addEventListener('click', e => {
+    const rd = document.getElementById(`redo_${e.currentTarget.dataset.id}`);
+    rd.style.display = rd.style.display==='none' ? 'flex' : 'none';
+  }));
+}
+
+async function processResult(matchId, hs, as, sc) {
+  const result = hs>as ? 'home_win' : as>hs ? 'away_win' : 'draw';
+  try {
+    const { error:mErr } = await supabase.from('matches').update({ home_score:hs, away_score:as, goalscorers:sc, result, status:'finished' }).eq('id',matchId);
+    if (mErr) throw mErr;
+    const { data:mkts } = await supabase.from('bet_markets').select('id,market_type').eq('match_id',matchId);
+    const m1 = mkts?.find(m=>m.market_type==='1x2');
+    const m2 = mkts?.find(m=>m.market_type==='goalscorer');
+    const m3 = mkts?.find(m=>m.market_type==='exact_score');
+    // 1X2
+    if (m1) {
+      const { data:opts } = await supabase.from('bet_options').select('id,outcome_key').eq('market_id',m1.id);
+      const correctOpt = (opts||[]).find(o=>o.outcome_key===result);
+      for (const o of (opts||[])) await supabase.from('bet_options').update({is_correct:o.outcome_key===result}).eq('id',o.id);
+      if (correctOpt) {
+        await supabase.from('predictions').update({is_correct:true,points_earned:1}).eq('option_id',correctOpt.id);
+        await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('market_id',m1.id).neq('option_id',correctOpt.id);
+      } else await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('market_id',m1.id);
+    }
+    // Golcü
+    if (m2) {
+      const { data:preds } = await supabase.from('predictions').select('*').eq('market_id',m2.id);
+      const slist = sc ? sc.toLowerCase().split(',').map(s=>s.trim()).filter(Boolean) : [];
+      for (const p of (preds||[])) {
+        const usr = (p.predicted_scorer||'').toLowerCase().trim();
+        const hit = !!usr && slist.length>0 && slist.some(s=>s.includes(usr)||usr.includes(s));
+        await supabase.from('predictions').update({is_correct:hit,points_earned:hit?2:0}).eq('id',p.id);
       }
     }
-  </script>
-
-  <script type="module">
-    import { supabase } from './js/supabase.js';
-    import { requireAuth, logout, isAdmin } from './js/auth.js';
-
-    let session;
-
-    // YENİ GÜNCEL 24 MAÇ FİKSTÜRÜ
-    const FIXTURES_UPDATED = [
-      // FENERBAHÇE — UEFA ŞAMPİYONLAR LİGİ
-      { id: 'fb-1', home: 'Fenerbahçe', away: 'Roma', date: '2026-09-10T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-2', home: 'Aston Villa', away: 'Fenerbahçe', date: '2026-10-14T22:00:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-3', home: 'Fenerbahçe', away: 'Slavia Prag', date: '2026-10-20T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-4', home: 'Fenerbahçe', away: 'Liverpool', date: '2026-11-04T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-5', home: 'Shakhtar Donetsk', away: 'Fenerbahçe', date: '2026-11-25T22:00:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-6', home: 'LASK Linz', away: 'Fenerbahçe', date: '2026-12-09T22:00:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-7', home: 'Fenerbahçe', away: 'Villarreal', date: '2027-01-20T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'fb-8', home: 'Atletico Madrid', away: 'Fenerbahçe', date: '2027-01-27T22:00:00+03:00', league: 'UEFA Champions League' },
-
-      // GALATASARAY — UEFA ŞAMPİYONLAR LİGİ
-      { id: 'gs-1', home: 'Sporting', away: 'Galatasaray', date: '2026-09-09T22:00:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-2', home: 'Galatasaray', away: 'Barcelona', date: '2026-10-13T22:00:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-3', home: 'Lille', away: 'Galatasaray', date: '2026-10-21T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-4', home: 'Galatasaray', away: 'Stuttgart', date: '2026-11-03T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-5', home: 'Galatasaray', away: 'Aston Villa', date: '2026-11-24T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-6', home: 'AEK Atina', away: 'Galatasaray', date: '2026-12-08T22:00:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-7', home: 'Galatasaray', away: 'Feyenoord', date: '2027-01-19T19:45:00+03:00', league: 'UEFA Champions League' },
-      { id: 'gs-8', home: 'PSG', away: 'Galatasaray', date: '2027-01-27T22:00:00+03:00', league: 'UEFA Champions League' },
-
-      // BEŞİKTAŞ — UEFA AVRUPA LİGİ
-      { id: 'bjk-1', home: 'Beşiktaş', away: 'Marsilya', date: '2026-09-17T22:00:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-2', home: 'Hoffenheim', away: 'Beşiktaş', date: '2026-10-15T22:00:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-3', home: 'Beşiktaş', away: 'Crystal Palace', date: '2026-10-22T22:00:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-4', home: 'Celtic', away: 'Beşiktaş', date: '2026-11-05T22:00:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-5', home: 'Beşiktaş', away: 'Hapoel Beer-Sheva', date: '2026-11-26T19:45:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-6', home: 'Bayer Leverkusen', away: 'Beşiktaş', date: '2026-12-10T22:00:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-7', home: 'Beşiktaş', away: 'Union Saint-Gilloise', date: '2027-01-21T19:45:00+03:00', league: 'UEFA Europa League' },
-      { id: 'bjk-8', home: 'Omonia', away: 'Beşiktaş', date: '2027-01-28T22:00:00+03:00', league: 'UEFA Europa League' },
-    ];
-
-    async function init() {
-      session = await requireAuth();
-      if (!session || !isAdmin(session)) {
-        alert('Bu sayfaya erişim yetkiniz yok!');
-        window.location.href = './matches.html';
-        return;
-      }
-      document.getElementById('logoutBtn').addEventListener('click', logout);
-      bindActionButtons();
-      await loadAdminMatches();
-      await loadAdminUsers();
-    }
-
-    function bindActionButtons() {
-      // 24 Avrupa Maçını Otomatik Çek / Yükle
-      document.getElementById('btnImportFixtures').addEventListener('click', async () => {
-        if (!confirm('Tüm eski maçlar silinip güncel 24 Avrupa maçı (FB, GS, BJK) 3 tahmin marketiyle yüklensin mi?')) return;
-        try {
-          // Clean existing matches first to ensure fresh 3 markets
-          const { data: existingMatches } = await supabase.from('matches').select('id');
-          const idsToDelete = (existingMatches || []).map(m => m.id);
-          if (idsToDelete.length > 0) {
-            await supabase.from('matches').delete().in('id', idsToDelete);
-          }
-
-          let count = 0;
-          for (const item of FIXTURES_UPDATED) {
-            const { data: match } = await supabase.from('matches').insert({
-              odds_api_id: item.id,
-              home_team: item.home,
-              away_team: item.away,
-              match_time: item.date,
-              group_name: item.league,
-              status: 'open',
-              is_admin_approved: true
-            }).select().single();
-
-            if (match) {
-              count++;
-              // 1. 1X2 Market (1 Puan)
-              const { data: m1 } = await supabase.from('bet_markets').insert({
-                match_id: match.id, market_type: '1x2', label: 'Maç Sonucu (1 Puan)', is_active: true
-              }).select().single();
-
-              if (m1) {
-                await supabase.from('bet_options').insert([
-                  { market_id: m1.id, label: '1 (Ev Sahibi)', outcome_key: 'home_win', odds_value: 1.00 },
-                  { market_id: m1.id, label: 'X (Beraberlik)', outcome_key: 'draw', odds_value: 1.00 },
-                  { market_id: m1.id, label: '2 (Deplasman)', outcome_key: 'away_win', odds_value: 1.00 }
-                ]);
-              }
-
-              // 2. Scorer Market (2 Puan)
-              const { data: m2 } = await supabase.from('bet_markets').insert({
-                match_id: match.id, market_type: 'goalscorer', label: 'Gol Atacak Oyuncu (2 Puan)', is_active: true
-              }).select().single();
-
-              if (m2) {
-                await supabase.from('bet_options').insert([
-                  { market_id: m2.id, label: 'Golcü Tahmini', outcome_key: 'goalscorer', odds_value: 1.00 }
-                ]);
-              }
-
-              // 3. Exact Score Market (5 Puan)
-              const { data: m3 } = await supabase.from('bet_markets').insert({
-                match_id: match.id, market_type: 'exact_score', label: 'Maç Skoru (5 Puan)', is_active: true
-              }).select().single();
-
-              if (m3) {
-                await supabase.from('bet_options').insert([
-                  { market_id: m3.id, label: 'Maç Skoru', outcome_key: 'exact_score', odds_value: 1.00 }
-                ]);
-              }
-            }
-          }
-          window.showToast(`${count} maç (3'er tahmin marketiyle) başarıyla yüklendi!`, 'success');
-          await loadAdminMatches();
-        } catch (err) {
-          window.showToast('Hata: ' + err.message, 'error');
-        }
-      });
-
-      // Tüm Maçları Sil
-      document.getElementById('btnDeleteAllMatches').addEventListener('click', async () => {
-        if (!confirm('Sistemdeki TÜM MAÇLARI silmek istediğinizden emin misiniz?')) return;
-        try {
-          const { data: allMatches } = await supabase.from('matches').select('id');
-          const ids = (allMatches || []).map(m => m.id);
-          if (ids.length > 0) {
-            await supabase.from('matches').delete().in('id', ids);
-            window.showToast('Tüm maçlar silindi.', 'info');
-          } else {
-            window.showToast('Silinecek maç bulunamadı.', 'info');
-          }
-          await loadAdminMatches();
-        } catch (err) {
-          window.showToast('Hata: ' + err.message, 'error');
-        }
-      });
-    }
-
-    async function loadAdminMatches() {
-      const container = document.getElementById('adminMatchesList');
-      const { data: matches, error } = await supabase
-        .from('matches')
-        .select('*')
-        .order('match_time', { ascending: true });
-
-      if (error) {
-        container.innerHTML = `<div style="color:var(--danger);">Hata: ${error.message}</div>`;
-        return;
-      }
-
-      if (!matches || matches.length === 0) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:3rem; color:var(--text-muted);">
-            <p style="margin-bottom:1rem; font-size:1.1rem;">Henüz sistemde maç bulunmuyor.</p>
-            <p>Yukarıdaki <strong>"Güncel 24 Avrupa Maçını Temizle &amp; Yükle"</strong> butonuna basarak maçları yükleyebilirsiniz!</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = `
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>ORGANİZASYON</th>
-              <th>MAÇ</th>
-              <th>DURUM</th>
-              <th style="text-align:center;">SKOR &amp; GOLCÜLERİ İŞLE</th>
-              <th style="text-align:right;">İŞLEMLER</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${matches.map(m => {
-              const isFinished = m.status === 'finished';
-              return `
-                <tr>
-                  <td>
-                    <span class="competition-badge ${m.group_name.includes('Europa') ? 'comp-uel' : 'comp-ucl'}">${m.group_name}</span>
-                  </td>
-                  <td>
-                    <span style="font-weight:700; color:#fff;">${m.home_team} vs ${m.away_team}</span>
-                  </td>
-                  <td>
-                    <span class="status-badge ${isFinished ? 'badge-finished' : 'badge-open'}">${m.status}</span>
-                  </td>
-                  <td style="text-align:center;">
-                    ${isFinished
-                      ? `<div style="font-size:1.1rem; color:var(--ucl-gold); font-weight:800;">${m.home_score} - ${m.away_score} <span style="font-size:0.8rem; color:var(--text-muted);">(${m.goalscorers || 'Golcü Yok'})</span></div>`
-                      : `
-                        <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
-                          <div style="display:inline-flex; gap:4px; align-items:center;">
-                            <input type="number" id="hs_${m.id}" style="width:45px; text-align:center;" class="form-input" min="0" value="0">
-                            <span>-</span>
-                            <input type="number" id="as_${m.id}" style="width:45px; text-align:center;" class="form-input" min="0" value="0">
-                          </div>
-                          <input type="text" id="scorers_${m.id}" placeholder="Gol atanlar (örn: Icardi, En-Nesyri)" class="form-input" style="font-size:0.75rem; padding:2px 6px; width:190px;">
-                          <button class="btn btn-primary finish-match-btn" data-id="${m.id}" style="padding:4px 8px; font-size:0.75rem;">
-                            Skoru &amp; Golcüleri İşle (1P-2P-5P)
-                          </button>
-                        </div>
-                      `}
-                  </td>
-                  <td style="text-align:right;">
-                    ${!isFinished ? `<button class="btn btn-warning toggle-lock-btn" data-id="${m.id}" data-status="${m.status}" style="padding:4px 8px; font-size:0.75rem; margin-bottom:4px; width: 100%;">${m.status === 'locked' ? 'Kilidi Aç' : 'Manuel Kilitle'}</button><br>` : ''}
-                    <button class="btn btn-danger delete-match-btn" data-id="${m.id}" style="padding:4px 8px; font-size:0.75rem; width: 100%;">Sil</button>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      `;
-
-      // Finish Match Event Listener
-      document.querySelectorAll('.finish-match-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const matchId = e.currentTarget.dataset.id;
-          const homeScore = parseInt(document.getElementById(`hs_${matchId}`).value) || 0;
-          const awayScore = parseInt(document.getElementById(`as_${matchId}`).value) || 0;
-          const goalscorersText = (document.getElementById(`scorers_${matchId}`).value || '').trim();
-
-          let result = 'draw';
-          if (homeScore > awayScore) result = 'home_win';
-          else if (awayScore > homeScore) result = 'away_win';
-
-          try {
-            const { error: matchErr } = await supabase
-              .from('matches')
-              .update({
-                home_score: homeScore,
-                away_score: awayScore,
-                goalscorers: goalscorersText,
-                result: result,
-                status: 'finished'
-              })
-              .eq('id', matchId);
-
-            if (matchErr) throw matchErr;
-
-            const { data: markets } = await supabase.from('bet_markets').select('id, market_type').eq('match_id', matchId);
-            const m1X2 = markets?.find(m => m.market_type === '1x2');
-            const mScorer = markets?.find(m => m.market_type === 'goalscorer');
-            const mScore = markets?.find(m => m.market_type === 'exact_score');
-
-            // 1. Maç Sonucu (1 Puan)
-            if (m1X2) {
-              const { data: options } = await supabase.from('bet_options').select('id, outcome_key').eq('market_id', m1X2.id);
-              const correctOpt = (options || []).find(o => o.outcome_key === result);
-              // Mark all options is_correct
-              for (const opt of (options || [])) {
-                await supabase.from('bet_options').update({ is_correct: opt.outcome_key === result }).eq('id', opt.id);
-              }
-              if (correctOpt) {
-                // Award points to users who picked the correct option
-                await supabase.from('predictions').update({ is_correct: true, points_earned: 1 }).eq('option_id', correctOpt.id);
-                // Zero out everyone else in this market who didn't pick correct
-                await supabase.from('predictions').update({ is_correct: false, points_earned: 0 })
-                  .eq('market_id', m1X2.id).neq('option_id', correctOpt.id);
-              } else {
-                // No correct option found - zero everyone
-                await supabase.from('predictions').update({ is_correct: false, points_earned: 0 }).eq('market_id', m1X2.id);
-              }
-            }
-
-            // 2. Golcü Tahmini (2 Puan)
-            if (mScorer && goalscorersText) {
-              const { data: preds } = await supabase.from('predictions').select('*').eq('market_id', mScorer.id);
-              const scorersList = goalscorersText.toLowerCase().split(',').map(s => s.trim());
-
-              for (const p of (preds || [])) {
-                const userScorer = (p.predicted_scorer || '').toLowerCase().trim();
-                const isHit = userScorer && scorersList.some(s => s.includes(userScorer) || userScorer.includes(s));
-                await supabase.from('predictions').update({
-                  is_correct: isHit,
-                  points_earned: isHit ? 2 : 0
-                }).eq('id', p.id);
-              }
-            }
-
-            // 3. Tam Maç Skoru (5 Puan)
-            if (mScore) {
-              const { data: preds } = await supabase.from('predictions').select('*').eq('market_id', mScore.id);
-              for (const p of (preds || [])) {
-                const isExact = p.predicted_home_score === homeScore && p.predicted_away_score === awayScore;
-                await supabase.from('predictions').update({
-                  is_correct: isExact,
-                  points_earned: isExact ? 5 : 0
-                }).eq('id', p.id);
-              }
-            }
-
-            await updateAllLeaderboards();
-            window.showToast(`Skor işlendi (${homeScore}-${awayScore})! Puanlar dağıtıldı.`, 'success');
-            await loadAdminMatches();
-          } catch (err) {
-            window.showToast('Hata: ' + err.message, 'error');
-          }
-        });
-      });
-
-      // Toggle Lock Event Listener
-      document.querySelectorAll('.toggle-lock-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const matchId = e.currentTarget.dataset.id;
-          const currentStatus = e.currentTarget.dataset.status;
-          const newStatus = currentStatus === 'locked' ? 'open' : 'locked';
-          try {
-            const { error } = await supabase.from('matches').update({ status: newStatus }).eq('id', matchId);
-            if (error) throw error;
-            window.showToast(`Maç ${newStatus === 'locked' ? 'kilitlendi' : 'açıldı'}.`, 'success');
-            await loadAdminMatches();
-          } catch (err) {
-            window.showToast('Hata: ' + err.message, 'error');
-          }
-        });
-      });
-
-      // Delete match
-      document.querySelectorAll('.delete-match-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          if (!confirm('Bu maçı silmek istediğinizden emin misiniz?')) return;
-          const matchId = e.currentTarget.dataset.id;
-          await supabase.from('matches').delete().eq('id', matchId);
-          window.showToast('Maç silindi.', 'info');
-          await loadAdminMatches();
-        });
-      });
-    }
-
-    async function loadAdminUsers() {
-      const container = document.getElementById('adminUsersList');
-      const { data: users, error } = await supabase.from('users').select('*');
-      if (error) {
-        container.innerHTML = `<div style="color:var(--danger);">Hata: ${error.message}</div>`;
-        return;
-      }
-
-      const { data: cache } = await supabase.from('leaderboard_cache').select('*');
-      const cacheMap = new Map(cache?.map(c => [c.user_id, c.total_points]));
-
-      container.innerHTML = `
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>KULLANICI ADI</th>
-              <th>YETKİ</th>
-              <th style="text-align:center;">MEVCUT PUAN</th>
-              <th style="text-align:right;">PUAN DÜZENLE</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${users.map(u => {
-              const pts = cacheMap.get(u.id) ?? 0;
-              return `
-                <tr>
-                  <td>
-                    <strong style="color:#fff;">${u.username}</strong>
-                  </td>
-                  <td>
-                    <span class="status-badge ${u.is_admin ? 'badge-locked' : 'badge-finished'}">
-                      ${u.is_admin ? 'ADMIN' : 'ÜYE'}
-                    </span>
-                  </td>
-                  <td style="text-align:center;">
-                    <span style="font-family:var(--font-display); font-size:1.3rem; font-weight:800; color:var(--ucl-gold);" id="user_pts_${u.id}">
-                      ${pts} Puan
-                    </span>
-                  </td>
-                  <td style="text-align:right;">
-                    <div style="display:inline-flex; gap:6px;">
-                      <button class="btn btn-outline add-pts-btn" data-id="${u.id}" data-amount="1" style="padding:2px 8px; font-size:0.75rem;">+1 Puan</button>
-                      <button class="btn btn-outline add-pts-btn" data-id="${u.id}" data-amount="2" style="padding:2px 8px; font-size:0.75rem;">+2 Puan</button>
-                      <button class="btn btn-outline add-pts-btn" data-id="${u.id}" data-amount="5" style="padding:2px 8px; font-size:0.75rem;">+5 Puan</button>
-                      <button class="btn btn-danger sub-pts-btn" data-id="${u.id}" data-amount="1" style="padding:2px 8px; font-size:0.75rem;">-1 Puan</button>
-                      <button class="btn btn-danger reset-pts-btn" data-id="${u.id}" style="padding:2px 8px; font-size:0.75rem;">Sıfırla</button>
-                    </div>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      `;
-
-      document.querySelectorAll('.add-pts-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const uid = e.currentTarget.dataset.id;
-          const amt = parseInt(e.currentTarget.dataset.amount);
-          await modifyUserPoints(uid, amt);
-        });
-      });
-
-      document.querySelectorAll('.sub-pts-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const uid = e.currentTarget.dataset.id;
-          const amt = -parseInt(e.currentTarget.dataset.amount);
-          await modifyUserPoints(uid, amt);
-        });
-      });
-
-      document.querySelectorAll('.reset-pts-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          if (!confirm('Bu kullanıcının puanını sıfırlamak istediğinize emin misiniz?')) return;
-          const uid = e.currentTarget.dataset.id;
-          await supabase.from('leaderboard_cache').upsert({ user_id: uid, total_points: 0, last_updated: new Date().toISOString() });
-          window.showToast('Puan sıfırlandı.', 'info');
-          await loadAdminUsers();
-        });
-      });
-    }
-
-    async function modifyUserPoints(userId, delta) {
-      const { data: existing } = await supabase.from('leaderboard_cache').select('total_points').eq('user_id', userId).maybeSingle();
-      const current = existing?.total_points ?? 0;
-      const newTotal = Math.max(0, current + delta);
-
-      await supabase.from('leaderboard_cache').upsert({
-        user_id: userId,
-        total_points: newTotal,
-        last_updated: new Date().toISOString()
-      });
-
-      window.showToast(`Puan güncellendi (${newTotal} Puan)`, 'success');
-      await loadAdminUsers();
-    }
-
-    async function updateAllLeaderboards() {
-      const { data: preds } = await supabase.from('predictions').select('user_id, points_earned, is_correct');
-      const userSummary = new Map();
-
-      (preds || []).forEach(p => {
-        if (!userSummary.has(p.user_id)) {
-          userSummary.set(p.user_id, { pts: 0, correctCount: 0, totalCount: 0 });
-        }
-        const s = userSummary.get(p.user_id);
-        s.pts += (p.points_earned || 0);
-        s.totalCount += 1;
-        if (p.is_correct) s.correctCount += 1;
-      });
-
-      for (const [uid, stat] of userSummary.entries()) {
-        await supabase.from('leaderboard_cache').upsert({
-          user_id: uid,
-          total_points: stat.pts,
-          correct_predictions: stat.correctCount,
-          total_predictions: stat.totalCount,
-          last_updated: new Date().toISOString()
-        });
+    // Tam skor
+    if (m3) {
+      const { data:preds } = await supabase.from('predictions').select('*').eq('market_id',m3.id);
+      for (const p of (preds||[])) {
+        const exact = p.predicted_home_score===hs && p.predicted_away_score===as;
+        await supabase.from('predictions').update({is_correct:exact,points_earned:exact?5:0}).eq('id',p.id);
       }
     }
+    await recalcAll();
+    showToast(`✅ ${hs}-${as} işlendi! Puanlar dağıtıldı.`, 'success');
+    await loadAdminMatches(); await loadStats();
+  } catch(err) { showToast('Hata: '+err.message, 'error'); }
+}
 
-    // Create New Match Form Submit
-    document.getElementById('createMatchForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const groupName = document.getElementById('groupName').value;
-      const homeTeam = document.getElementById('homeTeam').value.trim();
-      const awayTeam = document.getElementById('awayTeam').value.trim();
-      const matchTime = document.getElementById('matchTime').value;
+async function bulkStatus(status) {
+  if (!confirm(`Tüm maçları (biten hariç) ${status==='locked'?'kilitlemek':'açmak'} istediğinizden emin misiniz?`)) return;
+  const { data:ms } = await supabase.from('matches').select('id').neq('status','finished');
+  for (const m of (ms||[])) await supabase.from('matches').update({status}).eq('id',m.id);
+  showToast(`Tüm maçlar ${status==='locked'?'kilitlendi':'açıldı'}.`, 'success');
+  await loadAdminMatches(); await loadStats();
+}
 
-      const oddsApiId = `custom-${Date.now()}`;
+async function deleteAllMatches() {
+  if (!confirm('TÜM MAÇLARI silmek istediğinizden emin misiniz? Tüm tahminler de silinir!')) return;
+  const { data:ms } = await supabase.from('matches').select('id');
+  if (ms?.length) await supabase.from('matches').delete().in('id', ms.map(m=>m.id));
+  showToast('Tüm maçlar silindi.', 'info');
+  await loadAdminMatches(); await loadStats();
+}
 
-      try {
-        const { data: match, error: matchErr } = await supabase.from('matches').insert({
-          odds_api_id: oddsApiId,
-          home_team: homeTeam,
-          away_team: awayTeam,
-          match_time: new Date(matchTime).toISOString(),
-          group_name: groupName,
-          status: 'open',
-          is_admin_approved: true
-        }).select().single();
+async function saveEditMatch() {
+  const id = document.getElementById('editMatchId').value;
+  const home = document.getElementById('editHomeTeam').value.trim();
+  const away = document.getElementById('editAwayTeam').value.trim();
+  const mt = document.getElementById('editMatchTime').value;
+  const gn = document.getElementById('editGroupName').value;
+  const st = document.getElementById('editStatus').value;
+  if (!home||!away||!mt) { showToast('Tüm alanları doldurun!','error'); return; }
+  const { error } = await supabase.from('matches').update({ home_team:home, away_team:away, match_time:new Date(mt).toISOString(), group_name:gn, status:st }).eq('id',id);
+  if (error) { showToast('Hata: '+error.message,'error'); return; }
+  document.getElementById('editModal').classList.remove('open');
+  showToast('Maç güncellendi!', 'success');
+  await loadAdminMatches();
+}
 
-        if (matchErr) throw matchErr;
+// ── KULLANICILAR ─────────────────────────
+function bindUserButtons() {
+  document.getElementById('btnResetAllPoints').addEventListener('click', async () => {
+    if (!confirm('TÜM kullanıcıların puanlarını sıfırlamak istediğinizden emin misiniz?')) return;
+    const { data:lbs } = await supabase.from('leaderboard_cache').select('user_id');
+    for (const lb of (lbs||[])) await supabase.from('leaderboard_cache').upsert({user_id:lb.user_id,total_points:0,correct_predictions:0,total_predictions:0,last_updated:new Date().toISOString()});
+    showToast('Tüm puanlar sıfırlandı!','warning'); await loadAdminUsers();
+  });
+  document.getElementById('btnRecalcAll').addEventListener('click', async () => {
+    await recalcAll(); showToast('Puanlar yeniden hesaplandı!','success'); await loadAdminUsers();
+  });
+}
 
-        // 1X2 Market
-        const { data: m1x2 } = await supabase.from('bet_markets').insert({
-          match_id: match.id, market_type: '1x2', label: 'Maç Sonucu (1 Puan)', is_active: true
-        }).select().single();
+async function loadAdminUsers() {
+  const el = document.getElementById('adminUsersList');
+  const { data:users, error } = await supabase.from('users').select('*').order('username');
+  if (error) { el.innerHTML = `<div style="color:var(--danger);">Hata: ${error.message}</div>`; return; }
+  const { data:cache } = await supabase.from('leaderboard_cache').select('*');
+  const cMap = new Map((cache||[]).map(c=>[c.user_id,c]));
+  const { data:preds } = await supabase.from('predictions').select('user_id');
+  const pcMap = new Map(); (preds||[]).forEach(p => pcMap.set(p.user_id,(pcMap.get(p.user_id)||0)+1));
 
-        await supabase.from('bet_options').insert([
-          { market_id: m1x2.id, label: '1 (Ev Sahibi)', outcome_key: 'home_win', odds_value: 1.00 },
-          { market_id: m1x2.id, label: 'X (Beraberlik)', outcome_key: 'draw', odds_value: 1.00 },
-          { market_id: m1x2.id, label: '2 (Deplasman)', outcome_key: 'away_win', odds_value: 1.00 }
-        ]);
+  el.innerHTML = (users||[]).map(u => {
+    const cd = cMap.get(u.id), pts = cd?.total_points??0, pc = pcMap.get(u.id)||0;
+    return `
+    <div class="user-row">
+      <div class="user-info">
+        <div style="font-weight:800;color:#fff;">${u.username}</div>
+        <div style="font-size:.7rem;color:var(--text-muted);">${pc} tahmin</div>
+        <span class="status-badge ${u.is_admin?'badge-locked':'badge-finished'}" style="font-size:.62rem;">${u.is_admin?'⚡ ADMIN':'ÜYE'}</span>
+      </div>
+      <div class="user-pts" id="upts_${u.id}">${pts}</div>
+      <div class="pts-btns">
+        <button class="btn btn-outline btn-xs mod-pts" data-id="${u.id}" data-amt="1">+1</button>
+        <button class="btn btn-outline btn-xs mod-pts" data-id="${u.id}" data-amt="2">+2</button>
+        <button class="btn btn-outline btn-xs mod-pts" data-id="${u.id}" data-amt="5">+5</button>
+        <button class="btn btn-outline btn-xs mod-pts" data-id="${u.id}" data-amt="10">+10</button>
+        <button class="btn btn-danger btn-xs mod-pts" data-id="${u.id}" data-amt="-1">−1</button>
+        <button class="btn btn-danger btn-xs mod-pts" data-id="${u.id}" data-amt="-5">−5</button>
+        <button class="btn btn-warning btn-xs reset-user-pts" data-id="${u.id}">🔴 Sıfır</button>
+        <button class="btn btn-ghost btn-xs toggle-admin-btn" data-id="${u.id}" data-is="${u.is_admin?1:0}">${u.is_admin?'⬇️ Admin Kaldır':'⬆️ Admin Yap'}</button>
+        <button class="btn btn-danger btn-xs del-user-preds" data-id="${u.id}" data-name="${u.username}">🗑️ Tahminleri Sil</button>
+      </div>
+      <div style="display:flex;gap:3px;align-items:center;">
+        <input type="number" class="mini-input" id="cpts_${u.id}" placeholder="N" style="width:55px;height:30px;font-size:.85rem;">
+        <button class="btn btn-outline btn-xs set-pts-btn" data-id="${u.id}">= Set</button>
+      </div>
+    </div>`;
+  }).join('');
 
-        // Scorer Market
-        const { data: mScorer } = await supabase.from('bet_markets').insert({
-          match_id: match.id, market_type: 'goalscorer', label: 'Gol Atacak Oyuncu (2 Puan)', is_active: true
-        }).select().single();
+  el.querySelectorAll('.mod-pts').forEach(btn => btn.addEventListener('click', async e => {
+    const uid = e.currentTarget.dataset.id, amt = parseInt(e.currentTarget.dataset.amt);
+    await modifyPts(uid, amt);
+  }));
+  el.querySelectorAll('.reset-user-pts').forEach(btn => btn.addEventListener('click', async e => {
+    const uid = e.currentTarget.dataset.id;
+    if (!confirm('Bu kullanıcının puanını sıfırlamak istediğinizden emin misiniz?')) return;
+    await supabase.from('leaderboard_cache').upsert({user_id:uid,total_points:0,correct_predictions:0,total_predictions:0,last_updated:new Date().toISOString()});
+    document.getElementById(`upts_${uid}`).textContent = '0';
+    showToast('Puan sıfırlandı.','info');
+  }));
+  el.querySelectorAll('.set-pts-btn').forEach(btn => btn.addEventListener('click', async e => {
+    const uid = e.currentTarget.dataset.id;
+    const val = parseInt(document.getElementById(`cpts_${uid}`).value);
+    if (isNaN(val)||val<0) { showToast('Geçerli puan girin.','error'); return; }
+    await supabase.from('leaderboard_cache').upsert({user_id:uid,total_points:val,last_updated:new Date().toISOString()});
+    document.getElementById(`upts_${uid}`).textContent = val;
+    showToast(`Puan ${val} olarak ayarlandı.`,'success');
+  }));
+  el.querySelectorAll('.toggle-admin-btn').forEach(btn => btn.addEventListener('click', async e => {
+    const uid = e.currentTarget.dataset.id, isAdm = e.currentTarget.dataset.is==='1';
+    if (!confirm(`Bu kullanıcıyı ${isAdm?'admin yetkisinden çıkarmak':'admin yapmak'} istediğinizden emin misiniz?`)) return;
+    await supabase.from('users').update({is_admin:!isAdm}).eq('id',uid);
+    showToast(`Kullanıcı ${!isAdm?'admin yapıldı':'admin yetkisi kaldırıldı'}.`,'success');
+    await loadAdminUsers();
+  }));
+  el.querySelectorAll('.del-user-preds').forEach(btn => btn.addEventListener('click', async e => {
+    const uid = e.currentTarget.dataset.id, name = e.currentTarget.dataset.name;
+    if (!confirm(`${name} kullanıcısının TÜM tahminlerini silmek istediğinizden emin misiniz?`)) return;
+    await supabase.from('predictions').delete().eq('user_id',uid);
+    await supabase.from('leaderboard_cache').upsert({user_id:uid,total_points:0,correct_predictions:0,total_predictions:0,last_updated:new Date().toISOString()});
+    showToast(`${name} kullanıcısının tüm tahminleri silindi.`,'info');
+    await loadAdminUsers(); await loadStats();
+  }));
+}
 
-        await supabase.from('bet_options').insert([
-          { market_id: mScorer.id, label: 'Golcü Tahmini', outcome_key: 'goalscorer', odds_value: 1.00 }
-        ]);
+async function modifyPts(userId, delta) {
+  const { data:ex } = await supabase.from('leaderboard_cache').select('total_points').eq('user_id',userId).maybeSingle();
+  const nv = Math.max(0,(ex?.total_points??0)+delta);
+  await supabase.from('leaderboard_cache').upsert({user_id:userId,total_points:nv,last_updated:new Date().toISOString()});
+  document.getElementById(`upts_${userId}`).textContent = nv;
+  showToast(`Puan → ${nv}`,'success');
+}
 
-        // Exact Score Market
-        const { data: mScore } = await supabase.from('bet_markets').insert({
-          match_id: match.id, market_type: 'exact_score', label: 'Maç Skoru (5 Puan)', is_active: true
-        }).select().single();
+// ── TAHMİNLER ─────────────────────────────
+async function populateMatchSelects() {
+  const { data:ms } = await supabase.from('matches').select('id,home_team,away_team,match_time').order('match_time',{ascending:true});
+  const opts = (ms||[]).map(m => {
+    const dt = new Date(m.match_time).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'});
+    return `<option value="${m.id}">${dt} ${m.home_team} vs ${m.away_team}</option>`;
+  }).join('');
+  const base = '<option value="">— Maç seçin —</option>' + opts;
+  document.getElementById('predMatchFilter').innerHTML = base;
+  document.getElementById('delPredMatchSel').innerHTML = base;
+}
 
-        await supabase.from('bet_options').insert([
-          { market_id: mScore.id, label: 'Maç Skoru', outcome_key: 'exact_score', odds_value: 1.00 }
-        ]);
+window.loadPredictionsForMatch = async function() {
+  const matchId = document.getElementById('predMatchFilter').value;
+  const el = document.getElementById('predList'), st = document.getElementById('predStats');
+  if (!matchId) { el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--text-muted);">Maç seçin.</div>`; st.style.display='none'; return; }
 
-        window.showToast('Yeni Avrupa Maçı eklendi!', 'success');
-        switchAdminTab('matches');
-        await loadAdminMatches();
-      } catch (err) {
-        window.showToast('Hata: ' + err.message, 'error');
-      }
-    });
+  const [{ data:preds }, { data:users }] = await Promise.all([
+    supabase.from('predictions').select('*,bet_markets(market_type,label),bet_options(label,outcome_key)').eq('match_id',matchId).order('created_at',{ascending:false}),
+    supabase.from('users').select('id,username')
+  ]);
+  const uMap = new Map((users||[]).map(u=>[u.id,u.username]));
 
-    init();
-  </script>
+  if (!preds?.length) { el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--text-muted);">Tahmin yok.</div>`; st.style.display='none'; return; }
+
+  const totalPts = (preds||[]).reduce((s,p)=>s+(p.points_earned||0),0);
+  const correct = (preds||[]).filter(p=>p.is_correct).length;
+  st.innerHTML = `
+    <div class="stat-card"><div class="stat-val" style="color:var(--ucl-cyan)">${preds.length}</div><div class="stat-lbl">Toplam</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--success)">${correct}</div><div class="stat-lbl">Doğru</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--ucl-gold)">${totalPts}</div><div class="stat-lbl">Puan</div></div>`;
+  st.style.display = 'grid';
+  st.style.gridTemplateColumns = 'repeat(3,1fr)';
+
+  el.innerHTML = preds.map(p => {
+    const mType = p.bet_markets?.market_type||'—';
+    const tLabel = mType==='1x2'?'Sonuç (1P)':mType==='goalscorer'?'Golcü (2P)':mType==='exact_score'?'Tam Skor (5P)':mType;
+    const uname = uMap.get(p.user_id)||p.user_id.substring(0,8)+'…';
+    let pText = '';
+    if (p.predicted_home_score!==null && p.predicted_home_score!==undefined) pText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
+    else if (p.predicted_scorer?.trim()) pText = p.predicted_scorer;
+    else pText = p.bet_options?.label||p.bet_options?.outcome_key||'—';
+    const rBadge = p.is_correct===null||p.is_correct===undefined
+      ? `<span class="status-badge badge-open" style="font-size:.62rem;">Bekliyor</span>`
+      : p.is_correct
+        ? `<span class="status-badge" style="background:rgba(0,217,100,.2);color:var(--success);font-size:.62rem;">✓ +${p.points_earned}P</span>`
+        : `<span class="status-badge badge-finished" style="font-size:.62rem;">✗ 0P</span>`;
+    return `
+    <div class="pred-row">
+      <span class="pred-user">👤 ${uname}</span>
+      <span class="pred-type">${tLabel}</span>
+      <span class="pred-val">→ ${pText}</span>
+      <span>${rBadge}</span>
+      <button class="btn btn-danger btn-xs del-pred-btn" data-id="${p.id}" data-uid="${p.user_id}">🗑️</button>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.del-pred-btn').forEach(btn => btn.addEventListener('click', async e => {
+    if (!confirm('Bu tahmini silmek istediğinizden emin misiniz?')) return;
+    await supabase.from('predictions').delete().eq('id',e.currentTarget.dataset.id);
+    await recalcUser(e.currentTarget.dataset.uid);
+    showToast('Tahmin silindi.','info');
+    await loadPredictionsForMatch(); await loadStats();
+  }));
+};
+
+// ── SİSTEM ────────────────────────────────
+function bindSystemButtons() {
+  document.getElementById('s_btnLockAll').addEventListener('click', () => bulkStatus('locked'));
+  document.getElementById('s_btnUnlockAll').addEventListener('click', () => bulkStatus('open'));
+  document.getElementById('s_btnFullRecalc').addEventListener('click', async () => { await recalcAll(); showToast('Tüm puanlar yeniden hesaplandı!','success'); await loadAdminUsers(); });
+  document.getElementById('s_btnDeleteMatchPreds').addEventListener('click', async () => {
+    const mId = document.getElementById('delPredMatchSel').value;
+    if (!mId) { showToast('Önce maç seçin!','error'); return; }
+    if (!confirm('Seçili maçın tüm tahminlerini silmek istediğinizden emin misiniz?')) return;
+    await supabase.from('predictions').delete().eq('match_id',mId);
+    showToast('Tahminler silindi.','info'); await loadStats();
+  });
+  document.getElementById('s_btnImportFresh').addEventListener('click', () => importFixtures(true));
+  document.getElementById('s_btnImportSafe').addEventListener('click', () => importFixtures(false));
+  document.getElementById('s_btnNukeAllPreds').addEventListener('click', async () => {
+    const ans = prompt('UYARI: Tüm tahminleri silmek için "SİL" yazın:');
+    if (ans?.trim().toUpperCase() !== 'SİL') return;
+    const { data:ps } = await supabase.from('predictions').select('id');
+    if (ps?.length) await supabase.from('predictions').delete().in('id',ps.map(p=>p.id));
+    showToast('Tüm tahminler silindi!','warning'); await loadStats();
+  });
+  document.getElementById('s_btnNukeLeaderboard').addEventListener('click', async () => {
+    if (prompt('Liderliği sıfırlamak için "SIFIRLA" yazın:')?.trim() !== 'SIFIRLA') return;
+    const { data:lbs } = await supabase.from('leaderboard_cache').select('user_id');
+    for (const lb of (lbs||[])) await supabase.from('leaderboard_cache').upsert({user_id:lb.user_id,total_points:0,correct_predictions:0,total_predictions:0,exact_scores_count:0,scorers_count:0,last_updated:new Date().toISOString()});
+    showToast('Liderlik tablosu sıfırlandı!','warning'); await loadAdminUsers();
+  });
+}
+
+async function importFixtures(deleteFirst) {
+  const msg = deleteFirst ? 'Eski maçlar silinip 24 maç yeniden yüklensin mi? (Tahminler de silinir!)' : '24 maçtan eksik olanlar eklenir, mevcutlar korunur. Devam?';
+  if (!confirm(msg)) return;
+  if (deleteFirst) { const { data:ms } = await supabase.from('matches').select('id'); if (ms?.length) await supabase.from('matches').delete().in('id',ms.map(m=>m.id)); }
+  let added = 0, skipped = 0;
+  for (const item of FIXTURES) {
+    const { data:ex } = await supabase.from('matches').select('id').eq('odds_api_id',item.id).maybeSingle();
+    if (ex && !deleteFirst) { skipped++; continue; }
+    const { data:match } = await supabase.from('matches').insert({ odds_api_id:item.id, home_team:item.home, away_team:item.away, match_time:item.date, group_name:item.league, status:'open', is_admin_approved:true }).select('id').single();
+    if (match) {
+      added++;
+      const m1 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'1x2',label:'Maç Sonucu (1 Puan)',is_active:true}).select('id').single();
+      if (m1.data) await supabase.from('bet_options').insert([{market_id:m1.data.id,label:'1 (Ev Sahibi)',outcome_key:'home_win',odds_value:1},{market_id:m1.data.id,label:'X (Beraberlik)',outcome_key:'draw',odds_value:1},{market_id:m1.data.id,label:'2 (Deplasman)',outcome_key:'away_win',odds_value:1}]);
+      const m2 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'goalscorer',label:'Gol Atacak Oyuncu (2 Puan)',is_active:true}).select('id').single();
+      if (m2.data) await supabase.from('bet_options').insert([{market_id:m2.data.id,label:'Golcü Tahmini',outcome_key:'goalscorer',odds_value:1}]);
+      const m3 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'exact_score',label:'Maç Skoru (5 Puan)',is_active:true}).select('id').single();
+      if (m3.data) await supabase.from('bet_options').insert([{market_id:m3.data.id,label:'Maç Skoru',outcome_key:'exact_score',odds_value:1}]);
+    }
+  }
+  showToast(`${added} maç eklendi${skipped>0?`, ${skipped} atlandı`:''}.`,'success');
+  await refreshAll();
+}
+
+// ── YENİ MAÇ ────────────────────────────
+function bindAddMatchForm() {
+  document.getElementById('createMatchForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const gn = document.getElementById('groupName').value;
+    const ht = document.getElementById('homeTeam').value.trim();
+    const at = document.getElementById('awayTeam').value.trim();
+    const mt = document.getElementById('matchTime').value;
+    const st = document.getElementById('matchStatusNew').value;
+    const { data:match, error:mErr } = await supabase.from('matches').insert({ odds_api_id:`custom-${Date.now()}`, home_team:ht, away_team:at, match_time:new Date(mt).toISOString(), group_name:gn, status:st, is_admin_approved:true }).select().single();
+    if (mErr) { showToast('Hata: '+mErr.message,'error'); return; }
+    const m1 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'1x2',label:'Maç Sonucu (1 Puan)',is_active:true}).select().single();
+    if (m1.data) await supabase.from('bet_options').insert([{market_id:m1.data.id,label:'1 (Ev Sahibi)',outcome_key:'home_win',odds_value:1},{market_id:m1.data.id,label:'X (Beraberlik)',outcome_key:'draw',odds_value:1},{market_id:m1.data.id,label:'2 (Deplasman)',outcome_key:'away_win',odds_value:1}]);
+    const m2 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'goalscorer',label:'Gol Atacak Oyuncu (2 Puan)',is_active:true}).select().single();
+    if (m2.data) await supabase.from('bet_options').insert([{market_id:m2.data.id,label:'Golcü Tahmini',outcome_key:'goalscorer',odds_value:1}]);
+    const m3 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'exact_score',label:'Maç Skoru (5 Puan)',is_active:true}).select().single();
+    if (m3.data) await supabase.from('bet_options').insert([{market_id:m3.data.id,label:'Maç Skoru',outcome_key:'exact_score',odds_value:1}]);
+    showToast(`${ht} vs ${at} maçı oluşturuldu!`,'success');
+    e.target.reset(); switchTab('matches'); await refreshAll();
+  });
+}
+
+// ── Leaderboard Recalc ────────────────────
+async function recalcAll() {
+  const { data:preds } = await supabase.from('predictions').select('user_id,points_earned,is_correct,predicted_home_score,predicted_scorer');
+  const sm = new Map();
+  (preds||[]).forEach(p => {
+    if (!sm.has(p.user_id)) sm.set(p.user_id,{pts:0,correct:0,total:0,exact:0,scorer:0});
+    const s = sm.get(p.user_id); s.pts+=(p.points_earned||0); s.total++;
+    if (p.is_correct) { s.correct++; if (p.predicted_home_score!==null&&p.predicted_home_score!==undefined) s.exact++; else if (p.predicted_scorer?.trim()) s.scorer++; }
+  });
+  for (const [uid,s] of sm.entries()) {
+    await supabase.from('leaderboard_cache').upsert({user_id:uid,total_points:s.pts,correct_predictions:s.correct,total_predictions:s.total,exact_scores_count:s.exact,scorers_count:s.scorer,last_updated:new Date().toISOString()});
+  }
+}
+
+async function recalcUser(userId) {
+  const { data:preds } = await supabase.from('predictions').select('points_earned,is_correct,predicted_home_score,predicted_scorer').eq('user_id',userId);
+  let pts=0,correct=0,total=0,exact=0,scorer=0;
+  (preds||[]).forEach(p => { pts+=(p.points_earned||0); total++; if (p.is_correct) { correct++; if (p.predicted_home_score!==null&&p.predicted_home_score!==undefined) exact++; else if (p.predicted_scorer?.trim()) scorer++; } });
+  await supabase.from('leaderboard_cache').upsert({user_id:userId,total_points:pts,correct_predictions:correct,total_predictions:total,exact_scores_count:exact,scorers_count:scorer,last_updated:new Date().toISOString()});
+}
+
+init();
+</script>
 </body>
 </html>
