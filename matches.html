@@ -239,7 +239,7 @@
 
         if (match) {
           // 1. 1X2 Market
-          const { data: ex1 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', '1x2').maybeSingle();
+          const { data: ex1 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', '1x2').order('created_at',{ascending:true}).limit(1).then(r => ({ data: r.data?.[0] ?? null }));
           let m1Id = ex1?.id;
           if (!m1Id) {
             const { data: n1 } = await supabase.from('bet_markets').insert({
@@ -259,7 +259,7 @@
           }
 
           // 2. Scorer Market
-          const { data: ex2 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'goalscorer').maybeSingle();
+          const { data: ex2 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'goalscorer').order('created_at',{ascending:true}).limit(1).then(r => ({ data: r.data?.[0] ?? null }));
           let m2Id = ex2?.id;
           if (!m2Id) {
             const { data: n2 } = await supabase.from('bet_markets').insert({
@@ -277,7 +277,7 @@
           }
 
           // 3. Exact Score Market
-          const { data: ex3 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'exact_score').maybeSingle();
+          const { data: ex3 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'exact_score').order('created_at',{ascending:true}).limit(1).then(r => ({ data: r.data?.[0] ?? null }));
           let m3Id = ex3?.id;
           if (!m3Id) {
             const { data: n3 } = await supabase.from('bet_markets').insert({
@@ -297,24 +297,53 @@
       }
     }
 
+    // Bir maç+kategori için TEK kanonik market döndürür (en eski satır). Yoksa oluşturur.
+    // .maybeSingle() KULLANMAZ — dublike market varsa hata verir, o yüzden limit(1).
     async function ensureMarketExists(matchId, marketType, label) {
-      const { data: existing } = await supabase.from('bet_markets').select('id').eq('match_id', matchId).eq('market_type', marketType).maybeSingle();
-      if (existing) return existing.id;
+      const { data: existing } = await supabase.from('bet_markets')
+        .select('id').eq('match_id', matchId).eq('market_type', marketType)
+        .order('created_at', { ascending: true }).limit(1);
+      if (existing && existing.length) return existing[0].id;
 
-      const { data: newMarket } = await supabase.from('bet_markets').insert({
+      const { data: newMarket, error: insErr } = await supabase.from('bet_markets').insert({
         match_id: matchId,
         market_type: marketType,
         label: label,
         is_active: true
       }).select('id').single();
 
+      if (insErr || !newMarket) {
+        // unique index (match_id, market_type) — başkası oluşturmuş olabilir, tekrar oku
+        const { data: again } = await supabase.from('bet_markets')
+          .select('id').eq('match_id', matchId).eq('market_type', marketType)
+          .order('created_at', { ascending: true }).limit(1);
+        return again?.[0]?.id ?? null;
+      }
+
       if (newMarket) {
-        await supabase.from('bet_options').insert([
-          { market_id: newMarket.id, label: label, outcome_key: marketType, odds_value: 1.00 }
-        ]);
+        const opts = marketType === '1x2'
+          ? [
+              { outcome_key: 'home_win', label: '1 (Ev Sahibi)' },
+              { outcome_key: 'draw',     label: 'X (Beraberlik)' },
+              { outcome_key: 'away_win', label: '2 (Deplasman)' }
+            ]
+          : [{ outcome_key: marketType, label: label }];
+        await supabase.from('bet_options').insert(opts.map(o => ({ market_id: newMarket.id, odds_value: 1.00, ...o })));
         return newMarket.id;
       }
       return null;
+    }
+
+    // Kullanıcının bu maç+kategori için tuttuğu tek tahmini kanonik market'e sabitler:
+    // eski/dublike market satırlarındaki tahminlerini siler. Böylece kategori başına 1 tahmin.
+    async function dedupeUserCategory(matchId, marketType, keepMarketId) {
+      const { data: markets } = await supabase.from('bet_markets')
+        .select('id').eq('match_id', matchId).eq('market_type', marketType);
+      const stray = (markets || []).map(m => m.id).filter(id => id !== keepMarketId);
+      if (stray.length) {
+        await supabase.from('predictions').delete()
+          .eq('user_id', session.user.id).in('market_id', stray);
+      }
     }
 
     async function init() {
@@ -323,7 +352,14 @@
       if (isAdmin(session)) document.getElementById('adminLink').style.display = 'block';
 
       document.getElementById('logoutBtn').addEventListener('click', logout);
-      await ensureAll24FixturesInDb();
+      // Fikstür/market kurulumu maç başına sabittir; her sayfa açılışında tekrar
+      // çalıştırmak gereksiz (ve dublike market riski). Oturumda 1 kez yeter.
+      try {
+        if (!sessionStorage.getItem('fixturesEnsured')) {
+          await ensureAll24FixturesInDb();
+          sessionStorage.setItem('fixturesEnsured', '1');
+        }
+      } catch (_) { await ensureAll24FixturesInDb(); }
       await loadMatches();
     }
 
@@ -393,9 +429,13 @@
         const homeLogoHtml = getTeamLogoHtml(match.home_team);
         const awayLogoHtml = getTeamLogoHtml(match.away_team);
 
-        const market1X2 = match.bet_markets?.find(m => m.market_type === '1x2');
-        const marketScorer = match.bet_markets?.find(m => m.market_type === 'goalscorer');
-        const marketScore = match.bet_markets?.find(m => m.market_type === 'exact_score');
+        // Dublike market satırı olabildiğinden hep EN ESKİ olanı seç (kanonik)
+        const pickMarket = t => (match.bet_markets || [])
+          .filter(m => m.market_type === t)
+          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
+        const market1X2 = pickMarket('1x2');
+        const marketScorer = pickMarket('goalscorer');
+        const marketScore = pickMarket('exact_score');
 
         const pred1X2 = predMap.get(`${match.id}:1x2`) || (market1X2 ? predMap.get(market1X2.id) : null);
         const predScorer = predMap.get(`${match.id}:goalscorer`) || (marketScorer ? predMap.get(marketScorer.id) : null);
@@ -542,10 +582,8 @@
           const outcomeKey = target.dataset.outcome;
 
           try {
-            let marketId = target.dataset.marketId;
-            if (!marketId) {
-              marketId = await ensureMarketExists(matchId, '1x2', 'Maç Sonucu (1 Puan)');
-            }
+            const marketId = await ensureMarketExists(matchId, '1x2', 'Maç Sonucu (1 Puan)');
+            await dedupeUserCategory(matchId, '1x2', marketId);
 
             const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId).eq('outcome_key', outcomeKey);
             const optionId = options?.[0]?.id;
@@ -580,10 +618,8 @@
           }
 
           try {
-            let marketId = target.dataset.marketId;
-            if (!marketId) {
-              marketId = await ensureMarketExists(matchId, 'goalscorer', 'Gol Atacak Oyuncu (2 Puan)');
-            }
+            const marketId = await ensureMarketExists(matchId, 'goalscorer', 'Gol Atacak Oyuncu (2 Puan)');
+            await dedupeUserCategory(matchId, 'goalscorer', marketId);
 
             const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
             const optionId = options?.[0]?.id;
@@ -620,10 +656,8 @@
           }
 
           try {
-            let marketId = target.dataset.marketId;
-            if (!marketId) {
-              marketId = await ensureMarketExists(matchId, 'exact_score', 'Maç Skoru (5 Puan)');
-            }
+            const marketId = await ensureMarketExists(matchId, 'exact_score', 'Maç Skoru (5 Puan)');
+            await dedupeUserCategory(matchId, 'exact_score', marketId);
 
             const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
             const optionId = options?.[0]?.id;

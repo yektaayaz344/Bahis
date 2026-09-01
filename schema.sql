@@ -56,6 +56,10 @@ create table if not exists public.bet_markets (
   created_at timestamptz default now()
 );
 
+-- Maç başına her kategoriden TEK market (kullanıcı kategori başına 1 tahmin yapabilsin)
+create unique index if not exists bet_markets_match_type_uniq
+  on public.bet_markets (match_id, market_type);
+
 create table if not exists public.bet_options (
   id uuid primary key default gen_random_uuid(),
   market_id uuid references public.bet_markets(id) on delete cascade,
