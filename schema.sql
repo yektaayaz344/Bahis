@@ -74,7 +74,7 @@ create table if not exists public.predictions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.users(id) on delete cascade,
   match_id uuid references public.matches(id) on delete cascade,
-  market_id uuid references public.bet_markets(id) on delete cascade,
+  market_id uuid not null references public.bet_markets(id) on delete cascade,
   option_id uuid references public.bet_options(id) on delete cascade,
   predicted_home_score integer,
   predicted_away_score integer,
