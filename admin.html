@@ -141,6 +141,7 @@
 
   <!-- ═══ TAB 3: TAHMİNLER ═══ -->
   <div class="tab-panel" id="panelPredictions">
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;">Her tahmini tek tek puanla. <strong style="color:var(--ucl-cyan);">✓</strong> varsayılan puanı verir, <strong style="color:var(--danger);">✗</strong> sıfırlar, kutuya yazıp <strong>Kaydet</strong> özel puan verir, <strong>↺</strong> tekrar "bekliyor"a çeker. Golcü tahminleri otomatik puanlanmaz — buradan değerlendirilir.</p>
     <label style="font-size:.78rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:.35rem;">MAÇA GÖRE FİLTRELE</label>
     <select id="predMatchFilter" class="pred-match-select" onchange="loadPredictionsForMatch()">
       <option value="">— Maç seçin —</option>
@@ -461,15 +462,10 @@ async function processResult(matchId, hs, as, sc) {
         await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('market_id',m1.id).neq('option_id',correctOpt.id);
       } else await supabase.from('predictions').update({is_correct:false,points_earned:0}).eq('market_id',m1.id);
     }
-    // Golcü
+    // Golcü — OTOMATİK PUANLANMAZ. Admin "Tahminler" sekmesinden tek tek değerlendirir
+    // (yazım farkları: "Icardi" / "ıcardi" / "icardı" adil eşleşmez). Sadece "bekliyor"a çekilir.
     if (m2) {
-      const { data:preds } = await supabase.from('predictions').select('*').eq('market_id',m2.id);
-      const slist = sc ? sc.toLowerCase().split(',').map(s=>s.trim()).filter(Boolean) : [];
-      for (const p of (preds||[])) {
-        const usr = (p.predicted_scorer||'').toLowerCase().trim();
-        const hit = !!usr && slist.length>0 && slist.some(s=>s.includes(usr)||usr.includes(s));
-        await supabase.from('predictions').update({is_correct:hit,points_earned:hit?2:0}).eq('id',p.id);
-      }
+      await supabase.from('predictions').update({ is_correct:null, points_earned:0 }).eq('market_id',m2.id);
     }
     // Tam skor
     if (m3) {
@@ -480,7 +476,7 @@ async function processResult(matchId, hs, as, sc) {
       }
     }
     await recalcAll();
-    showToast(`✅ ${hs}-${as} işlendi! Puanlar dağıtıldı.`, 'success');
+    showToast(`✅ ${hs}-${as} işlendi! 1X2 + Tam Skor puanlandı. Golcü tahminlerini "Tahminler" sekmesinden tek tek değerlendirin.`, 'success');
     await loadAdminMatches(); await loadStats();
   } catch(err) { showToast('Hata: '+err.message, 'error'); }
 }
@@ -644,29 +640,47 @@ window.loadPredictionsForMatch = async function() {
   st.style.display = 'grid';
   st.style.gridTemplateColumns = 'repeat(3,1fr)';
 
+  const DEF_PTS = { '1x2':1, 'goalscorer':2, 'exact_score':5 };
+  const ORDER = { 'goalscorer':0, 'exact_score':1, '1x2':2 };
+  preds.sort((a,b) => (ORDER[a.bet_markets?.market_type] ?? 9) - (ORDER[b.bet_markets?.market_type] ?? 9));
+
   el.innerHTML = preds.map(p => {
     const mType = p.bet_markets?.market_type||'—';
-    const tLabel = mType==='1x2'?'Sonuç (1P)':mType==='goalscorer'?'Golcü (2P)':mType==='exact_score'?'Tam Skor (5P)':mType;
+    const defPts = DEF_PTS[mType] ?? 1;
+    const tLabel = mType==='1x2'?`Sonuç (${defPts}P)`:mType==='goalscorer'?`Golcü (${defPts}P)`:mType==='exact_score'?`Tam Skor (${defPts}P)`:mType;
     const uname = uMap.get(p.user_id)||p.user_id.substring(0,8)+'…';
     let pText = '';
     if (p.predicted_home_score!==null && p.predicted_home_score!==undefined) pText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
     else if (p.predicted_scorer?.trim()) pText = p.predicted_scorer;
     else pText = p.bet_options?.label||p.bet_options?.outcome_key||'—';
-    const rBadge = p.is_correct===null||p.is_correct===undefined
-      ? `<span class="status-badge badge-open" style="font-size:.62rem;">Bekliyor</span>`
-      : p.is_correct
-        ? `<span class="status-badge" style="background:rgba(0,217,100,.2);color:var(--success);font-size:.62rem;">✓ +${p.points_earned}P</span>`
-        : `<span class="status-badge badge-finished" style="font-size:.62rem;">✗ 0P</span>`;
     return `
     <div class="pred-row">
       <span class="pred-user">👤 ${uname}</span>
       <span class="pred-type">${tLabel}</span>
-      <span class="pred-val">→ ${pText}</span>
-      <span>${rBadge}</span>
+      <span class="pred-val">→ <strong style="color:#fff;">${pText}</strong></span>
+      <span id="pstat_${p.id}">${gradeBadge(p.is_correct, p.points_earned)}</span>
+      <div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-xs grade-btn" data-id="${p.id}" data-uid="${p.user_id}" data-pts="${defPts}" data-ok="1">✓ +${defPts}P</button>
+        <button class="btn btn-danger btn-xs grade-btn" data-id="${p.id}" data-uid="${p.user_id}" data-pts="0" data-ok="0">✗ 0P</button>
+        <input type="number" class="mini-input" id="gp_${p.id}" min="0" placeholder="P" style="width:46px;height:28px;font-size:.8rem;">
+        <button class="btn btn-primary btn-xs grade-custom" data-id="${p.id}" data-uid="${p.user_id}">Kaydet</button>
+        <button class="btn btn-ghost btn-xs grade-btn" data-id="${p.id}" data-uid="${p.user_id}" data-pts="0" data-ok="null" title="Bekliyor'a çek">↺</button>
+      </div>
       <button class="btn btn-danger btn-xs del-pred-btn" data-id="${p.id}" data-uid="${p.user_id}">🗑️</button>
     </div>`;
   }).join('');
 
+  el.querySelectorAll('.grade-btn').forEach(btn => btn.addEventListener('click', async e => {
+    const d = e.currentTarget.dataset;
+    const ok = d.ok==='1' ? true : d.ok==='0' ? false : null;
+    await gradePrediction(d.id, d.uid, parseInt(d.pts)||0, ok);
+  }));
+  el.querySelectorAll('.grade-custom').forEach(btn => btn.addEventListener('click', async e => {
+    const d = e.currentTarget.dataset;
+    const v = parseInt(document.getElementById(`gp_${d.id}`).value);
+    if (isNaN(v)||v<0) { showToast('Geçerli puan girin.','error'); return; }
+    await gradePrediction(d.id, d.uid, v, v>0);
+  }));
   el.querySelectorAll('.del-pred-btn').forEach(btn => btn.addEventListener('click', async e => {
     if (!confirm('Bu tahmini silmek istediğinizden emin misiniz?')) return;
     await supabase.from('predictions').delete().eq('id',e.currentTarget.dataset.id);
@@ -675,6 +689,25 @@ window.loadPredictionsForMatch = async function() {
     await loadPredictionsForMatch(); await loadStats();
   }));
 };
+
+function gradeBadge(isCorrect, pts) {
+  if (isCorrect===null || isCorrect===undefined)
+    return `<span class="status-badge badge-open" style="font-size:.62rem;">Bekliyor</span>`;
+  if (isCorrect)
+    return `<span class="status-badge" style="background:rgba(0,217,100,.2);color:var(--success);font-size:.62rem;">✓ +${pts||0}P</span>`;
+  return `<span class="status-badge badge-finished" style="font-size:.62rem;">✗ ${pts||0}P</span>`;
+}
+
+async function gradePrediction(id, uid, pts, ok) {
+  const { error } = await supabase.from('predictions').update({ is_correct: ok, points_earned: pts }).eq('id', id);
+  if (error) { showToast('Hata: '+error.message,'error'); return; }
+  await recalcUser(uid);
+  const stat = document.getElementById(`pstat_${id}`);
+  if (stat) stat.innerHTML = gradeBadge(ok, pts);
+  showToast(ok===null ? 'Bekliyor\'a çekildi.' : `Puanlandı → ${pts}P`, 'success');
+  await loadStats();
+  await loadAdminUsers();
+}
 
 // ── SİSTEM ────────────────────────────────
 function bindSystemButtons() {

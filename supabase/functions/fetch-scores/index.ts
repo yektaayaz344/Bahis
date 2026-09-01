@@ -5,10 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-function calcPoints(odds: number): number {
-  return Math.floor(odds * 10)
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -61,67 +57,9 @@ Deno.serve(async (req) => {
         status: 'finished'
       }).eq('id', match.id)
 
-      // bet_options doğru/yanlış işaretle
-      const { data: marketRows } = await supabase
-        .from('bet_markets')
-        .select('id')
-        .eq('match_id', match.id)
-
-      const marketIds = marketRows?.map(m => m.id) ?? []
-
-      const { data: options } = await supabase
-        .from('bet_options')
-        .select('id, outcome_key, market_id')
-        .in('market_id', marketIds)
-
-      for (const opt of options ?? []) {
-        await supabase.from('bet_options').update({
-          is_correct: opt.outcome_key === result
-        }).eq('id', opt.id)
-      }
-
-      // Tahminleri puanla
-      const { data: predictions } = await supabase
-        .from('predictions')
-        .select('id, user_id, option_id, odds_at_prediction')
-        .eq('match_id', match.id)
-
-      // Kullanıcı başına puan topla
-      const userPoints: Record<string, { total: number; correct: number; count: number }> = {}
-
-      for (const pred of predictions ?? []) {
-        const opt = options?.find(o => o.id === pred.option_id)
-        const isCorrect = opt?.outcome_key === result
-        const points = isCorrect ? calcPoints(Number(pred.odds_at_prediction)) : 0
-
-        await supabase.from('predictions').update({
-          is_correct: isCorrect,
-          points_earned: points
-        }).eq('id', pred.id)
-
-        if (!userPoints[pred.user_id]) userPoints[pred.user_id] = { total: 0, correct: 0, count: 0 }
-        userPoints[pred.user_id].total   += points
-        userPoints[pred.user_id].correct += isCorrect ? 1 : 0
-        userPoints[pred.user_id].count   += 1
-      }
-
-      // leaderboard_cache güncelle
-      for (const [userId, pts] of Object.entries(userPoints)) {
-        const { data: existing } = await supabase
-          .from('leaderboard_cache')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle()
-
-        await supabase.from('leaderboard_cache').upsert({
-          user_id: userId,
-          total_points:        (existing?.total_points        ?? 0) + pts.total,
-          correct_predictions: (existing?.correct_predictions ?? 0) + pts.correct,
-          total_predictions:   (existing?.total_predictions   ?? 0) + pts.count,
-          last_updated: new Date().toISOString()
-        })
-      }
-
+      // NOT: Puanlama admin panelinden yapılır (1X2 + Tam Skor otomatik, Golcü elle).
+      // Bu fonksiyon sadece maç skorunu/sonucunu doldurur; tahminlere DOKUNMAZ ki
+      // admin'in elle verdiği golcü puanları ezilmesin.
       updated++
     }
 

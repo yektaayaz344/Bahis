@@ -159,9 +159,13 @@
 
               let ptsBadge = '<span class="status-badge badge-open">BEKLİYOR</span>';
               if (isFinished) {
-                ptsBadge = (p.points_earned > 0)
-                  ? `<span class="status-badge badge-open" style="background:rgba(255,215,0,0.2); color:var(--ucl-gold); font-size:0.9rem;">+${p.points_earned} PUAN</span>`
-                  : `<span class="status-badge badge-finished" style="background:rgba(255,51,102,0.15); color:var(--danger);">0 PUAN</span>`;
+                if (p.is_correct === null || p.is_correct === undefined) {
+                  ptsBadge = `<span class="status-badge badge-open" style="background:rgba(0,217,255,0.15); color:var(--ucl-cyan);">DEĞERLENDİRİLİYOR</span>`;
+                } else {
+                  ptsBadge = (p.points_earned > 0)
+                    ? `<span class="status-badge badge-open" style="background:rgba(255,215,0,0.2); color:var(--ucl-gold); font-size:0.9rem;">+${p.points_earned} PUAN</span>`
+                    : `<span class="status-badge badge-finished" style="background:rgba(255,51,102,0.15); color:var(--danger);">0 PUAN</span>`;
+                }
               }
 
               return `
