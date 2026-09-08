@@ -49,6 +49,10 @@
     #editModal.open { display:flex; }
     .modal-box { background:var(--card-bg); border:1px solid rgba(0,217,255,.3); border-radius:var(--radius); padding:1.75rem; width:100%; max-width:460px; margin:1rem; }
     .modal-box h3 { margin-bottom:1rem; }
+    .scorer-sel-btn { padding:.25rem .5rem; font-size:.7rem; font-weight:600; background:rgba(5,8,20,.6); border:1px solid rgba(255,255,255,.12); border-radius:5px; color:var(--text-muted); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .scorer-sel-btn:hover { border-color:var(--success); color:#fff; }
+    .scorer-sel-btn.selected { background:rgba(0,230,118,.15); border-color:var(--success); color:var(--success); font-weight:700; }
+    .result-entry-box { margin-top:.5rem; background:rgba(0,0,0,.25); border-radius:8px; padding:.65rem .7rem; }
   </style>
 </head>
 <body>
@@ -292,6 +296,38 @@ const FIXTURES = [
   { id:'bjk-8', home:'Omonia', away:'Beşiktaş', date:'2027-01-28T19:00:00Z', league:'UEFA Europa League' }
 ];
 
+const TEAM_SCORERS = {
+  'Fenerbahçe':          ['Youssef En-Nesyri', 'Cengiz Ünder', 'Dusan Tadic', 'Sebastian Szymanski', 'Edin Džeko'],
+  'Galatasaray':         ['Victor Osimhen', 'Mauro Icardi', 'Barış Alper Yılmaz', 'Kerem Aktürkoğlu', 'Wilfried Zaha'],
+  'Beşiktaş':            ['Semih Kılıçsoy', 'Rafa Silva', 'Jackson Muleka', 'João Mário', 'Ante Rebić'],
+  'Roma':                ['Artem Dovbyk', 'Paulo Dybala', 'Lorenzo Pellegrini', 'Stephan El Shaarawy', 'Alexis Saelemaekers'],
+  'Aston Villa':         ['Ollie Watkins', 'Jhon Durán', 'Leon Bailey', 'Morgan Rogers', 'Moussa Diaby'],
+  'Slavia Prag':         ['Ivan Schranz', 'Jan Kuchta', 'Lukáš Provod', 'Ondřej Lingr', 'Daniel Douděra'],
+  'Liverpool':           ['Mohamed Salah', 'Darwin Núñez', 'Diogo Jota', 'Luis Díaz', 'Cody Gakpo'],
+  'Shakhtar Donetsk':    ['Georgiy Sudakov', 'Danylo Sikan', 'Lassina Traoré', 'Artem Bondarenko', 'Heorhii Herasymchuk'],
+  'LASK Linz':           ['Marin Ljubičić', 'Florian Flecker', 'Maximilian Entrup', 'Marvin Potzmann', 'Sascha Horvath'],
+  'Villarreal':          ['Gerard Moreno', 'Ayoze Pérez', 'Arnaut Danjuma', 'Álex Baena', 'Yeremy Pino'],
+  'Atletico Madrid':     ['Antoine Griezmann', 'Julián Álvarez', 'Alexander Sørloth', 'Álvaro Morata', 'Rodrigo Riquelme'],
+  'Sporting':            ['Viktor Gyökeres', 'Marcus Edwards', 'Pedro Gonçalves', 'Francisco Trincão', 'Nuno Santos'],
+  'Barcelona':           ['Robert Lewandowski', 'Raphinha', 'Lamine Yamal', 'Pedri', 'Ferran Torres'],
+  'Lille':               ['Jonathan David', 'Edon Zhegrova', 'Angel Gomes', 'Rémy Cabella', 'Hákon Haraldsson'],
+  'Stuttgart':           ['Deniz Undav', 'Nick Woltemade', 'Enzo Millot', 'Chris Führich', 'Silas'],
+  'AEK Atina':           ['Ezequiel Ponce', 'Levi García', 'Erik Lamela', 'Ivan Pesić', 'Nordin Amrabat'],
+  'Feyenoord':           ['Ayase Ueda', 'Igor Paixão', 'Calvin Stengs', 'Quinten Timber', 'Antoni Milambo'],
+  'PSG':                 ['Ousmane Dembélé', 'Bradley Barcola', 'Gonçalo Ramos', 'Randal Kolo Muani', 'Lee Kang-in'],
+  'Marsilya':            ['Mason Greenwood', 'Elye Wahi', 'Luis Henrique', 'Azzedine Ounahi', 'Neal Maupay'],
+  'Hoffenheim':          ['Andrej Kramarić', 'Adam Hložek', 'Tom Bischof', 'Marius Bülter', 'Maximilian Beier'],
+  'Crystal Palace':      ['Eberechi Eze', 'Jean-Philippe Mateta', 'Ismaïla Sarr', 'Odsonne Édouard', 'Daniel Muñoz'],
+  'Celtic':              ['Kyogo Furuhashi', 'Adam Idah', 'Nicolas Kühn', 'Matt O\'Riley', 'Daizen Maeda'],
+  'Hapoel Beer-Sheva':   ['Yarden Shua', 'Karlo Muhar', 'Niv Zivzivadze', 'Idan Nachmias', 'Dan Biton'],
+  'Bayer Leverkusen':    ['Patrik Schick', 'Florian Wirtz', 'Granit Xhaka', 'Jonas Hofmann', 'Alejandro Grimaldo'],
+  'Union Saint-Gilloise':['Mohamed Amoura', 'Cameron Puertas', 'Casper Nielsen', 'Loïc Lapoussin', 'Adingra'],
+  'Omonia':              ['Fotis Papoulis', 'Jordi Gómez', 'Brwa Nouri', 'Igor Kitić', 'Mayambela']
+};
+
+// matchId → Set<playerName> — çoklu golcü seçimi için durum
+const scorerSelection = new Map();
+
 async function init() {
   session = await requireAuth();
   if (!session || !isAdmin(session)) { alert('Erişim reddedildi!'); window.location.href='./matches.html'; return; }
@@ -360,6 +396,18 @@ async function loadAdminMatches() {
     const dt = new Date(m.match_time).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const timeISO = new Date(m.match_time); const localISO = new Date(timeISO.getTime()-timeISO.getTimezoneOffset()*60000).toISOString().slice(0,16);
 
+    const _mkScorerBtns = (players, mid) => players.map(p =>
+      `<button class="scorer-sel-btn" data-mid="${mid}" data-player="${p.replace(/"/g,'&quot;')}">${p}</button>`
+    ).join('');
+    const _hPlayers = TEAM_SCORERS[m.home_team] || [];
+    const _aPlayers = TEAM_SCORERS[m.away_team] || [];
+    const _scorerSection = `
+      <div style="margin-top:.45rem;">
+        <div style="font-size:.65rem;color:var(--text-muted);font-weight:700;margin-bottom:.25rem;">GOL ATAN OYUNCULAR (birden fazla seçilebilir):</div>
+        ${_hPlayers.length ? `<div style="font-size:.62rem;color:var(--text-muted);margin-bottom:.2rem;">${m.home_team}</div><div style="display:flex;flex-wrap:wrap;gap:.22rem;margin-bottom:.35rem;">${_mkScorerBtns(_hPlayers, m.id)}</div>` : ''}
+        ${_aPlayers.length ? `<div style="font-size:.62rem;color:var(--text-muted);margin-bottom:.2rem;">${m.away_team}</div><div style="display:flex;flex-wrap:wrap;gap:.22rem;">${_mkScorerBtns(_aPlayers, m.id)}</div>` : ''}
+      </div>`;
+
     return `
     <div class="match-admin-row">
       <div class="match-admin-header">
@@ -380,23 +428,27 @@ async function loadAdminMatches() {
       </div>
 
       ${!fin ? `
-      <div class="match-score-row">
-        <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKORU KAYDET (puanlar elle):</span>
-        <input type="number" class="mini-input" id="hs_${m.id}" min="0" value="0">
-        <span style="font-weight:800;color:var(--text-muted);">-</span>
-        <input type="number" class="mini-input" id="as_${m.id}" min="0" value="0">
-        <input type="text" class="scorer-txt" id="sc_${m.id}" placeholder="Golcüler: Icardi, En-Nesyri...">
-        <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;">💾 Skoru Kaydet → Tahminlere Git</button>
+      <div class="result-entry-box">
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem;">
+          <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKOR:</span>
+          <input type="number" class="mini-input" id="hs_${m.id}" min="0" value="0">
+          <span style="font-weight:800;color:var(--text-muted);">-</span>
+          <input type="number" class="mini-input" id="as_${m.id}" min="0" value="0">
+          <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;margin-left:auto;">✅ Kaydet &amp; Otomatik Puanla</button>
+        </div>
+        ${_scorerSection}
       </div>` : `
       <div style="margin-top:.35rem;">
-        <button class="btn btn-outline btn-xs redo-toggle" data-id="${m.id}">🔄 Skoru Güncelle</button>
-        <div class="match-score-row" id="redo_${m.id}" style="display:none;margin-top:.4rem;">
-          <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">YENİ SKOR:</span>
-          <input type="number" class="mini-input" id="hs2_${m.id}" min="0" value="${m.home_score??0}">
-          <span style="font-weight:800;color:var(--text-muted);">-</span>
-          <input type="number" class="mini-input" id="as2_${m.id}" min="0" value="${m.away_score??0}">
-          <input type="text" class="scorer-txt" id="sc2_${m.id}" value="${m.goalscorers??''}" placeholder="Golcüler">
-          <button class="btn btn-warning btn-xs proc-match" data-id="${m.id}" data-redo="1" style="white-space:nowrap;">🔄 Güncelle</button>
+        <button class="btn btn-outline btn-xs redo-toggle" data-id="${m.id}" data-scorers="${(m.goalscorers||'').replace(/"/g,'&quot;')}">🔄 Skoru Güncelle</button>
+        <div class="result-entry-box" id="redo_${m.id}" style="display:none;margin-top:.4rem;">
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem;">
+            <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">YENİ SKOR:</span>
+            <input type="number" class="mini-input" id="hs2_${m.id}" min="0" value="${m.home_score??0}">
+            <span style="font-weight:800;color:var(--text-muted);">-</span>
+            <input type="number" class="mini-input" id="as2_${m.id}" min="0" value="${m.away_score??0}">
+            <button class="btn btn-warning btn-xs proc-match" data-id="${m.id}" data-redo="1" style="white-space:nowrap;margin-left:auto;">🔄 Güncelle &amp; Yeniden Puanla</button>
+          </div>
+          ${_scorerSection}
         </div>
       </div>`}
     </div>`;
@@ -433,40 +485,92 @@ async function loadAdminMatches() {
     const px = isRedo ? '2' : '';
     const hs = parseInt(document.getElementById(`hs${px}_${id}`)?.value)||0;
     const as = parseInt(document.getElementById(`as${px}_${id}`)?.value)||0;
-    const sc = (document.getElementById(`sc${px}_${id}`)?.value||'').trim();
-    await processResult(id, hs, as, sc);
+    const scorers = [...(scorerSelection.get(id) || [])];
+    await processResult(id, hs, as, scorers);
+  }));
+
+  el.querySelectorAll('.scorer-sel-btn').forEach(btn => btn.addEventListener('click', e => {
+    const b = e.currentTarget, mid = b.dataset.mid, player = b.dataset.player;
+    if (!scorerSelection.has(mid)) scorerSelection.set(mid, new Set());
+    const sel = scorerSelection.get(mid);
+    if (sel.has(player)) { sel.delete(player); b.classList.remove('selected'); }
+    else { sel.add(player); b.classList.add('selected'); }
   }));
 
   el.querySelectorAll('.redo-toggle').forEach(btn => btn.addEventListener('click', e => {
-    const rd = document.getElementById(`redo_${e.currentTarget.dataset.id}`);
-    rd.style.display = rd.style.display==='none' ? 'flex' : 'none';
+    const mid = e.currentTarget.dataset.id;
+    const rd = document.getElementById(`redo_${mid}`);
+    const isOpening = rd.style.display === 'none';
+    rd.style.display = isOpening ? 'block' : 'none';
+    if (isOpening) {
+      // Mevcut golcüleri pre-select yap
+      const existing = (e.currentTarget.dataset.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (existing.length) {
+        scorerSelection.set(mid, new Set(existing));
+        rd.querySelectorAll('.scorer-sel-btn').forEach(b => {
+          if (scorerSelection.get(mid)?.has(b.dataset.player)) b.classList.add('selected');
+        });
+      }
+    }
   }));
 }
 
-async function processResult(matchId, hs, as, sc) {
-  const result = hs>as ? 'home_win' : as>hs ? 'away_win' : 'draw';
+async function processResult(matchId, hs, as, scorers) {
+  const result = hs > as ? 'home_win' : as > hs ? 'away_win' : 'draw';
+  const scorersArr = Array.isArray(scorers) ? scorers : [];
+  const goalscorersStr = scorersArr.join(', ');
   try {
-    const { error:mErr } = await supabase.from('matches').update({ home_score:hs, away_score:as, goalscorers:sc, result, status:'finished' }).eq('id',matchId);
+    // 1. Maç sonucunu kaydet
+    const { error:mErr } = await supabase.from('matches').update({
+      home_score: hs, away_score: as, goalscorers: goalscorersStr, result, status: 'finished'
+    }).eq('id', matchId);
     if (mErr) throw mErr;
-    // Skor bilgisi olarak bet_options is_correct'ini işaretle (matches.html renklendirmesi için),
-    // AMA hiçbir tahmini otomatik puanlama. Tüm tahminler "bekliyor"a çekilir; admin
-    // "Tahminler" sekmesinden 1X2 · Golcü · Skor hepsini tek tek dağıtır.
-    const { data:mkts } = await supabase.from('bet_markets').select('id,market_type').eq('match_id',matchId);
-    const m1 = mkts?.find(m=>m.market_type==='1x2');
+
+    // 2. bet_options is_correct işaretle (1x2)
+    const { data:mkts } = await supabase.from('bet_markets').select('id,market_type').eq('match_id', matchId);
+    const m1 = mkts?.find(m => m.market_type === '1x2');
     if (m1) {
-      const { data:opts } = await supabase.from('bet_options').select('id,outcome_key').eq('market_id',m1.id);
-      for (const o of (opts||[])) await supabase.from('bet_options').update({is_correct:o.outcome_key===result}).eq('id',o.id);
+      const { data:opts } = await supabase.from('bet_options').select('id,outcome_key').eq('market_id', m1.id);
+      for (const o of (opts||[])) await supabase.from('bet_options').update({ is_correct: o.outcome_key === result }).eq('id', o.id);
     }
-    const marketIds = (mkts||[]).map(m=>m.id);
-    if (marketIds.length) await supabase.from('predictions').update({ is_correct:null, points_earned:0 }).in('market_id', marketIds);
+
+    // 3. Tüm tahminleri otomatik puanla
+    const { data:preds } = await supabase.from('predictions')
+      .select('*,bet_markets(market_type),bet_options(outcome_key)')
+      .eq('match_id', matchId);
+
+    const cnt = { '1x2': 0, exact_score: 0, goalscorer: 0 };
+
+    for (const p of (preds || [])) {
+      const mt = p.bet_markets?.market_type;
+      let isCorrect = false, pts = 0;
+
+      if (mt === '1x2') {
+        isCorrect = p.bet_options?.outcome_key === result;
+        pts = isCorrect ? 1 : 0;
+      } else if (mt === 'exact_score') {
+        isCorrect = p.predicted_home_score === hs && p.predicted_away_score === as;
+        pts = isCorrect ? 5 : 0;
+      } else if (mt === 'goalscorer') {
+        const scorer = (p.predicted_scorer || '').trim().toLowerCase();
+        isCorrect = scorer.length > 0 && scorersArr.some(s => s.toLowerCase() === scorer);
+        pts = isCorrect ? 2 : 0;
+      }
+
+      await supabase.from('predictions').update({ is_correct: isCorrect, points_earned: pts }).eq('id', p.id);
+      if (isCorrect && cnt[mt] !== undefined) cnt[mt]++;
+    }
+
+    // 4. Liderlik tablosunu güncelle
     await recalcAll();
-    showToast(`✅ Skor kaydedildi: ${hs}-${as}. Şimdi "Tahminler" sekmesinden bu maçı seçip puanları tek tek dağıt.`, 'success');
+    scorerSelection.delete(matchId);
+
+    showToast(
+      `✅ ${hs}-${as} kaydedildi. 1X2: ${cnt['1x2']} doğru · Skor: ${cnt.exact_score} doğru · Golcü: ${cnt.goalscorer} doğru`,
+      'success'
+    );
     await loadAdminMatches(); await loadStats();
-    // Otomatik olarak Tahminler sekmesine geç ve maçı seç
-    switchTab('predictions');
-    const sel = document.getElementById('predMatchFilter');
-    if (sel) { sel.value = matchId; loadPredictionsForMatch(); }
-  } catch(err) { showToast('Hata: '+err.message, 'error'); }
+  } catch(err) { showToast('Hata: ' + err.message, 'error'); }
 }
 
 async function bulkStatus(status) {
