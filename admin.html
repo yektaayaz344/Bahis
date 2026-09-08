@@ -396,17 +396,6 @@ async function loadAdminMatches() {
     const dt = new Date(m.match_time).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const timeISO = new Date(m.match_time); const localISO = new Date(timeISO.getTime()-timeISO.getTimezoneOffset()*60000).toISOString().slice(0,16);
 
-    const _mkScorerBtns = (players, mid) => players.map(p =>
-      `<button class="scorer-sel-btn" data-mid="${mid}" data-player="${p.replace(/"/g,'&quot;')}">${p}</button>`
-    ).join('');
-    const _hPlayers = TEAM_SCORERS[m.home_team] || [];
-    const _aPlayers = TEAM_SCORERS[m.away_team] || [];
-    const _scorerSection = `
-      <div style="margin-top:.45rem;">
-        <div style="font-size:.65rem;color:var(--text-muted);font-weight:700;margin-bottom:.25rem;">GOL ATAN OYUNCULAR (birden fazla seçilebilir):</div>
-        ${_hPlayers.length ? `<div style="font-size:.62rem;color:var(--text-muted);margin-bottom:.2rem;">${m.home_team}</div><div style="display:flex;flex-wrap:wrap;gap:.22rem;margin-bottom:.35rem;">${_mkScorerBtns(_hPlayers, m.id)}</div>` : ''}
-        ${_aPlayers.length ? `<div style="font-size:.62rem;color:var(--text-muted);margin-bottom:.2rem;">${m.away_team}</div><div style="display:flex;flex-wrap:wrap;gap:.22rem;">${_mkScorerBtns(_aPlayers, m.id)}</div>` : ''}
-      </div>`;
 
     return `
     <div class="match-admin-row">
@@ -428,27 +417,21 @@ async function loadAdminMatches() {
       </div>
 
       ${!fin ? `
-      <div class="result-entry-box">
-        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem;">
-          <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKOR:</span>
-          <input type="number" class="mini-input" id="hs_${m.id}" min="0" value="0">
-          <span style="font-weight:800;color:var(--text-muted);">-</span>
-          <input type="number" class="mini-input" id="as_${m.id}" min="0" value="0">
-          <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;margin-left:auto;">✅ Kaydet &amp; Otomatik Puanla</button>
-        </div>
-        ${_scorerSection}
+      <div class="match-score-row">
+        <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">SKOR:</span>
+        <input type="number" class="mini-input" id="hs_${m.id}" min="0" value="0">
+        <span style="font-weight:800;color:var(--text-muted);">-</span>
+        <input type="number" class="mini-input" id="as_${m.id}" min="0" value="0">
+        <button class="btn btn-primary btn-xs proc-match" data-id="${m.id}" style="white-space:nowrap;">✅ Skor Kaydet &amp; Puanla</button>
       </div>` : `
       <div style="margin-top:.35rem;">
-        <button class="btn btn-outline btn-xs redo-toggle" data-id="${m.id}" data-scorers="${(m.goalscorers||'').replace(/"/g,'&quot;')}">🔄 Skoru Güncelle</button>
-        <div class="result-entry-box" id="redo_${m.id}" style="display:none;margin-top:.4rem;">
-          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.45rem;">
-            <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">YENİ SKOR:</span>
-            <input type="number" class="mini-input" id="hs2_${m.id}" min="0" value="${m.home_score??0}">
-            <span style="font-weight:800;color:var(--text-muted);">-</span>
-            <input type="number" class="mini-input" id="as2_${m.id}" min="0" value="${m.away_score??0}">
-            <button class="btn btn-warning btn-xs proc-match" data-id="${m.id}" data-redo="1" style="white-space:nowrap;margin-left:auto;">🔄 Güncelle &amp; Yeniden Puanla</button>
-          </div>
-          ${_scorerSection}
+        <button class="btn btn-outline btn-xs redo-toggle" data-id="${m.id}">🔄 Skoru Güncelle</button>
+        <div class="match-score-row" id="redo_${m.id}" style="display:none;margin-top:.4rem;">
+          <span style="font-size:.72rem;color:var(--text-muted);font-weight:700;">YENİ SKOR:</span>
+          <input type="number" class="mini-input" id="hs2_${m.id}" min="0" value="${m.home_score??0}">
+          <span style="font-weight:800;color:var(--text-muted);">-</span>
+          <input type="number" class="mini-input" id="as2_${m.id}" min="0" value="${m.away_score??0}">
+          <button class="btn btn-warning btn-xs proc-match" data-id="${m.id}" data-redo="1" style="white-space:nowrap;">🔄 Güncelle &amp; Yeniden Puanla</button>
         </div>
       </div>`}
     </div>`;
@@ -485,44 +468,21 @@ async function loadAdminMatches() {
     const px = isRedo ? '2' : '';
     const hs = parseInt(document.getElementById(`hs${px}_${id}`)?.value)||0;
     const as = parseInt(document.getElementById(`as${px}_${id}`)?.value)||0;
-    const scorers = [...(scorerSelection.get(id) || [])];
-    await processResult(id, hs, as, scorers);
-  }));
-
-  el.querySelectorAll('.scorer-sel-btn').forEach(btn => btn.addEventListener('click', e => {
-    const b = e.currentTarget, mid = b.dataset.mid, player = b.dataset.player;
-    if (!scorerSelection.has(mid)) scorerSelection.set(mid, new Set());
-    const sel = scorerSelection.get(mid);
-    if (sel.has(player)) { sel.delete(player); b.classList.remove('selected'); }
-    else { sel.add(player); b.classList.add('selected'); }
+    await processResult(id, hs, as);
   }));
 
   el.querySelectorAll('.redo-toggle').forEach(btn => btn.addEventListener('click', e => {
-    const mid = e.currentTarget.dataset.id;
-    const rd = document.getElementById(`redo_${mid}`);
-    const isOpening = rd.style.display === 'none';
-    rd.style.display = isOpening ? 'block' : 'none';
-    if (isOpening) {
-      // Mevcut golcüleri pre-select yap
-      const existing = (e.currentTarget.dataset.scorers || '').split(',').map(s => s.trim()).filter(Boolean);
-      if (existing.length) {
-        scorerSelection.set(mid, new Set(existing));
-        rd.querySelectorAll('.scorer-sel-btn').forEach(b => {
-          if (scorerSelection.get(mid)?.has(b.dataset.player)) b.classList.add('selected');
-        });
-      }
-    }
+    const rd = document.getElementById(`redo_${e.currentTarget.dataset.id}`);
+    rd.style.display = rd.style.display === 'none' ? 'flex' : 'none';
   }));
 }
 
-async function processResult(matchId, hs, as, scorers) {
+async function processResult(matchId, hs, as) {
   const result = hs > as ? 'home_win' : as > hs ? 'away_win' : 'draw';
-  const scorersArr = Array.isArray(scorers) ? scorers : [];
-  const goalscorersStr = scorersArr.join(', ');
   try {
     // 1. Maç sonucunu kaydet
     const { error:mErr } = await supabase.from('matches').update({
-      home_score: hs, away_score: as, goalscorers: goalscorersStr, result, status: 'finished'
+      home_score: hs, away_score: as, result, status: 'finished'
     }).eq('id', matchId);
     if (mErr) throw mErr;
 
@@ -534,42 +494,41 @@ async function processResult(matchId, hs, as, scorers) {
       for (const o of (opts||[])) await supabase.from('bet_options').update({ is_correct: o.outcome_key === result }).eq('id', o.id);
     }
 
-    // 3. Tüm tahminleri otomatik puanla
+    // 3. 1X2 ve Tam Skor otomatik puanla — golcü pending kalır (admin elle verir)
     const { data:preds } = await supabase.from('predictions')
       .select('*,bet_markets(market_type),bet_options(outcome_key)')
       .eq('match_id', matchId);
 
-    const cnt = { '1x2': 0, exact_score: 0, goalscorer: 0 };
+    const cnt = { '1x2': 0, exact_score: 0, goalscorer_pending: 0 };
 
-    for (const p of (preds || [])) {
+    for (const p of (preds||[])) {
       const mt = p.bet_markets?.market_type;
-      let isCorrect = false, pts = 0;
-
       if (mt === '1x2') {
-        isCorrect = p.bet_options?.outcome_key === result;
-        pts = isCorrect ? 1 : 0;
+        const ok = p.bet_options?.outcome_key === result;
+        await supabase.from('predictions').update({ is_correct: ok, points_earned: ok ? 1 : 0 }).eq('id', p.id);
+        if (ok) cnt['1x2']++;
       } else if (mt === 'exact_score') {
-        isCorrect = p.predicted_home_score === hs && p.predicted_away_score === as;
-        pts = isCorrect ? 5 : 0;
+        const ok = p.predicted_home_score === hs && p.predicted_away_score === as;
+        await supabase.from('predictions').update({ is_correct: ok, points_earned: ok ? 5 : 0 }).eq('id', p.id);
+        if (ok) cnt.exact_score++;
       } else if (mt === 'goalscorer') {
-        const scorer = (p.predicted_scorer || '').trim().toLowerCase();
-        isCorrect = scorer.length > 0 && scorersArr.some(s => s.toLowerCase() === scorer);
-        pts = isCorrect ? 2 : 0;
+        // Golcü tahminlerini pending bırak (is_correct null, points 0)
+        cnt.goalscorer_pending++;
       }
-
-      await supabase.from('predictions').update({ is_correct: isCorrect, points_earned: pts }).eq('id', p.id);
-      if (isCorrect && cnt[mt] !== undefined) cnt[mt]++;
     }
 
-    // 4. Liderlik tablosunu güncelle
     await recalcAll();
-    scorerSelection.delete(matchId);
 
     showToast(
-      `✅ ${hs}-${as} kaydedildi. 1X2: ${cnt['1x2']} doğru · Skor: ${cnt.exact_score} doğru · Golcü: ${cnt.goalscorer} doğru`,
+      `✅ ${hs}-${as} kaydedildi. 1X2: ${cnt['1x2']} doğru · Skor: ${cnt.exact_score} doğru · ${cnt.goalscorer_pending} golcü tahmini seni bekliyor →`,
       'success'
     );
     await loadAdminMatches(); await loadStats();
+
+    // Golcü tahminleri için Tahminler sekmesine yönlendir
+    switchTab('predictions');
+    const sel = document.getElementById('predMatchFilter');
+    if (sel) { sel.value = matchId; loadPredictionsForMatch(); }
   } catch(err) { showToast('Hata: ' + err.message, 'error'); }
 }
 
