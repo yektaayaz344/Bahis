@@ -409,8 +409,8 @@
         const dateStr = dateObj.toLocaleString('tr-TR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
         // MAÇ GÜNÜ BAŞLADIĞINDA KİLİTLEME KONTROLÜ (00:00)
-        const matchDayStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-        const isAutoLocked = now >= matchDayStart;
+        const matchDayLock = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 18, 0, 0);
+        const isAutoLocked = now >= matchDayLock;
 
         const isFinished = match.status === 'finished';
         const isLocked = match.status === 'locked' || isFinished || isAutoLocked;
@@ -422,7 +422,7 @@
           statusLabel = 'BİTTİ';
           statusClass = 'badge-finished';
         } else if (isLocked) {
-          statusLabel = '🔒 KİLİTLİ (Maç Günü)';
+          statusLabel = '🔒 KİLİTLİ (18:00)';
           statusClass = 'badge-locked';
         }
 
