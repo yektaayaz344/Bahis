@@ -65,6 +65,54 @@
       object-fit: contain;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
     }
+
+    .scorer-team-label {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .scorer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .scorer-btn {
+      padding: 0.3rem 0.6rem;
+      font-family: var(--font-body);
+      font-size: 0.73rem;
+      font-weight: 600;
+      background: rgba(5, 8, 20, 0.6);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+
+    .scorer-btn:hover:not([disabled]) {
+      border-color: var(--success);
+      color: #fff;
+      background: rgba(0, 230, 118, 0.08);
+    }
+
+    .scorer-btn.selected {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .scorer-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -205,6 +253,35 @@
       'union sg': 'assets/logos/union-saint-gilloise.png',
       'union saint-gilloise': 'assets/logos/union-saint-gilloise.png',
       'omonia': 'assets/logos/omonia.png'
+    };
+
+    const TEAM_SCORERS = {
+      'Fenerbahçe':          ['Youssef En-Nesyri', 'Cengiz Ünder', 'Dusan Tadic', 'Sebastian Szymanski', 'Edin Džeko'],
+      'Galatasaray':         ['Victor Osimhen', 'Mauro Icardi', 'Barış Alper Yılmaz', 'Kerem Aktürkoğlu', 'Wilfried Zaha'],
+      'Beşiktaş':            ['Semih Kılıçsoy', 'Rafa Silva', 'Jackson Muleka', 'João Mário', 'Ante Rebić'],
+      'Roma':                ['Artem Dovbyk', 'Paulo Dybala', 'Lorenzo Pellegrini', 'Stephan El Shaarawy', 'Alexis Saelemaekers'],
+      'Aston Villa':         ['Ollie Watkins', 'Jhon Durán', 'Leon Bailey', 'Morgan Rogers', 'Moussa Diaby'],
+      'Slavia Prag':         ['Ivan Schranz', 'Jan Kuchta', 'Lukáš Provod', 'Ondřej Lingr', 'Daniel Douděra'],
+      'Liverpool':           ['Mohamed Salah', 'Darwin Núñez', 'Diogo Jota', 'Luis Díaz', 'Cody Gakpo'],
+      'Shakhtar Donetsk':    ['Georgiy Sudakov', 'Danylo Sikan', 'Lassina Traoré', 'Artem Bondarenko', 'Heorhii Herasymchuk'],
+      'LASK Linz':           ['Marin Ljubičić', 'Florian Flecker', 'Maximilian Entrup', 'Marvin Potzmann', 'Sascha Horvath'],
+      'Villarreal':          ['Gerard Moreno', 'Ayoze Pérez', 'Arnaut Danjuma', 'Álex Baena', 'Yeremy Pino'],
+      'Atletico Madrid':     ['Antoine Griezmann', 'Julián Álvarez', 'Alexander Sørloth', 'Álvaro Morata', 'Rodrigo Riquelme'],
+      'Sporting':            ['Viktor Gyökeres', 'Marcus Edwards', 'Pedro Gonçalves', 'Francisco Trincão', 'Nuno Santos'],
+      'Barcelona':           ['Robert Lewandowski', 'Raphinha', 'Lamine Yamal', 'Pedri', 'Ferran Torres'],
+      'Lille':               ['Jonathan David', 'Edon Zhegrova', 'Angel Gomes', 'Rémy Cabella', 'Hákon Haraldsson'],
+      'Stuttgart':           ['Deniz Undav', 'Nick Woltemade', 'Enzo Millot', 'Chris Führich', 'Silas'],
+      'AEK Atina':           ['Ezequiel Ponce', 'Levi García', 'Erik Lamela', 'Ivan Pesić', 'Nordin Amrabat'],
+      'Feyenoord':           ['Ayase Ueda', 'Igor Paixão', 'Calvin Stengs', 'Quinten Timber', 'Antoni Milambo'],
+      'PSG':                 ['Ousmane Dembélé', 'Bradley Barcola', 'Gonçalo Ramos', 'Randal Kolo Muani', 'Lee Kang-in'],
+      'Marsilya':            ['Mason Greenwood', 'Elye Wahi', 'Luis Henrique', 'Azzedine Ounahi', 'Neal Maupay'],
+      'Hoffenheim':          ['Andrej Kramarić', 'Adam Hložek', 'Tom Bischof', 'Marius Bülter', 'Maximilian Beier'],
+      'Crystal Palace':      ['Eberechi Eze', 'Jean-Philippe Mateta', 'Ismaïla Sarr', 'Odsonne Édouard', 'Daniel Muñoz'],
+      'Celtic':              ['Kyogo Furuhashi', 'Adam Idah', 'Nicolas Kühn', 'Matt O\'Riley', 'Daizen Maeda'],
+      'Hapoel Beer-Sheva':   ['Yarden Shua', 'Karlo Muhar', 'Niv Zivzivadze', 'Idan Nachmias', 'Dan Biton'],
+      'Bayer Leverkusen':    ['Patrik Schick', 'Florian Wirtz', 'Granit Xhaka', 'Jonas Hofmann', 'Alejandro Grimaldo'],
+      'Union Saint-Gilloise':['Mohamed Amoura', 'Cameron Puertas', 'Casper Nielsen', 'Loïc Lapoussin', 'Adingra'],
+      'Omonia':              ['Fotis Papoulis', 'Jordi Gómez', 'Brwa Nouri', 'Igor Kitić', 'Mayambela']
     };
 
     function getTeamLogoHtml(teamName) {
@@ -491,23 +568,35 @@
         `;
 
         // 2. Golcü Tahmini (2 Puan)
-        const currentScorerPred = predScorer?.predicted_scorer ?? '';
+        const selectedScorer = predScorer?.predicted_scorer ?? '';
+        const homeScorers = TEAM_SCORERS[match.home_team] || [];
+        const awayScorers = TEAM_SCORERS[match.away_team] || [];
+
+        const renderScorerButtons = (players, matchId, locked, selected) =>
+          players.map(p => `
+            <button class="scorer-btn${selected === p ? ' selected' : ''}"
+              data-match-id="${matchId}" data-player="${p}"
+              ${locked ? 'disabled' : ''}>
+              ${p}
+            </button>`).join('');
+
         const htmlScorer = `
           <div>
-            <div class="pred-section-title" style="margin-bottom:0.4rem;">
-              <span>2. GOL ATACAK OYUNCU (TEK HAK)</span>
+            <div class="pred-section-title" style="margin-bottom:0.6rem;">
+              <span>2. GOL ATACAK OYUNCU</span>
               <span style="color:var(--success);">2 PUAN</span>
             </div>
-            <div class="score-input-group" style="gap:0.5rem;">
-              <input type="text" class="form-input" id="scorer_pred_${match.id}" value="${currentScorerPred}" placeholder="örn: Mauro Icardi / En-Nesyri" ${isLocked ? 'disabled' : ''} style="font-weight:600;">
-              <button class="btn btn-outline save-scorer-btn" style="padding:0.5rem 0.88rem; font-size:0.78rem;" ${isLocked ? 'disabled' : ''}
-                data-match-id="${match.id}" data-market-id="${marketScorer?.id || ''}">
-                Kaydet
-              </button>
-            </div>
-            ${predScorer && predScorer.predicted_scorer ? `
-              <div style="font-size:0.75rem; text-align:center; margin-top:4px; color:var(--success);">
-                Kaydedilen Golcü Tahmininiz: <strong>${predScorer.predicted_scorer}</strong>
+            ${homeScorers.length ? `
+              <div class="scorer-team-label">${match.home_team}</div>
+              <div class="scorer-grid">${renderScorerButtons(homeScorers, match.id, isLocked, selectedScorer)}</div>
+            ` : ''}
+            ${awayScorers.length ? `
+              <div class="scorer-team-label">${match.away_team}</div>
+              <div class="scorer-grid">${renderScorerButtons(awayScorers, match.id, isLocked, selectedScorer)}</div>
+            ` : ''}
+            ${selectedScorer ? `
+              <div style="font-size:0.75rem; text-align:center; margin-top:2px; color:var(--success);">
+                Tahmininiz: <strong>${selectedScorer}</strong>
               </div>
             ` : ''}
           </div>
@@ -605,36 +694,40 @@
         });
       });
 
-      // Click listener for Save Scorer buttons
-      document.querySelectorAll('.save-scorer-btn:not([disabled])').forEach(btn => {
+      // Click listener for scorer player buttons
+      document.querySelectorAll('.scorer-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const target = e.currentTarget;
           const matchId = target.dataset.matchId;
-          const scorerVal = document.getElementById(`scorer_pred_${matchId}`).value.trim();
-
-          if (!scorerVal) {
-            window.showToast('Lütfen gol atacağını düşündüğünüz futbolcu adını girin!', 'error');
-            return;
-          }
+          const player = target.dataset.player;
+          const isSelected = target.classList.contains('selected');
 
           try {
             const marketId = await ensureMarketExists(matchId, 'goalscorer', 'Gol Atacak Oyuncu (2 Puan)');
             await dedupeUserCategory(matchId, 'goalscorer', marketId);
 
-            const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
-            const optionId = options?.[0]?.id;
+            if (isSelected) {
+              await supabase.from('predictions')
+                .delete()
+                .eq('user_id', session.user.id)
+                .eq('market_id', marketId);
+              window.showToast('Golcü tahmini kaldırıldı.', 'info');
+            } else {
+              const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
+              const optionId = options?.[0]?.id;
 
-            const { error } = await supabase.from('predictions').upsert({
-              user_id: session.user.id,
-              match_id: matchId,
-              market_id: marketId,
-              option_id: optionId,
-              predicted_scorer: scorerVal,
-              odds_at_prediction: 1.00
-            }, { onConflict: 'user_id, market_id' });
+              const { error } = await supabase.from('predictions').upsert({
+                user_id: session.user.id,
+                match_id: matchId,
+                market_id: marketId,
+                option_id: optionId,
+                predicted_scorer: player,
+                odds_at_prediction: 1.00
+              }, { onConflict: 'user_id, market_id' });
 
-            if (error) throw error;
-            window.showToast(`Golcü tahmininiz kaydedildi: ${scorerVal} (+2 Puan adayı)`, 'success');
+              if (error) throw error;
+              window.showToast(`Golcü tahmininiz: ${player} (+2 Puan adayı)`, 'success');
+            }
             await loadMatches();
           } catch (err) {
             window.showToast('Hata: ' + err.message, 'error');
