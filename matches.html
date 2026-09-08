@@ -96,7 +96,7 @@
       <div>
         <h1 class="gradient-text" style="font-size:2.25rem;margin-bottom:0.2rem">Avrupa Fikstürü (24 Maç)</h1>
         <p style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">
-          3 Tahmin: <strong>Maç Sonucu (1 Puan)</strong> | <strong>Golcü Tahmini (2 Puan)</strong> | <strong>Tam Skor (5 Puan)</strong>
+          2 Tahmin: <strong>Maç Sonucu (1 Puan)</strong> | <strong>Tam Skor (5 Puan)</strong>
         </p>
       </div>
     </header>
@@ -259,25 +259,7 @@
             }
           }
 
-          // 2. Scorer Market
-          const { data: ex2 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'goalscorer').order('created_at',{ascending:true}).limit(1).then(r => ({ data: r.data?.[0] ?? null }));
-          let m2Id = ex2?.id;
-          if (!m2Id) {
-            const { data: n2 } = await supabase.from('bet_markets').insert({
-              match_id: match.id, market_type: 'goalscorer', label: 'Gol Atacak Oyuncu (2 Puan)', is_active: true
-            }).select('id').single();
-            m2Id = n2?.id;
-          }
-          if (m2Id) {
-            const { data: opts } = await supabase.from('bet_options').select('id').eq('market_id', m2Id);
-            if (!opts || opts.length === 0) {
-              await supabase.from('bet_options').insert([
-                { market_id: m2Id, label: 'Golcü Tahmini', outcome_key: 'goalscorer', odds_value: 1.00 }
-              ]);
-            }
-          }
-
-          // 3. Exact Score Market
+          // 2. Exact Score Market
           const { data: ex3 } = await supabase.from('bet_markets').select('id').eq('match_id', match.id).eq('market_type', 'exact_score').order('created_at',{ascending:true}).limit(1).then(r => ({ data: r.data?.[0] ?? null }));
           let m3Id = ex3?.id;
           if (!m3Id) {
@@ -435,11 +417,9 @@
           .filter(m => m.market_type === t)
           .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
         const market1X2 = pickMarket('1x2');
-        const marketScorer = pickMarket('goalscorer');
         const marketScore = pickMarket('exact_score');
 
         const pred1X2 = predMap.get(`${match.id}:1x2`) || (market1X2 ? predMap.get(market1X2.id) : null);
-        const predScorer = predMap.get(`${match.id}:goalscorer`) || (marketScorer ? predMap.get(marketScorer.id) : null);
         const predScore = predMap.get(`${match.id}:exact_score`) || (marketScore ? predMap.get(marketScore.id) : null);
 
         // 1. Maç Sonucu (1 Puan)
@@ -491,36 +471,13 @@
           </div>
         `;
 
-        // 2. Golcü Tahmini (2 Puan)
-        const currentScorerPred = predScorer?.predicted_scorer ?? '';
-        const htmlScorer = `
-          <div>
-            <div class="pred-section-title" style="margin-bottom:0.4rem;">
-              <span>2. GOL ATACAK OYUNCU (TEK HAK)</span>
-              <span style="color:var(--success);">2 PUAN</span>
-            </div>
-            <div class="score-input-group" style="gap:0.5rem;">
-              <input type="text" class="form-input" id="scorer_pred_${match.id}" value="${currentScorerPred}" placeholder="örn: Mauro Icardi / En-Nesyri" ${isLocked ? 'disabled' : ''} style="font-weight:600;">
-              <button class="btn btn-outline save-scorer-btn" style="padding:0.5rem 0.88rem; font-size:0.78rem;" ${isLocked ? 'disabled' : ''}
-                data-match-id="${match.id}" data-market-id="${marketScorer?.id || ''}">
-                Kaydet
-              </button>
-            </div>
-            ${predScorer && predScorer.predicted_scorer ? `
-              <div style="font-size:0.75rem; text-align:center; margin-top:4px; color:var(--success);">
-                Kaydedilen Golcü Tahmininiz: <strong>${predScorer.predicted_scorer}</strong>
-              </div>
-            ` : ''}
-          </div>
-        `;
-
-        // 3. Tam Maç Skoru (5 Puan) — TAKIM İSİMLERİ KALDIRILDI, SADECE SKOR GİRDİSİ VE KAYDET BUTONU
+        // 2. Tam Maç Skoru (5 Puan)
         const currentHomePred = predScore?.predicted_home_score ?? '';
         const currentAwayPred = predScore?.predicted_away_score ?? '';
         const htmlScore = `
           <div>
             <div class="pred-section-title" style="margin-bottom:0.4rem;">
-              <span>3. TAM MAÇ SKORU</span>
+              <span>2. TAM MAÇ SKORU</span>
               <span style="color:var(--ucl-gold);">5 PUAN</span>
             </div>
             <div class="score-input-group">
@@ -568,7 +525,6 @@
 
             <div class="dual-prediction-box">
               ${html1X2}
-              ${htmlScorer}
               ${htmlScore}
             </div>
           </div>
@@ -599,43 +555,6 @@
 
             if (error) throw error;
             window.showToast('Maç sonucu tahmininiz kaydedildi! (+1 Puan adayı)', 'success');
-            await loadMatches();
-          } catch (err) {
-            window.showToast('Hata: ' + err.message, 'error');
-          }
-        });
-      });
-
-      // Click listener for Save Scorer buttons
-      document.querySelectorAll('.save-scorer-btn:not([disabled])').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const target = e.currentTarget;
-          const matchId = target.dataset.matchId;
-          const scorerVal = document.getElementById(`scorer_pred_${matchId}`).value.trim();
-
-          if (!scorerVal) {
-            window.showToast('Lütfen gol atacağını düşündüğünüz futbolcu adını girin!', 'error');
-            return;
-          }
-
-          try {
-            const marketId = await ensureMarketExists(matchId, 'goalscorer', 'Gol Atacak Oyuncu (2 Puan)');
-            await dedupeUserCategory(matchId, 'goalscorer', marketId);
-
-            const { data: options } = await supabase.from('bet_options').select('id').eq('market_id', marketId);
-            const optionId = options?.[0]?.id;
-
-            const { error } = await supabase.from('predictions').upsert({
-              user_id: session.user.id,
-              match_id: matchId,
-              market_id: marketId,
-              option_id: optionId,
-              predicted_scorer: scorerVal,
-              odds_at_prediction: 1.00
-            }, { onConflict: 'user_id, market_id' });
-
-            if (error) throw error;
-            window.showToast(`Golcü tahmininiz kaydedildi: ${scorerVal} (+2 Puan adayı)`, 'success');
             await loadMatches();
           } catch (err) {
             window.showToast('Hata: ' + err.message, 'error');

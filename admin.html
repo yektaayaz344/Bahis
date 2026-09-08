@@ -145,7 +145,7 @@
 
   <!-- ═══ TAB 3: TAHMİNLER ═══ -->
   <div class="tab-panel" id="panelPredictions">
-    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;">Maç bittikten sonra <strong>her tahmini tek tek puanlarsın</strong> — oyuncuya göre gruplu (1X2 · Golcü · Skor). <strong style="color:var(--ucl-cyan);">✓</strong> varsayılan puan, <strong style="color:var(--danger);">✗</strong> sıfır, kutuya yazıp <strong>Kaydet</strong> özel puan, <strong>↺</strong> tekrar "bekliyor". Turuncu kenarlı satırlar henüz puanlanmadı. İstersen <strong>🤖 otomatik ver</strong> ile 1X2 &amp; Skoru maç sonucuna göre doldurup sadece golcüleri elle verirsin.</p>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;">Maç bittikten sonra <strong>her tahmini puanlarsın</strong> — oyuncuya göre gruplu (1X2 · Skor). <strong style="color:var(--ucl-cyan);">✓</strong> varsayılan puan, <strong style="color:var(--danger);">✗</strong> sıfır, kutuya yazıp <strong>Kaydet</strong> özel puan, <strong>↺</strong> tekrar "bekliyor". Turuncu kenarlı satırlar henüz puanlanmadı. İstersen <strong>🤖 otomatik ver</strong> ile 1X2 &amp; Skoru maç sonucuna göre otomatik doldur.</p>
     <label style="font-size:.78rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:.35rem;">MAÇA GÖRE FİLTRELE</label>
     <select id="predMatchFilter" class="pred-match-select" onchange="loadPredictionsForMatch()">
       <option value="">— Maç seçin —</option>
@@ -296,38 +296,6 @@ const FIXTURES = [
   { id:'bjk-8', home:'Omonia', away:'Beşiktaş', date:'2027-01-28T19:00:00Z', league:'UEFA Europa League' }
 ];
 
-const TEAM_SCORERS = {
-  'Fenerbahçe':          ['Youssef En-Nesyri', 'Cengiz Ünder', 'Dusan Tadic', 'Sebastian Szymanski', 'Edin Džeko'],
-  'Galatasaray':         ['Victor Osimhen', 'Mauro Icardi', 'Barış Alper Yılmaz', 'Kerem Aktürkoğlu', 'Wilfried Zaha'],
-  'Beşiktaş':            ['Semih Kılıçsoy', 'Rafa Silva', 'Jackson Muleka', 'João Mário', 'Ante Rebić'],
-  'Roma':                ['Artem Dovbyk', 'Paulo Dybala', 'Lorenzo Pellegrini', 'Stephan El Shaarawy', 'Alexis Saelemaekers'],
-  'Aston Villa':         ['Ollie Watkins', 'Jhon Durán', 'Leon Bailey', 'Morgan Rogers', 'Moussa Diaby'],
-  'Slavia Prag':         ['Ivan Schranz', 'Jan Kuchta', 'Lukáš Provod', 'Ondřej Lingr', 'Daniel Douděra'],
-  'Liverpool':           ['Mohamed Salah', 'Darwin Núñez', 'Diogo Jota', 'Luis Díaz', 'Cody Gakpo'],
-  'Shakhtar Donetsk':    ['Georgiy Sudakov', 'Danylo Sikan', 'Lassina Traoré', 'Artem Bondarenko', 'Heorhii Herasymchuk'],
-  'LASK Linz':           ['Marin Ljubičić', 'Florian Flecker', 'Maximilian Entrup', 'Marvin Potzmann', 'Sascha Horvath'],
-  'Villarreal':          ['Gerard Moreno', 'Ayoze Pérez', 'Arnaut Danjuma', 'Álex Baena', 'Yeremy Pino'],
-  'Atletico Madrid':     ['Antoine Griezmann', 'Julián Álvarez', 'Alexander Sørloth', 'Álvaro Morata', 'Rodrigo Riquelme'],
-  'Sporting':            ['Viktor Gyökeres', 'Marcus Edwards', 'Pedro Gonçalves', 'Francisco Trincão', 'Nuno Santos'],
-  'Barcelona':           ['Robert Lewandowski', 'Raphinha', 'Lamine Yamal', 'Pedri', 'Ferran Torres'],
-  'Lille':               ['Jonathan David', 'Edon Zhegrova', 'Angel Gomes', 'Rémy Cabella', 'Hákon Haraldsson'],
-  'Stuttgart':           ['Deniz Undav', 'Nick Woltemade', 'Enzo Millot', 'Chris Führich', 'Silas'],
-  'AEK Atina':           ['Ezequiel Ponce', 'Levi García', 'Erik Lamela', 'Ivan Pesić', 'Nordin Amrabat'],
-  'Feyenoord':           ['Ayase Ueda', 'Igor Paixão', 'Calvin Stengs', 'Quinten Timber', 'Antoni Milambo'],
-  'PSG':                 ['Ousmane Dembélé', 'Bradley Barcola', 'Gonçalo Ramos', 'Randal Kolo Muani', 'Lee Kang-in'],
-  'Marsilya':            ['Mason Greenwood', 'Elye Wahi', 'Luis Henrique', 'Azzedine Ounahi', 'Neal Maupay'],
-  'Hoffenheim':          ['Andrej Kramarić', 'Adam Hložek', 'Tom Bischof', 'Marius Bülter', 'Maximilian Beier'],
-  'Crystal Palace':      ['Eberechi Eze', 'Jean-Philippe Mateta', 'Ismaïla Sarr', 'Odsonne Édouard', 'Daniel Muñoz'],
-  'Celtic':              ['Kyogo Furuhashi', 'Adam Idah', 'Nicolas Kühn', 'Matt O\'Riley', 'Daizen Maeda'],
-  'Hapoel Beer-Sheva':   ['Yarden Shua', 'Karlo Muhar', 'Niv Zivzivadze', 'Idan Nachmias', 'Dan Biton'],
-  'Bayer Leverkusen':    ['Patrik Schick', 'Florian Wirtz', 'Granit Xhaka', 'Jonas Hofmann', 'Alejandro Grimaldo'],
-  'Union Saint-Gilloise':['Mohamed Amoura', 'Cameron Puertas', 'Casper Nielsen', 'Loïc Lapoussin', 'Adingra'],
-  'Omonia':              ['Fotis Papoulis', 'Jordi Gómez', 'Brwa Nouri', 'Igor Kitić', 'Mayambela']
-};
-
-// matchId → Set<playerName> — çoklu golcü seçimi için durum
-const scorerSelection = new Map();
-
 async function init() {
   session = await requireAuth();
   if (!session || !isAdmin(session)) { alert('Erişim reddedildi!'); window.location.href='./matches.html'; return; }
@@ -406,7 +374,6 @@ async function loadAdminMatches() {
         <span class="status-badge ${sBadge}" style="font-size:.7rem;">${sLabel}</span>
         ${fin ? `<span style="font-family:var(--font-display);font-size:1.05rem;font-weight:800;color:var(--ucl-gold);">${m.home_score}-${m.away_score}</span>` : ''}
       </div>
-      ${fin ? `<div style="font-size:.76rem;color:var(--text-muted);margin-top:4px;">Golcüler: <strong style="color:#fff;">${m.goalscorers||'—'}</strong></div>` : ''}
 
       <div class="match-admin-controls">
         ${m.status!=='finished' ? `<button class="btn btn-warning btn-xs toggle-lock" data-id="${m.id}" data-status="${m.status}">${m.status==='locked'?'🔓 Kilidi Aç':'🔒 Kilitle'}</button>` : ''}
@@ -494,12 +461,12 @@ async function processResult(matchId, hs, as) {
       for (const o of (opts||[])) await supabase.from('bet_options').update({ is_correct: o.outcome_key === result }).eq('id', o.id);
     }
 
-    // 3. 1X2 ve Tam Skor otomatik puanla — golcü pending kalır (admin elle verir)
+    // 3. 1X2 ve Tam Skor otomatik puanla
     const { data:preds } = await supabase.from('predictions')
       .select('*,bet_markets(market_type),bet_options(outcome_key)')
       .eq('match_id', matchId);
 
-    const cnt = { '1x2': 0, exact_score: 0, goalscorer_pending: 0 };
+    const cnt = { '1x2': 0, exact_score: 0 };
 
     for (const p of (preds||[])) {
       const mt = p.bet_markets?.market_type;
@@ -511,24 +478,13 @@ async function processResult(matchId, hs, as) {
         const ok = p.predicted_home_score === hs && p.predicted_away_score === as;
         await supabase.from('predictions').update({ is_correct: ok, points_earned: ok ? 5 : 0 }).eq('id', p.id);
         if (ok) cnt.exact_score++;
-      } else if (mt === 'goalscorer') {
-        // Golcü tahminlerini pending bırak (is_correct null, points 0)
-        cnt.goalscorer_pending++;
       }
     }
 
     await recalcAll();
 
-    showToast(
-      `✅ ${hs}-${as} kaydedildi. 1X2: ${cnt['1x2']} doğru · Skor: ${cnt.exact_score} doğru · ${cnt.goalscorer_pending} golcü tahmini seni bekliyor →`,
-      'success'
-    );
+    showToast(`✅ ${hs}-${as} kaydedildi. 1X2: ${cnt['1x2']} doğru · Skor: ${cnt.exact_score} doğru`, 'success');
     await loadAdminMatches(); await loadStats();
-
-    // Golcü tahminleri için Tahminler sekmesine yönlendir
-    switchTab('predictions');
-    const sel = document.getElementById('predMatchFilter');
-    if (sel) { sel.value = matchId; loadPredictionsForMatch(); }
   } catch(err) { showToast('Hata: ' + err.message, 'error'); }
 }
 
@@ -669,8 +625,8 @@ async function populateMatchSelects() {
   document.getElementById('delPredMatchSel').innerHTML = base;
 }
 
-const DEF_PTS = { '1x2':1, 'goalscorer':2, 'exact_score':5 };
-const TYPE_ORDER = { 'goalscorer':0, 'exact_score':1, '1x2':2 };
+const DEF_PTS = { '1x2':1, 'exact_score':5 };
+const TYPE_ORDER = { 'exact_score':0, '1x2':1 };
 
 window.loadPredictionsForMatch = async function() {
   const matchId = document.getElementById('predMatchFilter').value;
@@ -680,7 +636,7 @@ window.loadPredictionsForMatch = async function() {
   const [{ data:preds }, { data:users }, { data:match }] = await Promise.all([
     supabase.from('predictions').select('*,bet_markets(market_type,label),bet_options(label,outcome_key)').eq('match_id',matchId),
     supabase.from('users').select('id,username'),
-    supabase.from('matches').select('home_team,away_team,home_score,away_score,result,goalscorers,status').eq('id',matchId).maybeSingle()
+    supabase.from('matches').select('home_team,away_team,home_score,away_score,result,status').eq('id',matchId).maybeSingle()
   ]);
   const uMap = new Map((users||[]).map(u=>[u.id,u.username]));
 
@@ -696,7 +652,7 @@ window.loadPredictionsForMatch = async function() {
   st.style.gridTemplateColumns = 'repeat(3,1fr)';
 
   const scoreLine = match && match.home_score!==null
-    ? `<strong style="color:var(--ucl-gold);">${match.home_team} ${match.home_score} - ${match.away_score} ${match.away_team}</strong>${match.goalscorers?` · Golcüler: <strong style="color:#fff;">${match.goalscorers}</strong>`:''}`
+    ? `<strong style="color:var(--ucl-gold);">${match.home_team} ${match.home_score} - ${match.away_score} ${match.away_team}</strong>`
     : `<span style="color:var(--danger);">Skor girilmemiş — önce "Maçlar" sekmesinden skoru kaydet.</span>`;
 
   // Kullanıcıya göre grupla — her oyuncunun 3 kategorisi bir arada
@@ -728,10 +684,9 @@ window.loadPredictionsForMatch = async function() {
 function predRowHtml(p) {
   const mType = p.bet_markets?.market_type||'—';
   const defPts = DEF_PTS[mType] ?? 1;
-  const tLabel = mType==='1x2'?`Sonuç (${defPts}P)`:mType==='goalscorer'?`Golcü (${defPts}P)`:mType==='exact_score'?`Tam Skor (${defPts}P)`:mType;
+  const tLabel = mType==='1x2'?`Sonuç (${defPts}P)`:mType==='exact_score'?`Tam Skor (${defPts}P)`:mType;
   let pText = '';
   if (p.predicted_home_score!==null && p.predicted_home_score!==undefined) pText = `${p.predicted_home_score} - ${p.predicted_away_score}`;
-  else if (p.predicted_scorer?.trim()) pText = p.predicted_scorer;
   else pText = p.bet_options?.label||p.bet_options?.outcome_key||'—';
   const graded = p.is_correct!==null && p.is_correct!==undefined;
   return `
@@ -878,8 +833,6 @@ async function importFixtures(deleteFirst) {
       added++;
       const m1 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'1x2',label:'Maç Sonucu (1 Puan)',is_active:true}).select('id').single();
       if (m1.data) await supabase.from('bet_options').insert([{market_id:m1.data.id,label:'1 (Ev Sahibi)',outcome_key:'home_win',odds_value:1},{market_id:m1.data.id,label:'X (Beraberlik)',outcome_key:'draw',odds_value:1},{market_id:m1.data.id,label:'2 (Deplasman)',outcome_key:'away_win',odds_value:1}]);
-      const m2 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'goalscorer',label:'Gol Atacak Oyuncu (2 Puan)',is_active:true}).select('id').single();
-      if (m2.data) await supabase.from('bet_options').insert([{market_id:m2.data.id,label:'Golcü Tahmini',outcome_key:'goalscorer',odds_value:1}]);
       const m3 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'exact_score',label:'Maç Skoru (5 Puan)',is_active:true}).select('id').single();
       if (m3.data) await supabase.from('bet_options').insert([{market_id:m3.data.id,label:'Maç Skoru',outcome_key:'exact_score',odds_value:1}]);
     }
@@ -901,8 +854,6 @@ function bindAddMatchForm() {
     if (mErr) { showToast('Hata: '+mErr.message,'error'); return; }
     const m1 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'1x2',label:'Maç Sonucu (1 Puan)',is_active:true}).select().single();
     if (m1.data) await supabase.from('bet_options').insert([{market_id:m1.data.id,label:'1 (Ev Sahibi)',outcome_key:'home_win',odds_value:1},{market_id:m1.data.id,label:'X (Beraberlik)',outcome_key:'draw',odds_value:1},{market_id:m1.data.id,label:'2 (Deplasman)',outcome_key:'away_win',odds_value:1}]);
-    const m2 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'goalscorer',label:'Gol Atacak Oyuncu (2 Puan)',is_active:true}).select().single();
-    if (m2.data) await supabase.from('bet_options').insert([{market_id:m2.data.id,label:'Golcü Tahmini',outcome_key:'goalscorer',odds_value:1}]);
     const m3 = await supabase.from('bet_markets').insert({match_id:match.id,market_type:'exact_score',label:'Maç Skoru (5 Puan)',is_active:true}).select().single();
     if (m3.data) await supabase.from('bet_options').insert([{market_id:m3.data.id,label:'Maç Skoru',outcome_key:'exact_score',odds_value:1}]);
     showToast(`${ht} vs ${at} maçı oluşturuldu!`,'success');
@@ -912,23 +863,23 @@ function bindAddMatchForm() {
 
 // ── Leaderboard Recalc ────────────────────
 async function recalcAll() {
-  const { data:preds } = await supabase.from('predictions').select('user_id,points_earned,is_correct,predicted_home_score,predicted_scorer');
+  const { data:preds } = await supabase.from('predictions').select('user_id,points_earned,is_correct,predicted_home_score');
   const sm = new Map();
   (preds||[]).forEach(p => {
-    if (!sm.has(p.user_id)) sm.set(p.user_id,{pts:0,correct:0,total:0,exact:0,scorer:0});
+    if (!sm.has(p.user_id)) sm.set(p.user_id,{pts:0,correct:0,total:0,exact:0});
     const s = sm.get(p.user_id); s.pts+=(p.points_earned||0); s.total++;
-    if (p.is_correct) { s.correct++; if (p.predicted_home_score!==null&&p.predicted_home_score!==undefined) s.exact++; else if (p.predicted_scorer?.trim()) s.scorer++; }
+    if (p.is_correct) { s.correct++; if (p.predicted_home_score!==null&&p.predicted_home_score!==undefined) s.exact++; }
   });
   for (const [uid,s] of sm.entries()) {
-    await supabase.from('leaderboard_cache').upsert({user_id:uid,total_points:s.pts,correct_predictions:s.correct,total_predictions:s.total,exact_scores_count:s.exact,scorers_count:s.scorer,last_updated:new Date().toISOString()});
+    await supabase.from('leaderboard_cache').upsert({user_id:uid,total_points:s.pts,correct_predictions:s.correct,total_predictions:s.total,exact_scores_count:s.exact,scorers_count:0,last_updated:new Date().toISOString()});
   }
 }
 
 async function recalcUser(userId) {
-  const { data:preds } = await supabase.from('predictions').select('points_earned,is_correct,predicted_home_score,predicted_scorer').eq('user_id',userId);
-  let pts=0,correct=0,total=0,exact=0,scorer=0;
-  (preds||[]).forEach(p => { pts+=(p.points_earned||0); total++; if (p.is_correct) { correct++; if (p.predicted_home_score!==null&&p.predicted_home_score!==undefined) exact++; else if (p.predicted_scorer?.trim()) scorer++; } });
-  await supabase.from('leaderboard_cache').upsert({user_id:userId,total_points:pts,correct_predictions:correct,total_predictions:total,exact_scores_count:exact,scorers_count:scorer,last_updated:new Date().toISOString()});
+  const { data:preds } = await supabase.from('predictions').select('points_earned,is_correct,predicted_home_score').eq('user_id',userId);
+  let pts=0,correct=0,total=0,exact=0;
+  (preds||[]).forEach(p => { pts+=(p.points_earned||0); total++; if (p.is_correct) { correct++; if (p.predicted_home_score!==null&&p.predicted_home_score!==undefined) exact++; } });
+  await supabase.from('leaderboard_cache').upsert({user_id:userId,total_points:pts,correct_predictions:correct,total_predictions:total,exact_scores_count:exact,scorers_count:0,last_updated:new Date().toISOString()});
 }
 
 init();
